@@ -1,0 +1,49 @@
+# 📦 Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# 🚀 Next.js Build Output
+.next/
+out/
+build/
+
+# 🧪 Testing & Coverage
+coverage/
+.nyc_output
+
+# ⚙️ Environment Variables (KRUSIAL: JANGAN DIHAPUS)
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+
+# ☁️ Cloudflare & Wrangler
+.wrangler/
+.dev.vars
+dist/
+
+# 🗄️ Database (Local development only)
+*.db
+*.db-journal
+*.sqlite
+# drizzle/migrations folder HARUS di-commit, tapi kalau ada 
+# file config sensitif di sana, ignore spesifik aja.
+
+# 🪵 Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# 🖥️ IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# 🎨 UI/UX Assets (Opsional: Kalau ada file figma mentah atau assets jumbo)
+*.zip
+*.rar

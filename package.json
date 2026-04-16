@@ -1,0 +1,27 @@
+{
+  "name": "ipb-pre-loved",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafaelatantya/IPB-Pre-Loved.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rafaelatantya/IPB-Pre-Loved/issues"
+  },
+  "homepage": "https://github.com/rafaelatantya/IPB-Pre-Loved#readme",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20260416.2",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
+  }
+}
