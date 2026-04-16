@@ -1,7 +1,7 @@
-# Dokumentasi Frontend A: Mode Pembeli & Publik
+# 🎨 Dokumentasi Frontend A: Mode Pembeli & Publik
 
 ## 🎯 Fokus Utama
-Developer Frontend A bertanggung jawab penuh atas *user-facing storefront*, yaitu area katalog utama yang dapat dilihat oleh semua pengguna, baik yang belum maupun yang sudah login.
+Developer Frontend A bertanggung jawab penuh atas *user-facing storefront*, yaitu area katalog utama yang dapat dilihat oleh semua pengguna, baik yang belum maupun yang sudah login. Fokus pada *User Experience* dan tampilan yang estetik.
 
 ## 📂 Pemetaan File & Rute
 Developer A akan bekerja secara eksklusif di dalam sistem rute `(public)` dan beberapa spesifik modul.
@@ -19,18 +19,13 @@ Lokasi: `src/modules/catalog/components/`
 - `FilterSidebar.jsx` : Accordion atau panel di sisi kiri berisi check-box / dropdown pilihan rentang harga & kategori.
 
 Lokasi: `src/components/layouts/`
-- `Navbar.jsx` : Komponen header. Mengandung nama "IPB Pre-Loved", *Global Search Bar* (opsional), tombol Wishlist (Icon Hati), dan *User Avatar Profile*. Di Profile Avatar inilah harus terdapat *Dropdown* "Switch ke Dashboard Penjual".
-- `Footer.jsx` : Navigasi bawah statik (Copyright, Syarat ketentuan - statis saja cukup).
+- `Navbar.jsx` : Komponen header. Mengandung nama "IPB Pre-Loved", *Global Search Bar* (opsional), tombol Wishlist (Icon Hati), dan *User Avatar Profile*. Di Profile Avatar inilah harus terdapat *Dropdown* "Switch ke Dashboard Penjual" (Tautan menuju `(seller)/dashboard`).
+- `Footer.jsx` : Navigasi bawah statik.
 
 ### 3. Utility & Helper
 - `src/lib/whatsapp.js` : Tempat pembuatan fungsi khusus (helper). Fungsi ini akan melakukan generasi URL WhatsApp API (`wa.me`) dengan template otomatis: "Halo Kak [Nama Penjual], saya tertarik beli [Nama Barang] seharga [Harga] dari IPB Pre-Loved!".
 
 ## ⚙️ Kebutuhan Data & State Management (Checklist Pengerjaan)
-- [ ] **State Pencarian/Filter**: Gunakan cara "Lift state up" (atau query string pada Next.js `useSearchParams`) agar `SearchBar.jsx` dan `FilterSidebar.jsx` dapat mengubah URL, lalu `page.jsx` (Server/Client) menangkap URL param untuk nge-fetch data yang relevan.
-- [ ] **State Wishlist Lokal**: Di halaman detail, ikon 💖 harus responsif di klik. Siapkan status "Active / Not Active".
-- [ ] **Data Dummy Dulu**: Sambil nunggu D1 & Drizzle rampung, buat Array Object Hardcode, contoh: `const products = [{ id: 1, title: 'Laptop', price: 9000000, condition: 'BEKAS' }]`.
-- [ ] **Visual "Empty State"**: Jika filter menghasilkan *array* kosong, buat ilustrasi halaman (file SVG) dengan teks "Maaf, barang ini ndak nemu".
-
----
-
-*Disetujui untuk: Developer Frontend A*
+- [ ] **State Pencarian/Filter**: Gunakan `useSearchParams` agar `SearchBar.jsx` dan `FilterSidebar.jsx` memengaruhi URL untuk dimanfaatkan oleh server saat *fetch* data katalog.
+- [ ] **State Wishlist Lokal**: Ikon Hati di halaman detail responsif secara langsung.
+- [ ] **Visual "Empty State"**: Jika *search bar* tidak mencocokkan data apapun, tampilkan ilustrasi "Barang tidak temukan".

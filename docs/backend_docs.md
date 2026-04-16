@@ -1,6 +1,6 @@
-# 🚀 ANTIGRAVITY DOCS: IPB PRE LOVED
+# 🚀 BACKEND DOCS: IPB PRE LOVED
 
-Selamat datang di *Master Documentation* IPB Pre Loved! Dokumen ini dibuat agar kolaborasi antara **Backend** (Developer 1) dan **Frontend** (Developer 2 & 3) bisa berjalan mulus dan selaras dengan rancangan sistem (DFD, UML, LKP 5).
+Selamat datang di *Backend Documentation* IPB Pre Loved! Dokumen ini dibuat agar kolaborasi antara **Backend** (Developer 1) dan **Frontend** (Developer 2 & 3) bisa berjalan mulus dan selaras dengan rancangan sistem (DFD, UML, LKP 5).
 
 ---
 

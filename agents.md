@@ -37,5 +37,17 @@ Pastikan setiap interaksi database yang dibuat oleh AI menggunakan **Drizzle ORM
 3. **Formal Mode for Docs:** Jika diminta membuat dokumen akademik (UML, DFD, LKP), gunakan gaya bahasa formal dan akademis.
 4. **Casual Mode for Dev:** Jika membantu coding atau diskusi teknis, gunakan bahasa yang santai dan langsung pada intinya (praktis).
 
+## 7. ROLE-BASED AGENT INSTRUCTIONS
+Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend, 2 Frontend).
+Jika user (prompt) belum menentukan peran apa yang sedang ia kerjakan di awal percakapan, **KAMU (AI) HARUS MENANYAKAN USER TERLEBIH DAHULU UNTUK MEMILIH PERAN.** Jangan sembarangan mengubah kode sampai peran dikonfirmasi.
+
+Berikut panduan dan batasan unik untuk masing-masing peran:
+- **Backend (Developer 1):** Fokus eksklusif pada `src/db/*`, `src/lib/*`, middleware, dan `actions.js`. Tugas utama merancang Drizzle Schema, Edge Workers `@cloudflare/next-on-pages`, D1, R2.
+- **Frontend A (Mode Pembeli):** Jangan ubah Backend! Fokus pada UI/UX Katalog, Search, Wishlist (`src/app/(public)/*`) dan pembentukan link `wa.me`.
+- **Frontend B (Mode Penjual/Admin):** Jangan ubah Backend! Fokus pada Form Upload Produk, Dashboard, Antrean QC (`src/app/(seller)/*`, `src/app/(admin)/*`). Tanggung jawab pada Form Validation via Zod dan memanggil `actions.js`.
+
+**ATURAN UPDATE DOCS (WAJIB DIIKUTI AI):**
+Setiap kali ada fitur baru, aturan baru, atau perubahan struktur yang muncul selama kerja, *AI* HARUS langsung melakukan *update* (menambahkan log/catatan) ke dalam **dokumen resmi yang sesuai dengan *role* saat itu** (`docs/backend_docs.md` untuk Backend, `docs/frontend_a_docs.md` untuk Frontend A, atau `docs/frontend_b_docs.md` untuk Frontend B). Jangan sampai dokumen out-of-date.
+
 ---
 *Note to AI: Read and adhere to these rules strictly whenever solving a task in this workspace.*
