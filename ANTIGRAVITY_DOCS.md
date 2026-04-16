@@ -71,6 +71,16 @@ Sistem **TIDAK** menggunakan password.
 
 ---
 
+## 🌐 5. DEPLOYMENT & HOSTING (CLOUDFLARE PAGES)
+
+Aplikasi Next.js IPB Pre Loved difokuskan berjalan di atas ekosistem Cloudflare. Jadi, keseluruhan aplikasi baik itu **Front-End Server Component** maupun **Back-End Server Actions/API** akan di-deploy ke **Cloudflare Pages**.
+
+**Catatan Khusus untuk Developer Fullstack:**
+- Kita akan menggunakan adapter `@cloudflare/next-on-pages` untuk mengubah Next.js project menjadi fungsi Edge/Cloudflare Workers (Pages Functions).
+- Oleh karena itu, usahakan tidak menggunakan fitur eksklusif Node.js (seperti modul `fs`) yang tidak *compatible* dengan *Edge runtime*. 
+
+---
+
 ## 🤝 KESEPAKATAN PENTING
 > [!IMPORTANT]
 > 1. **Jangan instal package yang makan memori besar** atau berbayar, gunakan ekosistem Cloudflare.

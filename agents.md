@@ -8,7 +8,8 @@
 
 ## 2. TECH STACK
 - **Front-End:** Next.js (App Router), React, Tailwind CSS, Shadcn UI.
-- **Back-End:** Next.js Server Actions, Cloudflare D1 (SQLite), Cloudflare R2 (Object Storage).
+- **Back-End / Server:** Next.js Server Actions, Cloudflare D1 (SQLite), Cloudflare R2 (Object Storage).
+- **Deployment & Hosting:** Cloudflare Pages (ditembak via adapter `@cloudflare/next-on-pages`). Seluruh function akan di-build menjadi Edge workers. 
 - **Authentication:** NextAuth (Google OAuth) - **Strictly limited to @apps.ipb.ac.id domain**.
 - **ORM:** Drizzle ORM.
 
