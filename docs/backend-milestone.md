@@ -6,8 +6,8 @@ Gunakan file ini untuk tracking tugas-tugas sebagai Developer Backend (Data & Lo
 
 ## Phase 1: Database Setup & Drizzle ORM
 - `[x] SELESAI` - Inisiasi Schema Dasar: `users`, `categories`, `products`, `wishlists` (Di file: `src/db/schema.js`)
-- `[ ] BELUM` - Tambah Schema Baru: Tabel `product_images` dan `qc_reviews`
-- `[ ] BELUM` - Definisi Relasi Tabel: Set-up block Drizzle `relations()` agar `products` nyambung ke images, category, dll.
+- `[x] SELESAI` - Tambah Schema Baru: Tabel `product_images` dan `qc_reviews`
+- `[x] SELESAI` - Definisi Relasi Tabel: Set-up block Drizzle `relations()` agar `products` nyambung ke images, category, dll.
 - `[x] SELESAI` - Set up DB Connection: (File: `src/lib/db.js` binding ke `env.DB`)
 
 ## Phase 2: Cloudflare Resources Setup
