@@ -13,3 +13,5 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/middleware.js` | Midleware pelindung rute SSR Next.js berdasarkan Role (SELLER/ADMIN bypass rules) |
 | `wrangler.toml` | Konfigurasi build Cloudflare Emulator, Binding Database ID, dan R2 ID |
 | `agents.md` | Aturan konteks/batas suci mandat untuk semua AI di lingkungan project ini |
+| `src/actions.js` | Kumpulan Next.js Server Actions untuk interaksi database (D1) |
+| `docs/backend_docs.md` | Panduan teknis khusus Backend untuk setup D1, R2, dan Server Actions |

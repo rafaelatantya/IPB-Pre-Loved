@@ -6,6 +6,7 @@ pages_build_output_dir = ".next"
 binding = "DB" # Ini nama variabel yang bakal kita panggil di code
 database_name = "ipb-preloved-db"
 database_id = "777ac36d-0a4f-4996-9c38-201fed833d73"
+migrations_dir = "drizzle/migrations"
 
 [[r2_buckets]]
 binding = "BUCKET"
