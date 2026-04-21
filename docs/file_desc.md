@@ -15,3 +15,8 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `agents.md` | Aturan konteks/batas suci mandat untuk semua AI di lingkungan project ini |
 | `src/actions.js` | Kumpulan Next.js Server Actions untuk interaksi database (D1) |
 | `docs/backend_docs.md` | Panduan teknis khusus Backend untuk setup D1, R2, dan Server Actions |
+| `jsconfig.json` | Konfigurasi path aliasing `@/*` untuk memudahkan import modul |
+| `tailwind.config.js` | Konfigurasi framework CSS Tailwind untuk styling aplikasi |
+| `src/app/globals.css` | File CSS global yang berisi direktif Tailwind dan desain sistem dasar |
+| `src/app/login/page.js` | Halaman Login premium dengan integrasi Google OAuth |
+| `src/app/AuthContext.js` | Client component wrapper untuk provide session NextAuth ke seluruh aplikasi |

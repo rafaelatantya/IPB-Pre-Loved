@@ -55,13 +55,13 @@ Berikut panduan dan batasan unik untuk masing-masing peran:
 Karena pengembangan frontend dan backend sangat terikat pada ekosistem Cloudflare, setiap *AI Agent* yang melayani developer Frontend (Frontend A & B) **WAJIB** mengikuti *flow* ini ketika mencoba men-jalankan *(run)* atau mencari jalan keluar dari *error* selama *testing*.
 
 **Tahap 1: Verifikasi Pre-Flight (Sebelum Run)**
-1. **Cek Kredensial:** Pastikan `.dev.vars` dan `.env.local` eksis. Jangan teruskan testing jika tidak ada.
+1. **Cek Kredensial:** Pastikan `.dev.vars` dan `.env.local` eksis. Jika hanya ada `.dev.vars`, jalankan `cp .dev.vars .env.local` agar `next dev` bisa membaca *environment variables*.
 2. **Cek Dependency:** Jalankan `npm install --legacy-peer-deps` (wajib pakai flag ini karena ada _conflict_ versi `next-on-pages` dan Next.js 15).
 
 **Tahap 2: Execution Command (DILARANG PAKAI `npm run dev` BAE)**
 - Secara bawaan, Next.js akan mendeteksi `next dev`. Tapi karena kita butuh *binding* Cloudflare D1/R2, AI HARUS meminta eksekusi ini ke terminal:
   `npm run build && npx wrangler pages dev .next --remote`
-  *(Catatan: flag `--remote` menghubungkan frontend lokal langsung ke database Cloudflare di internet).*
+  *(Catatan: flag `--remote` menghubungkan frontend lokal langsung ke database Cloudflare di internet). Jika hanya ingin testing UI cepat tanpa build, gunakan `npx next dev --port 3001` (pastikan sudah Sinkronisasi `.env.local` di Tahap 1).*
 
 **Tahap 3: Resolusi Error Spesifik (DO NOT HALLUCINATE FIXES)**
 Jika command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdasarkan daftar ini sebelum mengubah *source code*:

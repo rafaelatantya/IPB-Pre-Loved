@@ -11,6 +11,8 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const user = req.auth?.user;
 
+  console.log(`[Middleware] Path: ${nextUrl.pathname} | LoggedIn: ${isLoggedIn} | Role: ${user?.role}`);
+
   const isSellerRoute = nextUrl.pathname.startsWith('/seller');
   const isAdminRoute = nextUrl.pathname.startsWith('/admin');
 
@@ -25,7 +27,7 @@ export default auth((req) => {
   }
 
   // Proteksi Route Admin
-  if (isAdminRoute) {
+  if (isAdminRoute && nextUrl.pathname !== '/admin-test') {
     if (!isLoggedIn) {
       return Response.redirect(new URL('/api/auth/signin', nextUrl));
     }

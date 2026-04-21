@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import { getAuthConfig } from "@/lib/auth";
 
-export const runtime = "edge";
 
 // Helper hook to inject Cloudflare bindings to NextAuth configuration
 const createHandler = () => {
