@@ -11,13 +11,13 @@ Gunakan file ini untuk tracking tugas-tugas sebagai Developer Backend (Data & Lo
 - `[x] SELESAI` - Set up DB Connection: (File: `src/lib/db.js` binding ke `env.DB`)
 
 ## Phase 2: Cloudflare Resources Setup
-- `[ ] BELUM` - AWS S3 Client / R2 Setup: Buat file koneksi S3 di `src/lib/storage.js` untuk R2.
-- `[ ] BELUM` - Next-on-Pages Setup: Pastikan dependencies `@cloudflare/next-on-pages` running di project.
+- `[x] SELESAI` - AWS S3 Client / R2 Setup: Buat file koneksi S3 di `src/lib/storage.js` untuk R2.
+- `[x] SELESAI` - Next-on-Pages Setup: Pastikan dependencies `@cloudflare/next-on-pages` running di project.
 
 ## Phase 3: Autentikasi SSO (Google Workspace)
-- `[ ] BELUM` - Route Provider NextAuth: Bikin Catch-all route di `src/app/api/auth/[...nextauth]/route.js`.
-- `[ ] BELUM` - Filter Domain `@apps.ipb.ac.id`: Validasi auto-register di callbacks signin `src/lib/auth.js`.
-- `[ ] BELUM` - Route Guarding: File `src/middleware.js` buat ngamanin rute `/seller` dan `/admin`.
+- `[x] SELESAI` - Route Provider NextAuth: Bikin Catch-all route di `src/app/api/auth/[...nextauth]/route.js`.
+- `[x] SELESAI` - Filter Domain `@apps.ipb.ac.id`: Validasi auto-register di callbacks signin `src/lib/auth.js`.
+- `[x] SELESAI` - Route Guarding: File `src/middleware.js` buat ngamanin rute `/seller` dan `/admin`.
 
 ## Phase 4: Server Actions Foundation (The Brains)
 - `[ ] BELUM` - Catalog Services: Fungsi fetch data barang *Approved* ke `src/modules/catalog/services.js`.

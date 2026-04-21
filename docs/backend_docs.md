@@ -88,3 +88,12 @@ Aplikasi Next.js IPB Pre Loved difokuskan berjalan di atas ekosistem Cloudflare.
 > 3. Jangan ubah *schema database* tanpa persetujuan lewat grup, karena ini ngaruh banget ke query UI/UX.
 
 *Selamat ngoding, jangan lupa commit rutin ke GitHub!* 🔥
+
+---
+
+## 📝 CHANGELOG
+- **[21 Apr 2026] Phase 2 & 3 Completed:**
+  - Ditambahkan dependensi `next`, `react`, `@cloudflare/next-on-pages`, `@aws-sdk/client-s3`.
+  - Dibuat `src/lib/storage.js` untuk R2 Client.
+  - Dibuat setup `next-auth@beta` pada `src/lib/auth.js` dan route API.
+  - Middleware dibuat untuk proteksi halaman `/seller` dan `/admin`.
