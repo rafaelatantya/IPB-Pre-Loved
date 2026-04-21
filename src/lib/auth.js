@@ -1,12 +1,10 @@
 import Google from "next-auth/providers/google";
 
-// MANUAL ADMIN LIST (Initial Testing Phase)
-const ADMIN_EMAILS = [
-  "rafaelatantya@apps.ipb.ac.id",
-  // Masukkan email admin lainnya di sini
-];
-
 export function getAuthConfig(env) {
+  // Parsing Environment Variables
+  const ALLOWED_DOMAINS = (env.ALLOWED_DOMAINS || "@apps.ipb.ac.id").split(",").map(d => d.trim().toLowerCase());
+  const ADMIN_EMAILS = (env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+
   return {
     providers: [
       Google({
@@ -20,8 +18,12 @@ export function getAuthConfig(env) {
     },
     callbacks: {
       async signIn({ user, account, profile }) {
-        // Pengecekan Domain Wajib IPB
-        if (!user.email?.endsWith("@apps.ipb.ac.id")) {
+        // Pengecekan Domain Dinamis (Default: @apps.ipb.ac.id)
+        const userEmail = user.email?.toLowerCase();
+        const isAllowed = ALLOWED_DOMAINS.some(domain => userEmail?.endsWith(domain));
+
+        if (!isAllowed) {
+          console.warn(`SIGNIN BLOCKED: Domain [${userEmail}] not in [${ALLOWED_DOMAINS.join(", ")}]`);
           return false;
         }
 
@@ -35,8 +37,8 @@ export function getAuthConfig(env) {
           const existingUser = await db.select().from(users).where(eq(users.email, user.email)).get();
 
           if (!existingUser) {
-            // Cek apakah email ini masuk ke list ADMIN manual
-            const initialRole = ADMIN_EMAILS.includes(user.email) ? "ADMIN" : "BUYER";
+            const isManualAdmin = ADMIN_EMAILS.includes(userEmail);
+            const initialRole = isManualAdmin ? "ADMIN" : "BUYER";
 
             await db.insert(users).values({
               id: user.id || crypto.randomUUID(),
@@ -50,17 +52,15 @@ export function getAuthConfig(env) {
         }
         return true;
       },
-      async jwt({ token, user, trigger, session }) {
+      async jwt({ token, user }) {
         const userEmail = (user?.email || token?.email)?.toLowerCase();
         
-        // PRIORITAS UTAMA: Manual Admin List (Hardcoded Bypass)
-        // Ini dicek setiap kali token diakses, jadi perubahan list Admin langsung kerasa tanpa relogin.
-        if (userEmail && ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail)) {
+        // Cek Role Admin dari Env List (Prioritas Utama untuk Testing)
+        if (userEmail && ADMIN_EMAILS.includes(userEmail)) {
           token.role = "ADMIN";
         }
 
         if (user) {
-          // Hanya jalan pas Sign In pertama kali
           try {
             const { getDb } = await import("@/lib/db");
             const { users } = await import("@/db/schema");
@@ -69,11 +69,12 @@ export function getAuthConfig(env) {
             const db = getDb(env);
             const dbUser = await db.select().from(users).where(eq(users.email, user.email)).get();
             
-            if (!token.role) { // Jika belum di-set oleh manual list
+            if (!token.role) { 
               token.role = dbUser?.role || "BUYER";
             }
             token.id = user.id || dbUser?.id;
           } catch (e) {
+            console.error("JWT Callback Error:", e);
             if (!token.role) token.role = "BUYER";
           }
         }
@@ -88,6 +89,7 @@ export function getAuthConfig(env) {
         return session;
       }
     },
+    debug: true, // NYALAKAN INI UNTUK LIHAT ERROR DI TERMINAL
     trustHost: true,
     secret: env.AUTH_SECRET || process.env.AUTH_SECRET,
   };

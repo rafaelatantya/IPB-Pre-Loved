@@ -75,6 +75,22 @@ Sistem **TIDAK** menggunakan password.
 ---
 
 ## 🌐 5. DEPLOYMENT & HOSTING (CLOUDFLARE PAGES)
+...
+## 🔐 6. ROLE-BASED ACCESS CONTROL (RBAC) LOGIC
+Untuk mendukung fitur multi-user, aplikasi menerapkan aturan tampilan dinamis berdasarkan role:
+
+### 👤 Buyer / Seller Mode:
+- **Users List**: Hidden (Privasi).
+- **Category Management**: Hidden (Read-only).
+- **Product Upload**: 
+  - Penjual otomatis terkunci ke dirinya sendiri.
+  - Status produk default: `PENDING`.
+  - Tombol Approval: Hidden.
+
+### 🛡️ Admin Mode:
+- **Full Access**: Bisa melihat/menghapus user.
+- **QC Manager**: Memiliki dashboard untuk melakukan `Accept/Reject` pada produk berstatus `PENDING`.
+- **Direct Post**: Produk yang diupload Admin bisa langsung berstatus `APPROVED`.
 
 Aplikasi Next.js IPB Pre Loved difokuskan berjalan di atas ekosistem Cloudflare. Jadi, keseluruhan aplikasi baik itu **Front-End Server Component** maupun **Back-End Server Actions/API** akan di-deploy ke **Cloudflare Pages**.
 
@@ -114,6 +130,8 @@ Bagi teman-teman Frontend (Developer 2 & 3) yang ingin melakukan *testing UI/UX*
 ## 📝 CHANGELOG
 - **[21 Apr 2026] UUID Migration, Persistence Fix & User Sync:**
   - Migrasi seluruh Primary Key dari `Integer` ke `UUID (Text)` untuk stabilitas Edge runtime.
-  - Implementasi `--persist-to ./local-db-info` di `package.json` untuk sinkronisasi DB CLI & Server.
-  - **User Sync Logic:** Menambahkan fitur sinkronisasi otomatis user yang sedang login ke database melalui panel admin (`/admin-test`) untuk mempermudah testing lokal.
+  - Implementasi `--persist-to ./local-db-info` di `package.json` untuk sinkronisasi DB CLI- `[x] SELESAI` - Local Sync Logic: Mekanisme sinkronisasi user session ke D1 via `/admin-test` untuk testing jualan.
+- `[ ] BELUM` - Unified Dashboard Logic: Implementasi Role-based UI (Admin vs Buyer) di `/admin-test`.
+- `[ ] BELUM` - Admin QC Workflow: Fitur Accept/Reject produk PENDING oleh Admin.
+- `[ ] BELUM` - Catalog Services: Fungsi fetch data barang *Approved* ke `src/modules/catalog/services.js`.
   - CRUD Admin Panel (Category & Product upload) selesai dan siap ditest.

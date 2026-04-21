@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { getAdminUsers, getCategories, getProducts, addCategory, deleteCategory, createProductWithImage, deleteProduct, initializeDatabaseInternal } from "@/actions";
-import { CheckCircle2, XCircle, LogOut, User, ShieldCheck, ShoppingCart, Store, Trash2, Plus, RefreshCcw, Image as ImageIcon } from "lucide-react";
+import { getAdminUsers, getCategories, getProducts, addCategory, deleteCategory, createProductWithImage, deleteProduct, initializeDatabaseInternal, updateProductStatus, toggleUserRole, deleteUser } from "@/actions";
+import { CheckCircle2, XCircle, LogOut, User, ShieldCheck, ShoppingCart, Store, Trash2, Plus, RefreshCcw, Image as ImageIcon, Check, X } from "lucide-react";
 
 export default function AdminTestPage() {
   const { data: session } = useSession();
@@ -100,12 +100,16 @@ export default function AdminTestPage() {
           price: formData.get("price"),
           description: formData.get("description"),
           categoryId: formData.get("categoryId"),
-          sellerId: formData.get("sellerId"),
+          sellerId: isAdmin ? formData.get("sellerId") : session?.user?.id, 
           condition: formData.get("condition") || "GOOD",
           location: formData.get("location") || "IPB Dramaga"
       };
 
-      const res = await createProductWithImage({ formData: data, imageFile });
+      const res = await createProductWithImage({ 
+        formData: data, 
+        imageFile, 
+        userRole: session?.user?.role 
+      });
       
       if (res.success) {
         alert("✅ PROSES BERHASIL!\n" + res.message);
@@ -122,6 +126,13 @@ export default function AdminTestPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleUpdateStatus(productId, newStatus) {
+    setLoading(true);
+    const res = await updateProductStatus(productId, newStatus);
+    alert(res.message || res.error);
+    fetchAll();
   }
 
   useEffect(() => {
@@ -210,45 +221,48 @@ export default function AdminTestPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Users Table */}
-          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
-            <h2 className="text-xl font-bold mb-4 text-indigo-900 flex items-center gap-2">
-              <User className="w-5 h-5" /> Users ({users.length})
-            </h2>
-            <div className="overflow-y-auto max-h-[400px]">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="border-b text-gray-400 uppercase text-[10px] tracking-wider">
-                    <th className="py-3 px-2">User</th>
-                    <th className="py-3 px-2">Role</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(u => (
-                    <tr key={u.id} className="border-b hover:bg-indigo-50/30 transition">
-                      <td className="py-3 px-2">
-                        <div className="font-medium text-gray-900">{u.name}</div>
-                        <div className="text-[10px] text-gray-500">{u.email}</div>
-                      </td>
-                      <td className="py-3 px-2">
-                         <button 
-                            onClick={() => handleToggleRole(u.id, u.role)}
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition hover:opacity-80 ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}`}
-                         >
-                           {u.role}
-                         </button>
-                      </td>
-                      <td className="py-3 px-2">
-                        <button onClick={() => handleDeleteUser(u.id)} className="text-gray-400 hover:text-red-500 transition">
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
+          {/* Users Table (Admin Only) */}
+          {isAdmin && (
+            <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
+              <h2 className="text-xl font-bold mb-4 text-indigo-900 flex items-center gap-2">
+                <User className="w-5 h-5" /> Users ({users.length})
+              </h2>
+              <div className="overflow-y-auto max-h-[400px]">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b text-gray-400 uppercase text-[10px] tracking-wider">
+                      <th className="py-3 px-2">User</th>
+                      <th className="py-3 px-2">Role</th>
+                      <th className="py-3 px-2 text-right">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody>
+                    {users.map(u => (
+                      <tr key={u.id} className="border-b hover:bg-indigo-50/30 transition">
+                        <td className="py-3 px-2">
+                          <div className="font-medium text-gray-900">{u.name}</div>
+                          <div className="text-[10px] text-gray-500">{u.email}</div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <button 
+                              onClick={() => handleToggleRole(u.id, u.role)}
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition hover:opacity-80 ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}`}
+                          >
+                            {u.role}
+                          </button>
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          <button onClick={() => handleDeleteUser(u.id)} className="text-gray-400 hover:text-red-500 transition">
+                              <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* Products & Categories Container */}
           <div className="lg:col-span-2 space-y-8">
@@ -272,7 +286,30 @@ export default function AdminTestPage() {
                           <td className="py-3 text-gray-600">{p.seller?.name || "Unknown"}</td>
                           <td className="py-3 font-mono">Rp {p.price?.toLocaleString()}</td>
                           <td className="py-3">
-                            <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-[10px] font-bold uppercase">{p.status}</span>
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                              p.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 
+                              p.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {p.status}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right">
+                             <div className="flex justify-end gap-2">
+                                {isAdmin && p.status === 'PENDING' && (
+                                  <>
+                                    <button onClick={() => handleUpdateStatus(p.id, 'APPROVED')} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200" title="Terima">
+                                      <Check className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleUpdateStatus(p.id, 'REJECTED')} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Tolak">
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
+                                <button onClick={() => deleteProduct(p.id).then(fetchAll)} className="text-gray-400 hover:text-red-500">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                             </div>
                           </td>
                         </tr>
                       ))}
@@ -296,17 +333,19 @@ export default function AdminTestPage() {
                   ))}
                 </div>
 
-                <form onSubmit={handleAddCategory} className="flex gap-2">
-                    <input 
-                        name="categoryName" 
-                        placeholder="Nama Kategori Baru..." 
-                        required
-                        className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <button type="submit" disabled={loading} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-                        <Plus className="w-5 h-5" />
-                    </button>
-                </form>
+                {isAdmin && (
+                  <form onSubmit={handleAddCategory} className="flex gap-2">
+                      <input 
+                          name="categoryName" 
+                          placeholder="Nama Kategori Baru..." 
+                          required
+                          className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button type="submit" disabled={loading} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                          <Plus className="w-5 h-5" />
+                      </button>
+                  </form>
+                )}
               </section>
 
               {/* R2 Image Upload Test */}
@@ -324,10 +363,16 @@ export default function AdminTestPage() {
                             <option value="">Pilih Kategori...</option>
                             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
-                        <select name="sellerId" className="px-3 py-2 text-sm border rounded-lg w-full" required>
-                            <option value="">Pilih Penjual...</option>
-                            {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                        </select>
+                        {isAdmin ? (
+                          <select name="sellerId" className="px-3 py-2 text-sm border rounded-lg w-full" required>
+                              <option value="">Pilih Penjual...</option>
+                              {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                          </select>
+                        ) : (
+                          <div className="px-3 py-2 text-sm border rounded-lg w-full bg-gray-50 text-gray-500 flex items-center gap-2">
+                            <User className="w-4 h-4" /> {session?.user?.name || "Self"} (Locked)
+                          </div>
+                        )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <select name="condition" className="px-3 py-2 text-sm border rounded-lg w-full" required>

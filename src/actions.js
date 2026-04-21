@@ -224,7 +224,7 @@ export async function deleteCategory(id) {
 /**
  * Action: Create Product with Image (Modular for testing)
  */
-export async function createProductWithImage({ formData, imageFile }) {
+export async function createProductWithImage({ formData, imageFile, userRole = "BUYER" }) {
   try {
     const env = await getEnv();
     const db = getDb(env);
@@ -247,12 +247,14 @@ export async function createProductWithImage({ formData, imageFile }) {
         httpMetadata: { contentType: imageFile.type }
       });
       
-      // Catatan: Ganti [R2_PUBLIC_URL] dengan URL asli nanti
-      // Gunakan placeholder yang lebih descriptive agar user tahu ini butuh config
       imageUrl = `https://r2.ipb-preloved.workers.dev/${r2Key}`; 
     }
 
-    // 2. Insert Product
+    // 2. Tentukan status berdasarkan ROLE
+    // Admin langsung APPROVED, Buyer/Seller masuk PENDING
+    const initialStatus = userRole === "ADMIN" ? "APPROVED" : "PENDING";
+
+    // 3. Insert Product
     await db.insert(products).values({
       id: productId,
       sellerId: formData.sellerId,
@@ -262,10 +264,10 @@ export async function createProductWithImage({ formData, imageFile }) {
       price: parseInt(formData.price) || 0,
       condition: formData.condition || "GOOD",
       location: formData.location || "IPB Dramaga",
-      status: "APPROVED", 
+      status: initialStatus, 
     }).run();
 
-    // 3. Simpan relasi gambar
+    // 4. Simpan relasi gambar
     if (imageUrl) {
       await db.insert(productImages).values({
         id: crypto.randomUUID(),
@@ -276,10 +278,24 @@ export async function createProductWithImage({ formData, imageFile }) {
       }).run();
     }
 
-    return { success: true, message: "Produk & Gambar berhasil disimpan!" };
+    return { success: true, message: `Produk berhasil disimpan dengan status ${initialStatus}!` };
   } catch (error) {
     console.error("ERROR [createProductWithImage]:", error);
     return { success: false, error: "Gagal memproses produk/gambar: " + error.message };
+  }
+}
+
+/**
+ * Action: Update Status Produk (QC Admin)
+ */
+export async function updateProductStatus(productId, status) {
+  try {
+    const db = await getContextDb();
+    await db.update(products).set({ status }).where(eq(products.id, productId));
+    return { success: true, message: `Produk berhasil di-${status.toLowerCase()}` };
+  } catch (error) {
+    console.error("DEBUG: Update product status error:", error);
+    return { success: false, error: `Gagal mengubah status: ${error.message}` };
   }
 }
 
