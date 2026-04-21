@@ -81,6 +81,21 @@ Aplikasi Next.js IPB Pre Loved difokuskan berjalan di atas ekosistem Cloudflare.
 
 ---
 
+## 💻 6. PANDUAN KOLABORASI LOKAL (UNTUK TEMAN-TEMAN FRONTEND)
+
+Bagi teman-teman Frontend (Developer 2 & 3) yang ingin melakukan *testing UI/UX* dan menyambungkannya dengan fungsi backend di laptop masing-masing, ikuti langkah berikut:
+
+1. **JANGAN MERUBAH DATABASE STRUCT:** Database D1 dikelola penuh oleh Backend.
+2. **Setup Credentials (`.dev.vars`):** Kalian wajib meminta file `.dev.vars` kepada Developer Backend. File ini tidak di-*push* ke GitHub karena rahasia. Simpan file ini di *root directory*.
+3. **Jalankan Aplikasi:** 
+   - Instal semua *dependencies*: `npm install`
+   - Setelah kalian login ke wrangler (`npx wrangler login`), kalian bisa langsung menggunakan **Database Asli (Remote) di Cloudflare** tanpa repot bikin *dummy* lokal!
+   - Jalankan perintah ini untuk melakukan *remote connection* (Local UI -> Real D1 Database):
+     `npm run build && npx wrangler pages dev .next --remote`
+4. **Catatan Penting:** Karena kalian langsung menembak database asli, berhati-hatilah saat melakukan *testing* (jangan asal menghapus data penting). Jika ada perubahan kolom/tabel, pastikan Backend sudah menembakkan migrasi database-nya terlebih dahulu.
+
+---
+
 ## 🤝 KESEPAKATAN PENTING
 > [!IMPORTANT]
 > 1. **Jangan instal package yang makan memori besar** atau berbayar, gunakan ekosistem Cloudflare.

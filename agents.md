@@ -46,6 +46,31 @@ Berikut panduan dan batasan unik untuk masing-masing peran:
 - **Frontend A (Mode Pembeli):** Jangan ubah Backend! Fokus pada UI/UX Katalog, Search, Wishlist (`src/app/(public)/*`) dan pembentukan link `wa.me`.
 - **Frontend B (Mode Penjual/Admin):** Jangan ubah Backend! Fokus pada Form Upload Produk, Dashboard, Antrean QC (`src/app/(seller)/*`, `src/app/(admin)/*`). Tanggung jawab pada Form Validation via Zod dan memanggil `actions.js`.
 
+**PANDUAN LINGKUNGAN LOKAL KOMUNAL:**
+- Semua *developer* & *AI* HARUS asumsikan *local environment* tersimulasi via Cloudflare. Jika UI/UX melakukan testing database, AI Frontend wajib memastikan file `.dev.vars` (konfigurasi D1/R2 emulation) ada, dan tidak sembarangan memaksa `drizzle-kit push` tanpa persetujuan peran Backend.
+
+---
+
+## 8. 🚨 FRONTEND AI TESTING & TROUBLESHOOTING FLOW
+Karena pengembangan frontend dan backend sangat terikat pada ekosistem Cloudflare, setiap *AI Agent* yang melayani developer Frontend (Frontend A & B) **WAJIB** mengikuti *flow* ini ketika mencoba men-jalankan *(run)* atau mencari jalan keluar dari *error* selama *testing*.
+
+**Tahap 1: Verifikasi Pre-Flight (Sebelum Run)**
+1. **Cek Kredensial:** Pastikan `.dev.vars` dan `.env.local` eksis. Jangan teruskan testing jika tidak ada.
+2. **Cek Dependency:** Jalankan `npm install --legacy-peer-deps` (wajib pakai flag ini karena ada _conflict_ versi `next-on-pages` dan Next.js 15).
+
+**Tahap 2: Execution Command (DILARANG PAKAI `npm run dev` BAE)**
+- Secara bawaan, Next.js akan mendeteksi `next dev`. Tapi karena kita butuh *binding* Cloudflare D1/R2, AI HARUS meminta eksekusi ini ke terminal:
+  `npm run build && npx wrangler pages dev .next --remote`
+  *(Catatan: flag `--remote` menghubungkan frontend lokal langsung ke database Cloudflare di internet).*
+
+**Tahap 3: Resolusi Error Spesifik (DO NOT HALLUCINATE FIXES)**
+Jika command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdasarkan daftar ini sebelum mengubah *source code*:
+- **Error D1/Database Not Found:** Artinya flag `--remote` lupa disertakan, atau user belum login ke wrangler terminal (`npx wrangler login`). **JANGAN** pernah AI Frontend menjalankan migrasi database paksa (`drizzle-kit`). Suruh user koordinasi ke *Backend*.
+- **Error API Route Fetching / Auth.js pecah:** Ingat ini Edge Workers! Node.js API tradisional seperti `fs` dan `path` tidak akan jalan. Cek *actions* apakah terbebas dari Node modules.
+- **Error Hydration UI:** Frontend AI bebas memperbaiki kode React Components.
+
+---
+
 **ATURAN UPDATE DOCS (WAJIB DIIKUTI AI):**
 Setiap kali ada fitur baru, aturan baru, atau perubahan struktur yang muncul selama kerja, *AI* HARUS langsung melakukan *update* (menambahkan log/catatan) ke dalam **dokumen resmi yang sesuai dengan *role* saat itu** (`docs/backend_docs.md` untuk Backend, `docs/frontend_a_docs.md` untuk Frontend A, atau `docs/frontend_b_docs.md` untuk Frontend B). Jangan sampai dokumen out-of-date.
 
