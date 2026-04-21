@@ -34,12 +34,15 @@ Tim menggunakan **Next.js (App Router)** sebagai Full-Stack Framework.
 
 Berikut adalah struktur tabel yang harus diimplementasikan oleh Backend di `src/db/schema.js` berdasarkan UML Class Diagram:
 
-1. **`users`**: `id`, `name`, `email`, `role`, `whatsappNumber`, `createdAt`.
-2. **`categories`**: `id`, `name`, `slug`.
-3. **`products`**: `id`, `sellerId`, `categoryId`, `title`, `description`, `price`, `condition`, `status` (PENDING/APPROVED/REJECTED), `location`, `createdAt`.
-4. **`product_images`** *(Belum ada di code existing!)*: `id`, `productId`, `r2Key`, `url`, `sortOrder`.
-5. **`qc_reviews`** *(Belum ada di code existing!)*: `id`, `productId`, `adminId`, `decision`, `note`, `reviewedAt`.
-6. **`wishlists`**: `id`, `userId`, `productId`, `createdAt`.
+1. **`users`**: `id` (UUID), `name`, `email`, `role`, `whatsappNumber`, `createdAt`.
+2. **`categories`**: `id` (UUID), `name`, `slug`.
+3. **`products`**: `id` (UUID), `sellerId`, `categoryId` (Ref UUID), `title`, `description`, `price`, `condition`, `status`, `location`, `createdAt`.
+4. **`product_images`**: `id` (UUID), `productId`, `r2Key`, `url`, `sortOrder`.
+5. **`qc_reviews`**: `id` (UUID), `productId`, `adminId`, `decision`, `note`, `reviewedAt`.
+6. **`wishlists`**: `id` (UUID), `userId`, `productId`, `createdAt`.
+
+> [!IMPORTANT]
+> **Kepada Seluruh Developer:** Kita menggunakan string **UUID (randomUUID)** sebagai Primary Key untuk semua tabel. Jangan gunakan integer auto-increment karena sering bermasalah saat bundling Edge functions di Cloudflare.
 
 > [!CAUTION]
 > **Kepada Backend:** Jangan lupa definisikan `relations` dari Drizzle ORM agar join data antara produk, gambar, dan kategori jauh lebih mudah saat query!
@@ -90,9 +93,11 @@ Bagi teman-teman Frontend (Developer 2 & 3) yang ingin melakukan *testing UI/UX*
 3. **Jalankan Aplikasi:** 
    - Instal semua *dependencies*: `npm install`
    - Setelah kalian login ke wrangler (`npx wrangler login`), kalian bisa langsung menggunakan **Database Asli (Remote) di Cloudflare** tanpa repot bikin *dummy* lokal!
-   - Jalankan perintah ini untuk melakukan *remote connection* (Local UI -> Real D1 Database):
-     `npm run build && npx wrangler pages dev .next --remote`
-4. **Catatan Penting:** Karena kalian langsung menembak database asli, berhati-hatilah saat melakukan *testing* (jangan asal menghapus data penting). Jika ada perubahan kolom/tabel, pastikan Backend sudah menembakkan migrasi database-nya terlebih dahulu.
+    - Jalankan perintah ini untuk melakukan *remote connection* (Local UI -> Real D1 Database):
+      `npm run build && npx wrangler pages dev .vercel/output/static --remote`
+    - **PENTING (Local DB):** Jika kalian ingin testing database LOKAL, gunakan perintah:
+      `npm run pages:dev`
+      Data akan disimpan di folder `./local-db-info`. Jangan hapus folder ini jika ingin data tetap awet.
 
 ---
 
@@ -107,8 +112,8 @@ Bagi teman-teman Frontend (Developer 2 & 3) yang ingin melakukan *testing UI/UX*
 ---
 
 ## 📝 CHANGELOG
-- **[21 Apr 2026] Phase 2 & 3 Completed:**
-  - Ditambahkan dependensi `next`, `react`, `@cloudflare/next-on-pages`, `@aws-sdk/client-s3`.
-  - Dibuat `src/lib/storage.js` untuk R2 Client.
-  - Dibuat setup `next-auth@beta` pada `src/lib/auth.js` dan route API.
-  - Middleware dibuat untuk proteksi halaman `/seller` dan `/admin`.
+- **[21 Apr 2026] UUID Migration, Persistence Fix & User Sync:**
+  - Migrasi seluruh Primary Key dari `Integer` ke `UUID (Text)` untuk stabilitas Edge runtime.
+  - Implementasi `--persist-to ./local-db-info` di `package.json` untuk sinkronisasi DB CLI & Server.
+  - **User Sync Logic:** Menambahkan fitur sinkronisasi otomatis user yang sedang login ke database melalui panel admin (`/admin-test`) untuk mempermudah testing lokal.
+  - CRUD Admin Panel (Category & Product upload) selesai dan siap ditest.

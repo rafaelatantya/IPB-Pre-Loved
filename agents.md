@@ -8,7 +8,12 @@
 
 ## 2. TECH STACK
 - **Front-End:** Next.js (App Router), React, Tailwind CSS, Shadcn UI.
-- **Back-End / Server:** Next.js Server Actions, Cloudflare D1 (SQLite), Cloudflare R2 (Object Storage).
+- **Arsitektur Backend (Latest)**
+- **Runtime**: Cloudflare Edge (Wrangler Pages Dev)
+- **Database**: Cloudflare D1 (SQLite) dengan Drizzle ORM
+- **Primary Keys**: Menggunakan **UUID String** (v4) untuk semua tabel (Categories, Users, Products, Wishlists) guna menghindari konflik auto-increment di environment Edge.
+- **Persistence**: Database lokal disimpan di `./local-db-info`. Gunakan `--persist-to ./local-db-info` saat menjalankan CLI.
+- **Storage**: Cloudflare R2 untuk upload gambar produk.
 - **Deployment & Hosting:** Cloudflare Pages (ditembak via adapter `@cloudflare/next-on-pages`). Seluruh function akan di-build menjadi Edge workers. 
 - **Authentication:** NextAuth (Google OAuth) - **Strictly limited to @apps.ipb.ac.id domain**.
 - **ORM:** Drizzle ORM.
@@ -64,7 +69,7 @@ Karena pengembangan frontend dan backend sangat terikat pada ekosistem Cloudflar
   *(Catatan: flag `--remote` menghubungkan frontend lokal langsung ke database Cloudflare di internet). Jika hanya ingin testing UI cepat tanpa build, gunakan `npx next dev --port 3001` (pastikan sudah Sinkronisasi `.env.local` di Tahap 1).*
 
 **Tahap 3: Resolusi Error Spesifik (DO NOT HALLUCINATE FIXES)**
-Jika command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdasarkan daftar ini sebelum mengubah *source code*:
+If command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdasarkan daftar ini sebelum mengubah *source code*:
 - **Error D1/Database Not Found:** Artinya flag `--remote` lupa disertakan, atau user belum login ke wrangler terminal (`npx wrangler login`). **JANGAN** pernah AI Frontend menjalankan migrasi database paksa (`drizzle-kit`). Suruh user koordinasi ke *Backend*.
 - **Error API Route Fetching / Auth.js pecah:** Ingat ini Edge Workers! Node.js API tradisional seperti `fs` dan `path` tidak akan jalan. Cek *actions* apakah terbebas dari Node modules.
 - **Error Hydration UI:** Frontend AI bebas memperbaiki kode React Components.
@@ -74,6 +79,12 @@ Jika command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berd
 **ATURAN UPDATE DOCS & DICTIONARY (WAJIB DIIKUTI AI):**
 1. Setiap kali ada fitur baru, aturan baru, atau perubahan struktur yang muncul selama kerja, *AI* HARUS melakukan *update* ke dalam **dokumen resmi yang sesuai dengan *role* saat itu** (`docs/backend_docs.md` atau `docs/frontend_a_docs.md` dll). Jangan sampai dokumen out-of-date.
 2. Setiap kali Agent selesai membuat/mengubah secara signifikan suatu folder atau file, wajib untuk mencatatnya secara terpusat di `docs/file_desc.md` sebagai **Kamus File** project.
+
+### Backend Handover Notes
+- **Testing CRUD**: Gunakan `/admin-test` untuk verifikasi D1 dan R2. Pastikan klik "Fix DB" untuk sync User.
+- **Drizzle Studio**: Jalankan `npx drizzle-kit studio` untuk visualisasi data relasional secara GUI.
+- **Database Reset**: Jalankan `npm run db:wipe` untuk membersihkan state lokal jika terjadi error atau inkonsistensi data.
+- **Run Dev**: Selalu jalankan `npm run pages:dev` agar binding D1/R2 sinkron dengan database ID asli.
 
 ---
 *Note to AI: Read and adhere to these rules strictly whenever solving a task in this workspace.*

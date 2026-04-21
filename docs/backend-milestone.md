@@ -21,6 +21,12 @@ Gunakan file ini untuk tracking tugas-tugas sebagai Developer Backend (Data & Lo
 - `[x] SELESAI` - Manual Admin List: Implementasi `ADMIN_EMAILS` di `auth.js` untuk bypass role testing.
 
 ## Phase 4: Server Actions Foundation (The Brains)
+- `[x] SELESAI` - Product Actions Foundation: Bikin form submission `createProductWithImage` untuk upload R2 dan D1 (File di: `src/actions.js`).
+- `[x] SELESAI` - Local Sync Logic: Mekanisme sinkronisasi user session ke D1 via `/admin-test` untuk testing jualan.
 - `[ ] BELUM` - Catalog Services: Fungsi fetch data barang *Approved* ke `src/modules/catalog/services.js`.
-- `[ ] BELUM` - Product Actions: Bikin form submission `submitProduct(formData)` untuk upload R2 dan D1 (File di: `src/modules/product/actions.js`).
-- `[ ] BELUM` - Admin QC Actions: Bikin script fetch data pending & tombol lempar `processQC(decision)` (File di: `src/modules/admin/actions.js`).
+- `[ ] BELUM` - Admin QC Dashboard: Halaman khusus admin untuk Approve/Reject barang PENDING.
+
+## Phase 5: Online Deployment & Security
+- `[ ] BELUM` - Cloudflare Pages Deployment: Push kode ke repo dan hubungkan ke Dashboard Cloudflare.
+- `[ ] BELUM` - Remote D1 Sync: Migrasi data dari lokal ke database online.
+- `[ ] BELUM` - Image Bucket Policy: Setting public access URL untuk R2 images.

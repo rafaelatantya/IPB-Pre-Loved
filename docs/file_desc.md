@@ -20,3 +20,6 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/globals.css` | File CSS global yang berisi direktif Tailwind dan desain sistem dasar |
 | `src/app/login/page.js` | Halaman Login premium dengan integrasi Google OAuth |
 | `src/app/AuthContext.js` | Client component wrapper untuk provide session NextAuth ke seluruh aplikasi |
+| `local-db-info/` | Folder persitensi lokal untuk D1 Database dan R2 Storage (shared CLI & Server) |
+| `src/app/admin-test/page.js` | Dashboard modular untuk pengujian CRUD Backend (User, Category, R2 Product) |
+| `drizzle.config.js` | Konfigurasi Drizzle Kit untuk jalankan Drizzle Studio (Lokal & Remote) |

@@ -1,5 +1,5 @@
 CREATE TABLE `categories` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`slug` text NOT NULL
 );
@@ -17,7 +17,7 @@ CREATE TABLE `product_images` (
 CREATE TABLE `products` (
 	`id` text PRIMARY KEY NOT NULL,
 	`seller_id` text NOT NULL,
-	`category_id` integer,
+	`category_id` text,
 	`title` text NOT NULL,
 	`description` text NOT NULL,
 	`price` integer NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE `users` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint
 CREATE TABLE `wishlists` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`product_id` text NOT NULL,
 	`created_at` integer DEFAULT CURRENT_TIMESTAMP,

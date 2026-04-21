@@ -9,10 +9,11 @@
     "build": "next build",
     "start": "next start",
     "pages:build": "npx @cloudflare/next-on-pages",
-    "pages:dev": "npm run build && npx wrangler pages dev .next --remote",
+    "pages:dev": "npm run pages:build && npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 BUCKET --persist-to ./local-db-info",
     "db:generate": "drizzle-kit generate",
-    "db:push:local": "npx wrangler d1 migrations apply DB --local",
-    "db:push:remote": "npx wrangler d1 migrations apply DB --remote"
+    "db:push:local": "echo \"y\" | npx wrangler d1 migrations apply DB --local --persist-to ./local-db-info",
+    "db:push:remote": "npx wrangler d1 migrations apply DB --remote",
+    "db:wipe": "rm -rf .wrangler/state ./local-db-info && npm run db:push:local"
   },
   "repository": {
     "type": "git",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
+    "better-sqlite3": "^12.9.0",
     "drizzle-kit": "^0.31.10",
     "wrangler": "^4.84.0"
   }

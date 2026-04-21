@@ -17,9 +17,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   wishlistItems: many(wishlists),
 }));
 
-// Tabel Categories
 export const categories = sqliteTable('categories', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(), // Pindah ke UUID (lebih stabil di Edge)
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
 });
@@ -28,11 +27,10 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
   products: many(products),
 }));
 
-// Tabel Products
 export const products = sqliteTable('products', {
   id: text('id').primaryKey(),
   sellerId: text('seller_id').notNull().references(() => users.id),
-  categoryId: integer('category_id').references(() => categories.id),
+  categoryId: text('category_id').references(() => categories.id), // Samakan tipe data
   title: text('title').notNull(),
   description: text('description').notNull(),
   price: integer('price').notNull(),
@@ -93,9 +91,8 @@ export const qcReviewsRelations = relations(qcReviews, ({ one }) => ({
   }),
 }));
 
-// Tabel Wishlist (Sebagai bridging table / Menyerupai WishlistItem di UML)
 export const wishlists = sqliteTable('wishlists', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(), // Pindah ke UUID
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),

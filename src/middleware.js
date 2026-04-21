@@ -1,43 +1,35 @@
-import NextAuth from "next-auth";
-import { getAuthConfig } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
-// In middleware, standard process.env is usually sufficient because NextAuth 
-// mainly uses AUTH_SECRET from here to decode the JWT cookie.
-// D1 Database callbacks code wouldn't be triggered by simple middleware session checks
-const { auth } = NextAuth(getAuthConfig(process.env));
+// MODULER MIDDLEWARE: Tanpa Library NextAuth
+// Karena NextAuth v5 sering crash di Cloudflare Middleware (error async_hooks),
+// kita pakai cara manual yang jauh lebih stabil buat personal testing.
+export default function middleware(req) {
+  const { nextUrl, cookies } = req;
+  
+  // Ambil token dari cookie (NextAuth v5 default name)
+  const hasToken = cookies.get("authjs.session-token") || 
+                   cookies.get("__Secure-authjs.session-token");
 
-export default auth((req) => {
-  const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
-  const user = req.auth?.user;
-
-  console.log(`[Middleware] Path: ${nextUrl.pathname} | LoggedIn: ${isLoggedIn} | Role: ${user?.role}`);
+  console.log(`[Middleware Lite] Path: ${nextUrl.pathname} | HasToken: ${!!hasToken}`);
 
   const isSellerRoute = nextUrl.pathname.startsWith('/seller');
   const isAdminRoute = nextUrl.pathname.startsWith('/admin');
 
-  // Proteksi Route Seller
-  if (isSellerRoute) {
-    if (!isLoggedIn) {
-      return Response.redirect(new URL('/api/auth/signin', nextUrl));
-    }
-    if (user?.role !== 'SELLER' && user?.role !== 'ADMIN') {
-      return Response.redirect(new URL('/', nextUrl));
-    }
+  // Proteksi Route Seller (Sifatnya mendinginkan, logic detail ada di Page)
+  if (isSellerRoute && !hasToken) {
+    return NextResponse.redirect(new URL('/login', nextUrl));
   }
 
   // Proteksi Route Admin
-  if (isAdminRoute && nextUrl.pathname !== '/admin-test') {
-    if (!isLoggedIn) {
-      return Response.redirect(new URL('/api/auth/signin', nextUrl));
-    }
-    if (user?.role !== 'ADMIN') {
-      return Response.redirect(new URL('/', nextUrl));
-    }
+  // Kita bebaskan /admin-test agar kamu bisa masuk buat testing
+  if (isAdminRoute && nextUrl.pathname !== '/admin-test' && !hasToken) {
+    return NextResponse.redirect(new URL('/login', nextUrl));
   }
-});
 
-// Hanya match untuk validasi halaman (exclude resource / statics)
+  return NextResponse.next();
+}
+
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
+
