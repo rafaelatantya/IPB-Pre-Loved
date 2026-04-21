@@ -1,0 +1,13 @@
+# [CLOUDFLARE R2 CREDENTIALS]
+R2_ACCOUNT_ID="isi_account_id_cloudflare_anda"
+R2_ACCESS_KEY_ID="isi_access_key"
+R2_SECRET_ACCESS_KEY="isi_secret_key"
+R2_BUCKET_NAME="ipb-preloved-images"
+
+# [GOOGLE OAUTH]
+GOOGLE_CLIENT_ID="isi_client_id_dari_google_console"
+GOOGLE_CLIENT_SECRET="isi_client_secret_dari_google"
+
+# [NEXTAUTH]
+# Cara generate: ketik di terminal: npx auth secret
+AUTH_SECRET="random_string_huruf_acak_buat_enkripsi_cookies"

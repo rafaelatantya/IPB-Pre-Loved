@@ -71,8 +71,9 @@ Jika command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berd
 
 ---
 
-**ATURAN UPDATE DOCS (WAJIB DIIKUTI AI):**
-Setiap kali ada fitur baru, aturan baru, atau perubahan struktur yang muncul selama kerja, *AI* HARUS langsung melakukan *update* (menambahkan log/catatan) ke dalam **dokumen resmi yang sesuai dengan *role* saat itu** (`docs/backend_docs.md` untuk Backend, `docs/frontend_a_docs.md` untuk Frontend A, atau `docs/frontend_b_docs.md` untuk Frontend B). Jangan sampai dokumen out-of-date.
+**ATURAN UPDATE DOCS & DICTIONARY (WAJIB DIIKUTI AI):**
+1. Setiap kali ada fitur baru, aturan baru, atau perubahan struktur yang muncul selama kerja, *AI* HARUS melakukan *update* ke dalam **dokumen resmi yang sesuai dengan *role* saat itu** (`docs/backend_docs.md` atau `docs/frontend_a_docs.md` dll). Jangan sampai dokumen out-of-date.
+2. Setiap kali Agent selesai membuat/mengubah secara signifikan suatu folder atau file, wajib untuk mencatatnya secara terpusat di `docs/file_desc.md` sebagai **Kamus File** project.
 
 ---
 *Note to AI: Read and adhere to these rules strictly whenever solving a task in this workspace.*
