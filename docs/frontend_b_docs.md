@@ -31,3 +31,23 @@ Lokasi: `src/modules/admin/components/`
 - [ ] **Validasi Formulir Zod**: Pastikan error tervisualisasi (warna merah) di tiap tag HTML jika user mem-bypass syarat.
 - [ ] **Form State Feedback**: *Loading State* & *Disabled Button Submission* saat call API sedang di-proses oleh Backend (menghindari duplikasi R2/D1).
 - [ ] **Dashboard Empty States**: Tabel *"Kosong"* jika user baru registrasi dan tidak punya produk jualan. Status tag Badge `Pending`/`Approved` harus dimarkup berdasarkan text.
+
+## 🤖 Integrasi Backend (Panduan untuk AI Agent)
+Frontend B bekerja dengan data terproteksi. Pastikan Agent menggunakan modular actions berikut:
+
+```javascript
+// Import modular actions
+import { getProducts, deleteProduct } from "@/modules/product/actions";
+import { updateProductStatus } from "@/modules/product/actions"; // QC Admin
+import { getCategories } from "@/modules/category/actions";
+
+// PRIVACY FIRST: List Produkku (Mode Penjual)
+// Berikan sellerId agar user hanya melihat barangnya sendiri
+const myProducts = await getProducts(session.user.id);
+
+// SECURITY: Penghapusan Produk
+// Wajib menyertakan ID user dan Role untuk validasi di backend
+const result = await deleteProduct(productId, session.user.id, session.user.role);
+```
+
+- **PENTING**: Admin QC tetap bisa melihat semua produk dengan memanggil `getProducts()` tanpa parameter (null).

@@ -5,24 +5,40 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { getAdminUsers, getCategories, getProducts, addCategory, deleteCategory, createProductWithImage, deleteProduct, initializeDatabaseInternal, updateProductStatus, toggleUserRole, deleteUser } from "@/actions";
-import { CheckCircle2, XCircle, LogOut, User, ShieldCheck, ShoppingCart, Store, Trash2, Plus, RefreshCcw, Image as ImageIcon, Check, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { getAdminUsers, toggleUserRole, deleteUser, initializeDatabaseInternal } from "@/modules/admin/actions";
+import { getCategories, addCategory, deleteCategory } from "@/modules/category/actions";
+import { getProducts, createProductWithImage, updateProductStatus, deleteProduct } from "@/modules/product/actions";
+import { CheckCircle2, XCircle, LogOut, User, ShieldCheck, ShoppingCart, Store, Trash2, Plus, RefreshCcw, Image as ImageIcon, Check, X, Search } from "lucide-react";
 
 export default function AdminTestPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [status, setStatus] = useState("Idle");
+  const [statusText, setStatusText] = useState("Idle");
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("mine"); // 'mine', 'pending', 'all'
+  const [userSearch, setUserSearch] = useState("");
 
-  async function fetchAll() {
+  // Guest Protection
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  async function fetchAll(searchQuery = "") {
     setLoading(true);
-    setStatus("Fetching data...");
+    setStatusText("Fetching data...");
+    
+    // Check role inside action to avoid stale state in useEffect
+    const checkIsAdmin = session?.user?.role === "ADMIN";
     
     const [uRes, pRes, cRes] = await Promise.all([
-      getAdminUsers(),
-      getProducts(),
+      checkIsAdmin ? getAdminUsers(searchQuery) : { success: true, data: [] },
+      getProducts(checkIsAdmin ? null : session?.user?.id),
       getCategories()
     ]);
 
@@ -30,31 +46,20 @@ export default function AdminTestPage() {
     if (pRes.success) setProducts(pRes.data);
     if (cRes.success) setCategories(cRes.data);
     
-    setStatus("Data Refreshed");
+    setStatusText("Data Refreshed");
     setLoading(false);
   }
 
-  const handleInitDB = async () => {
-      setLoading(true);
-      setStatus("Initializing database...");
-      try {
-        // Kirim data session user agar otomatis terdaftar di DB
-        const res = await initializeDatabaseInternal(session?.user);
-        if (res.success) {
-          alert("✅ " + res.message);
-          setStatus("DB Initialized");
-        } else {
-          alert("❌ " + res.error);
-          setStatus("Initialization Failed");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Critial Error: " + err.message);
-        setStatus("Error");
-      }
-      fetchAll();
-      setLoading(false);
+  const handleUserSearch = (e) => {
+    e.preventDefault();
+    fetchAll(userSearch);
   };
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchAll();
+    }
+  }, [status]);
 
   async function handleAddCategory(e) {
     e.preventDefault();
@@ -89,7 +94,7 @@ export default function AdminTestPage() {
   async function handleUploadProduct(e) {
     e.preventDefault();
     setLoading(true);
-    setStatus("Uploading to R2 & DB...");
+    setStatusText("Uploading to R2 & DB...");
     
     try {
       const formData = new FormData(e.target);
@@ -114,15 +119,15 @@ export default function AdminTestPage() {
       if (res.success) {
         alert("✅ PROSES BERHASIL!\n" + res.message);
         e.target.reset();
-        setStatus("Upload Success");
+        setStatusText("Upload Success");
         fetchAll();
       } else {
         alert("❌ PROSES GAGAL!\n" + res.error);
-        setStatus("Upload Failed");
+        setStatusText("Upload Failed");
       }
     } catch (err) {
       alert("FATAL ERROR: " + err.message);
-      setStatus("System Error");
+      setStatusText("System Error");
     } finally {
       setLoading(false);
     }
@@ -135,11 +140,17 @@ export default function AdminTestPage() {
     fetchAll();
   }
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  // Filtered Lists
+  const myProducts = products.filter(p => p.sellerId === session?.user?.id);
+  const pendingQueue = products.filter(p => p.status === "PENDING" && (isAdmin ? p.sellerId !== session?.user?.id : false));
+  const allInventory = products;
+
+  const displayedProducts = !isAdmin 
+    ? myProducts 
+    : (activeTab === "mine" ? myProducts : (activeTab === "pending" ? pendingQueue : allInventory));
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
@@ -147,7 +158,7 @@ export default function AdminTestPage() {
         <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-indigo-900">Backend Infrastructure Test Panel</h1>
-            <p className="text-gray-500">Monitoring & Testing System Role: <span className="font-bold text-indigo-600">{session?.user?.role || "GUEST"}</span></p>
+            <p className="text-gray-500">Monitoring & Testing System • Role: <span className="font-bold text-indigo-600">{session?.user?.role || "GUEST"}</span></p>
           </div>
           <button 
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -195,22 +206,13 @@ export default function AdminTestPage() {
         
         <div className="flex gap-4 mb-8">
           <button 
-            onClick={fetchAll}
+            onClick={() => { setUserSearch(""); fetchAll(""); }}
             disabled={loading}
-            className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 disabled:opacity-50 transition"
+            className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 disabled:opacity-50 transition flex items-center gap-2"
           >
-            {loading ? "Refreshing..." : "Refresh Data"}
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Reset & Refresh
           </button>
-          
-          {isAdmin && (
-            <button 
-              onClick={handleInitDB}
-              disabled={loading}
-              className="bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 disabled:opacity-50"
-            >
-              {loading ? "Initializing..." : "Fix DB & Seed Data"}
-            </button>
-          )}
         </div>
 
         {!isAdmin && (
@@ -224,9 +226,23 @@ export default function AdminTestPage() {
           {/* Users Table (Admin Only) */}
           {isAdmin && (
             <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1">
-              <h2 className="text-xl font-bold mb-4 text-indigo-900 flex items-center gap-2">
-                <User className="w-5 h-5" /> Users ({users.length})
-              </h2>
+              <div className="flex flex-col gap-4 mb-4">
+                <h2 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
+                  <User className="w-5 h-5" /> Users ({users.length})
+                </h2>
+                <form onSubmit={handleUserSearch} className="flex gap-2">
+                  <input 
+                    type="text"
+                    placeholder="Cari Nama/Email..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="flex-1 text-xs px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                  <button type="submit" className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition">
+                    <Search className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
               <div className="overflow-y-auto max-h-[400px]">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
@@ -268,22 +284,76 @@ export default function AdminTestPage() {
           <div className="lg:col-span-2 space-y-8">
               {/* Products Table */}
               <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold mb-4 text-indigo-900">Products ({products.length})</h2>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                  <h2 className="text-xl font-bold text-indigo-900">
+                    {!isAdmin ? "Your Products" : (
+                      activeTab === "mine" ? "Your Products" : 
+                      activeTab === "pending" ? "QC Review Queue" : "All System Inventory"
+                    )} ({displayedProducts.length})
+                  </h2>
+                  
+                  {isAdmin && (
+                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                      <button 
+                        onClick={() => setActiveTab("mine")}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'mine' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        My Products
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab("pending")}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-2 ${activeTab === 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        QC Queue {pendingQueue.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab("all")}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        Browse All
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="overflow-x-auto text-sm">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b text-gray-400 uppercase text-[10px] tracking-wider">
+                        <th className="py-3 px-2">Preview</th>
                         <th className="py-3">Title</th>
-                        <th className="py-3 font-semibold">Seller</th>
+                        {isAdmin && activeTab !== "mine" && <th className="py-3 font-semibold">Seller</th>}
                         <th className="py-3">Price</th>
                         <th className="py-3">Status</th>
+                        <th className="py-3"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map(p => (
-                        <tr key={p.id} className="border-b hover:bg-indigo-50/30 transition">
-                          <td className="py-3 font-medium text-gray-900">{p.title}</td>
-                          <td className="py-3 text-gray-600">{p.seller?.name || "Unknown"}</td>
+                      {displayedProducts.map(p => (
+                        <tr key={p.id} className="border-b hover:bg-gray-50 transition items-center">
+                          <td className="py-3 px-2">
+                            <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
+                              {p.images && p.images[0] ? (
+                                <img src={p.images[0].url} alt={p.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <ImageIcon className="w-5 h-5 text-gray-400" />
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 font-medium text-gray-900">
+                            {p.title}
+                            <div className="text-[10px] text-gray-400 font-normal">{p.category?.name || "No Category"}</div>
+                          </td>
+                          {isAdmin && activeTab !== "mine" && (
+                            <td className="py-3 text-gray-600">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 uppercase">
+                                  {p.seller?.name?.charAt(0) || "?"}
+                                </div>
+                                <span>{p.seller?.name || "Unknown"}</span>
+                              </div>
+                            </td>
+                          )}
                           <td className="py-3 font-mono">Rp {p.price?.toLocaleString()}</td>
                           <td className="py-3">
                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
@@ -296,23 +366,32 @@ export default function AdminTestPage() {
                           </td>
                           <td className="py-3 text-right">
                              <div className="flex justify-end gap-2">
-                                {isAdmin && p.status === 'PENDING' && (
+                                {isAdmin && activeTab === 'pending' && (
                                   <>
-                                    <button onClick={() => handleUpdateStatus(p.id, 'APPROVED')} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200" title="Terima">
+                                    <button onClick={() => handleUpdateStatus(p.id, 'APPROVED')} className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition" title="Terima">
                                       <Check className="w-4 h-4" />
                                     </button>
-                                    <button onClick={() => handleUpdateStatus(p.id, 'REJECTED')} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Tolak">
+                                    <button onClick={() => handleUpdateStatus(p.id, 'REJECTED')} className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition" title="Tolak">
                                       <X className="w-4 h-4" />
                                     </button>
                                   </>
                                 )}
-                                <button onClick={() => deleteProduct(p.id).then(fetchAll)} className="text-gray-400 hover:text-red-500">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {(isAdmin || p.sellerId === session?.user?.id) && (
+                                  <button onClick={() => deleteProduct(p.id, session?.user?.id, session?.user?.role).then(fetchAll)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
                              </div>
                           </td>
                         </tr>
                       ))}
+                      {displayedProducts.length === 0 && (
+                        <tr>
+                          <td colSpan={isAdmin ? 6 : 5} className="py-12 text-center text-gray-400 italic">
+                            Belum ada produk di kategori ini.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -364,10 +443,24 @@ export default function AdminTestPage() {
                             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         {isAdmin ? (
-                          <select name="sellerId" className="px-3 py-2 text-sm border rounded-lg w-full" required>
-                              <option value="">Pilih Penjual...</option>
-                              {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                          </select>
+                          <div className="flex flex-col gap-2 w-full">
+                            <div className="flex gap-2">
+                              <input 
+                                type="text"
+                                placeholder="Cari Penjual..."
+                                value={userSearch}
+                                onChange={(e) => setUserSearch(e.target.value)}
+                                className="flex-1 text-xs px-3 py-2 border rounded-lg outline-none"
+                              />
+                              <button type="button" onClick={() => fetchAll(userSearch)} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                <Search className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <select name="sellerId" className="px-3 py-2 text-sm border rounded-lg w-full" required>
+                                <option value="">Pilih Penjual ({users.length} ditemukan)...</option>
+                                {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+                            </select>
+                          </div>
                         ) : (
                           <div className="px-3 py-2 text-sm border rounded-lg w-full bg-gray-50 text-gray-500 flex items-center gap-2">
                             <User className="w-4 h-4" /> {session?.user?.name || "Self"} (Locked)
@@ -403,7 +496,7 @@ export default function AdminTestPage() {
         </div>
 
         <footer className="mt-12 pt-8 border-t text-center text-gray-400 text-xs">
-          <p>Status: {status} • Build ID: edge-production-worker</p>
+          <p>System: {statusText} | Auth: {status} • Build ID: edge-production-worker</p>
         </footer>
       </div>
     </div>

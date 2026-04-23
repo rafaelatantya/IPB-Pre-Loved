@@ -29,3 +29,16 @@ Lokasi: `src/components/layouts/`
 - [ ] **State Pencarian/Filter**: Gunakan `useSearchParams` agar `SearchBar.jsx` dan `FilterSidebar.jsx` memengaruhi URL untuk dimanfaatkan oleh server saat *fetch* data katalog.
 - [ ] **State Wishlist Lokal**: Ikon Hati di halaman detail responsif secara langsung.
 - [ ] **Visual "Empty State"**: Jika *search bar* tidak mencocokkan data apapun, tampilkan ilustrasi "Barang tidak temukan".
+
+## 🤖 Integrasi Backend (Panduan untuk AI Agent)
+Frontend A harus mengambil data produk yang statusnya **APPROVED** saja. Gunakan modular service berikut:
+
+```javascript
+// Import service katalog publik
+import { getApprovedProducts } from "@/modules/catalog/services";
+
+// Contoh penggunaan di Server Component (Sangat Direkomendasikan)
+const { success, data, error } = await getApprovedProducts(categoryId);
+```
+
+- **PENTING**: Jangan melakukan filter status `APPROVED` secara manual di sisi client. Panggil service di atas agar hanya data yang valid yang dikirim oleh server.

@@ -10,19 +10,19 @@ export default function middleware(req) {
   const hasToken = cookies.get("authjs.session-token") || 
                    cookies.get("__Secure-authjs.session-token");
 
-  console.log(`[Middleware Lite] Path: ${nextUrl.pathname} | HasToken: ${!!hasToken}`);
+  const isLoginPage = nextUrl.pathname === '/login';
+  const isPublicFile = nextUrl.pathname.startsWith('/_next') || 
+                       nextUrl.pathname.includes('/api/auth') ||
+                       nextUrl.pathname.includes('favicon.ico');
 
-  const isSellerRoute = nextUrl.pathname.startsWith('/seller');
-  const isAdminRoute = nextUrl.pathname.startsWith('/admin');
-
-  // Proteksi Route Seller (Sifatnya mendinginkan, logic detail ada di Page)
-  if (isSellerRoute && !hasToken) {
-    return NextResponse.redirect(new URL('/login', nextUrl));
+  // 1. Biarkan akses ke halaman login atau file publik
+  if (isLoginPage || isPublicFile) {
+    return NextResponse.next();
   }
 
-  // Proteksi Route Admin
-  // Kita bebaskan /admin-test agar kamu bisa masuk buat testing
-  if (isAdminRoute && nextUrl.pathname !== '/admin-test' && !hasToken) {
+  // 2. Jika tidak ada token, paksa redirect ke /login untuk SEMUA route lain
+  if (!hasToken) {
+    console.log(`[Middleware Strict] Unauthorized access to ${nextUrl.pathname}, redirecting to /login`);
     return NextResponse.redirect(new URL('/login', nextUrl));
   }
 

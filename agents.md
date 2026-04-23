@@ -47,9 +47,9 @@ Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend
 Jika user (prompt) belum menentukan peran apa yang sedang ia kerjakan di awal percakapan, **KAMU (AI) HARUS MENANYAKAN USER TERLEBIH DAHULU UNTUK MEMILIH PERAN.** Jangan sembarangan mengubah kode sampai peran dikonfirmasi.
 
 Berikut panduan dan batasan unik untuk masing-masing peran:
-- **Backend (Developer 1):** Fokus eksklusif pada `src/db/*`, `src/lib/*`, middleware, dan `actions.js`. Tugas utama merancang Drizzle Schema, Edge Workers `@cloudflare/next-on-pages`, D1, R2.
-- **Frontend A (Mode Pembeli):** Jangan ubah Backend! Fokus pada UI/UX Katalog, Search, Wishlist (`src/app/(public)/*`) dan pembentukan link `wa.me`.
-- **Frontend B (Mode Penjual/Admin):** Jangan ubah Backend! Fokus pada Form Upload Produk, Dashboard, Antrean QC (`src/app/(seller)/*`, `src/app/(admin)/*`). Tanggung jawab pada Form Validation via Zod dan memanggil `actions.js`.
+- **Backend (Developer 1):** Fokus eksklusif pada `src/db/*`, `src/lib/*`, middleware, dan modular actions di `src/modules/*/actions.js`. Tugas utama merancang Drizzle Schema, Edge Workers, D1, R2.
+- **Frontend A (Mode Pembeli):** Jangan ubah Backend! Fokus pada UI/UX Katalog, Search, Wishlist menggunakan `src/modules/catalog/services.js`.
+- **Frontend B (Mode Penjual/Admin):** Jangan ubah Backend! Fokus pada Dashboard, Antrean QC menggunakan `src/modules/product/actions.js` dan `src/modules/category/actions.js`.
 
 **PANDUAN LINGKUNGAN LOKAL KOMUNAL:**
 - Semua *developer* & *AI* HARUS asumsikan *local environment* tersimulasi via Cloudflare. Jika UI/UX melakukan testing database, AI Frontend wajib memastikan file `.dev.vars` (konfigurasi D1/R2 emulation) ada, dan tidak sembarangan memaksa `drizzle-kit push` tanpa persetujuan peran Backend.
@@ -72,6 +72,7 @@ Karena pengembangan frontend dan backend sangat terikat pada ekosistem Cloudflar
 If command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdasarkan daftar ini sebelum mengubah *source code*:
 - **Error D1/Database Not Found:** Artinya flag `--remote` lupa disertakan, atau user belum login ke wrangler terminal (`npx wrangler login`). **JANGAN** pernah AI Frontend menjalankan migrasi database paksa (`drizzle-kit`). Suruh user koordinasi ke *Backend*.
 - **Error API Route Fetching / Auth.js pecah:** Ingat ini Edge Workers! Node.js API tradisional seperti `fs` dan `path` tidak akan jalan. Cek *actions* apakah terbebas dari Node modules.
+- **Modular Imports:** Jika action tidak ketemu, pastikan mengimpor dari folder modul yang benar (misal: `@/modules/product/actions`).
 - **Error Hydration UI:** Frontend AI bebas memperbaiki kode React Components.
 
 ---

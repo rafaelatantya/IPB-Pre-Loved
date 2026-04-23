@@ -11,10 +11,11 @@ Tim menggunakan **Next.js (App Router)** sebagai Full-Stack Framework.
 ### 💻 Developer 1: Backend (Data & Logic)
 **Target:** Cloudflare D1 (Database), R2 (Storage), NextAuth (SSO IPB).
 - `src/db/schema.js`: Master definisi tabel database (Drizzle ORM).
-- `src/lib/db.js`: Koneksi ke Cloudflare D1.
+- `src/lib/db.js`: Koneksi Drizzle & Context Helpers (`getEnv`, `getContextDb`).
 - `src/lib/storage.js`: Koneksi AWS S3 Client ke Cloudflare R2 untuk upload foto.
-- `src/lib/auth.js` & `src/app/api/auth/[...nextauth]/route.js`: Integrasi Google OAuth `@apps.ipb.ac.id`.
-- `src/modules/*/actions.js`: Kumpulan **Server Actions** (`'use server'`) yang akan dipanggil oleh Frontend.
+- `src/lib/auth.js` & `src/app/api/auth/[...nextauth]/route.js`: Integrasi Google OAuth.
+- `src/modules/*/actions.js`: Server Actions modular (Admin, Product, Category).
+- `src/modules/catalog/services.js`: Public services untuk fetching data katalog.
 
 ### 🎨 Developer 2: Frontend A (Mode Pembeli)
 **Target:** UI/UX Katalog, Pencarian, Wishlist, Integrasi WhatsApp.
@@ -127,11 +128,34 @@ Bagi teman-teman Frontend (Developer 2 & 3) yang ingin melakukan *testing UI/UX*
 
 ---
 
+## 🤖 7. AGENT INTEGRATION GUIDE (FOR DEVELOPER 2 & 3)
+
+Dokumen ini adalah kontrak antara Backend Agent dan Frontend Agent.
+
+### A. Modular Server Actions
+Jangan mengimpor dari file `actions.js` tunggal lagi. Gunakan modul spesifik:
+```javascript
+import { ... } from "@/modules/admin/actions";   // Manajemen User & DB
+import { ... } from "@/modules/product/actions"; // CRUD Produk & QC
+import { ... } from "@/modules/category/actions"; // Manajemen Kategori
+import { getApprovedProducts } from "@/modules/catalog/services"; // Publik Katalog
+```
+
+### B. Role-Based Logic (Frontend Rules)
+- **Cek Role**: Gunakan `const isAdmin = session?.user?.role === "ADMIN"`.
+- **Privacy First**: Saat memanggil `getProducts`, jika user bukan admin, berikan parameter `session.user.id` agar mereka hanya melihat produk miliknya.
+- **Security Check**: Saat memanggil `deleteProduct`, sertakan `id`, `session.user.id`, dan `session.user.role`. Backend akan memvalidasi kepemilikan.
+
+---
+
 ## 📝 CHANGELOG
+- **[22 Apr 2026] Backend Modularization & security Hardening:**
+  - `[x] SELESAI` - Refaktor `actions.js` ke folder `src/modules/*`.
+  - `[x] SELESAI` - Implementasi **Owner-Check** pada penghapusan produk.
+  - `[x] SELESAI` - Penambahan `src/modules/catalog/services.js` untuk data `APPROVED`.
+  - `[x] SELESAI` - Update UI `/admin-test` dengan logic filter privacy.
+
 - **[21 Apr 2026] UUID Migration, Persistence Fix & User Sync:**
-  - Migrasi seluruh Primary Key dari `Integer` ke `UUID (Text)` untuk stabilitas Edge runtime.
-  - Implementasi `--persist-to ./local-db-info` di `package.json` untuk sinkronisasi DB CLI- `[x] SELESAI` - Local Sync Logic: Mekanisme sinkronisasi user session ke D1 via `/admin-test` untuk testing jualan.
-- `[ ] BELUM` - Unified Dashboard Logic: Implementasi Role-based UI (Admin vs Buyer) di `/admin-test`.
-- `[ ] BELUM` - Admin QC Workflow: Fitur Accept/Reject produk PENDING oleh Admin.
-- `[ ] BELUM` - Catalog Services: Fungsi fetch data barang *Approved* ke `src/modules/catalog/services.js`.
-  - CRUD Admin Panel (Category & Product upload) selesai dan siap ditest.
+  - `[x] SELESAI` - Migrasi seluruh Primary Key dari `Integer` ke `UUID (Text)`.
+  - `[x] SELESAI` - Unified Dashboard Logic: Implementasi Role-based UI di `/admin-test`.
+  - `[x] SELESAI` - Admin QC Workflow: Fitur Accept/Reject produk PENDING oleh Admin.

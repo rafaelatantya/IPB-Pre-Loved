@@ -6,15 +6,18 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | File / Folder Path | Deskripsi Fungsi |
 | --- | --- |
 | `src/db/schema.js` | Struktur rancangan tabel database D1 menggunakan Drizzle ORM |
-| `src/lib/db.js` | Helper koneksi adapter dari ORM Drizzle ke env DB Cloudflare D1 |
+| `src/lib/db.js` | Helper koneksi Drizzle + Context Helpers (`getEnv`, `getContextDb`) |
 | `src/lib/storage.js` | Inisiasi client/koneksi AWS S3-SDK untuk upload object ke Cloudflare R2 |
 | `src/lib/auth.js` | Konfigurasi inti dan callback rules pembatasan domain NextAuth (SSO Google) |
 | `src/app/api/auth/[...nextauth]/route.js` | Route handler yang mengakomodir standard fetch Edge dari library NextAuth |
 | `src/middleware.js` | Midleware pelindung rute SSR Next.js berdasarkan Role (SELLER/ADMIN bypass rules) |
 | `wrangler.toml` | Konfigurasi build Cloudflare Emulator, Binding Database ID, dan R2 ID |
 | `agents.md` | Aturan konteks/batas suci mandat untuk semua AI di lingkungan project ini |
-| `src/actions.js` | Kumpulan Next.js Server Actions untuk interaksi database (D1) |
-| `docs/backend_docs.md` | Panduan teknis khusus Backend untuk setup D1, R2, dan Server Actions |
+| `src/modules/admin/actions.js` | Server Actions khusus manajemen user dan inisialisasi DB |
+| `src/modules/product/actions.js` | Server Actions untuk CRUD produk (dengan security owner logic) |
+| `src/modules/category/actions.js` | Server Actions untuk manajemen kategori barang |
+| `src/modules/catalog/services.js` | Business logic/Services untuk query data katalog publik (Approved) |
+| `docs/backend_docs.md` | Panduan teknis Backend & Integrasi Agent (Role-Based) |
 | `jsconfig.json` | Konfigurasi path aliasing `@/*` untuk memudahkan import modul |
 | `tailwind.config.js` | Konfigurasi framework CSS Tailwind untuk styling aplikasi |
 | `src/app/globals.css` | File CSS global yang berisi direktif Tailwind dan desain sistem dasar |
