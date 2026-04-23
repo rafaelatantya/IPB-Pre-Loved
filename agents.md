@@ -14,6 +14,7 @@
 - **Primary Keys**: Menggunakan **UUID String** (v4) untuk semua tabel (Categories, Users, Products, Wishlists) guna menghindari konflik auto-increment di environment Edge.
 - **Persistence**: Database lokal disimpan di `./local-db-info`. Gunakan `--persist-to ./local-db-info` saat menjalankan CLI.
 - **Storage**: Cloudflare R2 untuk upload gambar produk.
+- **Image Serving**: Melalui API Proxy internal `/api/images/[key]` (Edge Function) untuk menjamin aksesibilitas gambar di lingkungan lokal dan produksi tanpa domain publik R2.
 - **Deployment & Hosting:** Cloudflare Pages (ditembak via adapter `@cloudflare/next-on-pages`). Seluruh function akan di-build menjadi Edge workers. 
 - **Authentication:** NextAuth (Google OAuth) - **Strictly limited to @apps.ipb.ac.id domain**.
 - **ORM:** Drizzle ORM.
@@ -83,9 +84,9 @@ If command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdas
 2. Setiap kali Agent selesai membuat/mengubah secara signifikan suatu folder atau file, wajib untuk mencatatnya secara terpusat di `docs/file_desc.md` sebagai **Kamus File** project.
 
 ### Backend Handover Notes
-- **Testing CRUD**: Gunakan `/admin-test` untuk verifikasi D1 dan R2. Pastikan klik "Fix DB" untuk sync User.
+- **Marketplace Logic**: Non-admin dapat melihat produk `APPROVED` milik orang lain, namun produk `PENDING` tetap terproteksi hanya untuk pemilik dan Admin.
+- **Image Proxy**: Selalu gunakan path relatif `/api/images/` untuk menampilkan gambar dari R2.
 - **Drizzle Studio**: Jalankan `npx drizzle-kit studio` untuk visualisasi data relasional secara GUI.
-- **Database Reset**: Jalankan `npm run db:wipe` untuk membersihkan state lokal jika terjadi error atau inkonsistensi data.
 - **Run Dev**: Selalu jalankan `npm run pages:dev` agar binding D1/R2 sinkron dengan database ID asli.
 
 ---

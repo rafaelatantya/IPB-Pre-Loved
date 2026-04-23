@@ -149,6 +149,12 @@ import { getApprovedProducts } from "@/modules/catalog/services"; // Publik Kata
 ---
 
 ## 📝 CHANGELOG
+- **[23 Apr 2026] Image Proxy, Auth-ID Sync & Marketplace Access:**
+  - `[x] SELESAI` - Implementasi **Internal Image Server** (`/api/images/`) untuk R2.
+  - `[x] SELESAI` - Sinkronisasi **Session User ID** dengan Database ID (Single Source of Truth).
+  - `[x] SELESAI` - Pembukaan akses **Marketplace** (Approved Products) untuk Non-Admin di `/admin-test`.
+  - `[x] SELESAI` - Penambahan aturan **"Root Cause First"** di `agents.md`.
+
 - **[22 Apr 2026] Backend Modularization & security Hardening:**
   - `[x] SELESAI` - Refaktor `actions.js` ke folder `src/modules/*`.
   - `[x] SELESAI` - Implementasi **Owner-Check** pada penghapusan produk.
