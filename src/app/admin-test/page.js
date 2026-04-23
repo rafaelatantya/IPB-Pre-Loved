@@ -13,21 +13,35 @@ import { CheckCircle2, XCircle, LogOut, User, ShieldCheck, ShoppingCart, Store, 
 
 export default function AdminTestPage() {
   const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [statusText, setStatusText] = useState("Idle");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("mine"); // 'mine', 'pending', 'all'
+  const [activeTab, setActiveTab] = useState("mine"); // 'mine', 'pending', 'all', 'approved'
   const [userSearch, setUserSearch] = useState("");
 
-  // Guest Protection
+  // Normalize image URL (Fix legacy or relative paths)
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http") && url.includes("r2.ipb-preloved.workers.dev")) {
+      const key = url.split(".dev/")[1];
+      return `/api/images/${key}`;
+    }
+    return url;
+  };
+
+  // Tab and Guest Protection
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-  }, [status, router]);
+    if (status === "authenticated" && !isAdmin) {
+      setActiveTab("approved");
+    }
+  }, [status, router, isAdmin]);
 
   async function fetchAll(searchQuery = "") {
     setLoading(true);
@@ -141,16 +155,26 @@ export default function AdminTestPage() {
   }
 
 
-  const isAdmin = session?.user?.role === "ADMIN";
+
 
   // Filtered Lists
   const myProducts = products.filter(p => p.sellerId === session?.user?.id);
   const pendingQueue = products.filter(p => p.status === "PENDING" && (isAdmin ? p.sellerId !== session?.user?.id : false));
+  const approvedProducts = products.filter(p => p.status === "APPROVED");
   const allInventory = products;
 
-  const displayedProducts = !isAdmin 
-    ? myProducts 
-    : (activeTab === "mine" ? myProducts : (activeTab === "pending" ? pendingQueue : allInventory));
+  const displayedProducts = isAdmin 
+    ? (activeTab === "mine" ? myProducts : (activeTab === "pending" ? pendingQueue : allInventory))
+    : (activeTab === "mine" ? myProducts : approvedProducts);
+
+  // DEBUG LOG (Hanya muncul di console dev)
+  useEffect(() => {
+    if (session?.user) {
+      console.log("DEBUG: Current User ID:", session.user.id);
+      console.log("DEBUG: Total Products:", products.length);
+      console.log("DEBUG: My Products Count:", myProducts.length);
+    }
+  }, [session, products, myProducts]);
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
@@ -158,7 +182,10 @@ export default function AdminTestPage() {
         <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-indigo-900">Backend Infrastructure Test Panel</h1>
-            <p className="text-gray-500">Monitoring & Testing System • Role: <span className="font-bold text-indigo-600">{session?.user?.role || "GUEST"}</span></p>
+            <div className="flex flex-col">
+               <p className="text-gray-500">Monitoring & Testing System • Role: <span className="font-bold text-indigo-600">{session?.user?.role || "GUEST"}</span></p>
+               <p className="text-[10px] text-gray-300 font-mono">UID: {session?.user?.id || 'not-loaded'}</p>
+            </div>
           </div>
           <button 
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -286,34 +313,46 @@ export default function AdminTestPage() {
               <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                   <h2 className="text-xl font-bold text-indigo-900">
-                    {!isAdmin ? "Your Products" : (
-                      activeTab === "mine" ? "Your Products" : 
-                      activeTab === "pending" ? "QC Review Queue" : "All System Inventory"
-                    )} ({displayedProducts.length})
+                    {activeTab === "mine" ? "Your Products" : 
+                     activeTab === "pending" ? "QC Review Queue" : 
+                     activeTab === "approved" ? "Approved Marketplace" : "All System Inventory"} 
+                    ({displayedProducts.length})
                   </h2>
                   
-                  {isAdmin && (
-                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                  <div className="flex bg-gray-100 p-1 rounded-xl">
+                    <button 
+                      onClick={() => setActiveTab("mine")}
+                      className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'mine' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      My Products
+                    </button>
+                    
+                    {!isAdmin && (
                       <button 
-                        onClick={() => setActiveTab("mine")}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'mine' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab("approved")}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'approved' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        My Products
+                        Marketplace
                       </button>
-                      <button 
-                        onClick={() => setActiveTab("pending")}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-2 ${activeTab === 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                      >
-                        QC Queue {pendingQueue.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
-                      </button>
-                      <button 
-                        onClick={() => setActiveTab("all")}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                      >
-                        Browse All
-                      </button>
-                    </div>
-                  )}
+                    )}
+
+                    {isAdmin && (
+                      <>
+                        <button 
+                          onClick={() => setActiveTab("pending")}
+                          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-2 ${activeTab === 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                          QC Queue {pendingQueue.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+                        </button>
+                        <button 
+                          onClick={() => setActiveTab("all")}
+                          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${activeTab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                          Browse All
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto text-sm">
@@ -334,7 +373,7 @@ export default function AdminTestPage() {
                           <td className="py-3 px-2">
                             <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
                               {p.images && p.images[0] ? (
-                                <img src={p.images[0].url} alt={p.title} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(p.images[0].url)} alt={p.title} className="w-full h-full object-cover" />
                               ) : (
                                 <ImageIcon className="w-5 h-5 text-gray-400" />
                               )}
@@ -456,9 +495,12 @@ export default function AdminTestPage() {
                                 <Search className="w-3 h-3" />
                               </button>
                             </div>
-                            <select name="sellerId" className="px-3 py-2 text-sm border rounded-lg w-full" required>
-                                <option value="">Pilih Penjual ({users.length} ditemukan)...</option>
-                                {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+                            <select name="sellerId" className="px-3 py-2 text-sm border rounded-lg w-full" required defaultValue={session?.user?.id}>
+                                <option value={session?.user?.id}>✨ Gunakan Akun Saya ({session?.user?.name})</option>
+                                <option value="" disabled>-- Atau Pilih User Lain ({users.length} ditemukan) --</option>
+                                {users.filter(u => u.id !== session?.user?.id).map(u => (
+                                  <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                                ))}
                             </select>
                           </div>
                         ) : (

@@ -2,17 +2,27 @@
 
 import { getContextDb, getEnv } from "@/lib/db";
 import { products, productImages } from "@/db/schema";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, or } from "drizzle-orm";
 
 /**
  * Action: Ambil produk (Testing & Dashboard)
- * Jika sellerId diberikan, hanya ambil produk milik seller tersebut.
+ * Jika sellerId diberikan (Non-Admin), ambil produk milik sendiri ATAU yang sudah APPROVED.
  */
 export async function getProducts(sellerId = null) {
   try {
     const db = await getContextDb();
     
-    let query = db.query.products.findMany({
+    // Kondisi filter
+    let whereCondition = undefined;
+    if (sellerId) {
+      whereCondition = or(
+        eq(products.sellerId, sellerId),
+        eq(products.status, "APPROVED")
+      );
+    }
+
+    const result = await db.query.products.findMany({
+      where: whereCondition,
       with: {
         seller: true,
         category: true,
@@ -21,22 +31,6 @@ export async function getProducts(sellerId = null) {
       orderBy: [desc(products.createdAt)],
     });
 
-    // Note: Drizzle findMany doesn't chain like select().where() easily in this syntax
-    // We'll refetch with filter if sellerId exists
-    if (sellerId) {
-      const result = await db.query.products.findMany({
-        where: eq(products.sellerId, sellerId),
-        with: {
-          seller: true,
-          category: true,
-          images: true,
-        },
-        orderBy: [desc(products.createdAt)],
-      });
-      return { success: true, data: result };
-    }
-
-    const result = await query;
     return { success: true, data: result };
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -65,7 +59,7 @@ export async function createProductWithImage({ formData, imageFile, userRole = "
       await bucket.put(r2Key, arrayBuffer, {
         httpMetadata: { contentType: imageFile.type }
       });
-      imageUrl = `https://r2.ipb-preloved.workers.dev/${r2Key}`; 
+      imageUrl = `/api/images/${r2Key}`; 
     }
 
     const initialStatus = userRole === "ADMIN" ? "APPROVED" : "PENDING";

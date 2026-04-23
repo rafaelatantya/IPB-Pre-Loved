@@ -69,10 +69,16 @@ export function getAuthConfig(env) {
             const db = getDb(env);
             const dbUser = await db.select().from(users).where(eq(users.email, user.email)).get();
             
-            if (!token.role) { 
-              token.role = dbUser?.role || "BUYER";
+            // PRIORITAS: Selalu gunakan ID dari Database (Single Source of Truth)
+            // agar sinkron dengan tabel products, wishlists, dll.
+            if (dbUser) {
+              token.id = dbUser.id;
+              if (!token.role) token.role = dbUser.role;
+            } else {
+              // Fallback jika user benar-benar baru (sedang proses sign-in)
+              token.id = user.id;
+              token.role = "BUYER";
             }
-            token.id = user.id || dbUser?.id;
           } catch (e) {
             console.error("JWT Callback Error:", e);
             if (!token.role) token.role = "BUYER";
