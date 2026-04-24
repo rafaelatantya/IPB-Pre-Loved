@@ -8,6 +8,9 @@ export const users = sqliteTable('users', {
   email: text('email').notNull().unique(),
   role: text('role').default('ONBOARDING'), // ONBOARDING, BUYER, SELLER, ADMIN
   whatsappNumber: text('whatsapp_number'),
+  userType: text('user_type').default('STUDENT'), // STUDENT, STAFF, ALUMNI
+  isBlocked: integer('is_blocked', { mode: 'boolean' }).default(false),
+  isFlagged: integer('is_flagged', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -36,8 +39,11 @@ export const products = sqliteTable('products', {
   price: integer('price').notNull(),
   condition: text('condition').notNull(), // NEW, LIKE_NEW, GOOD, FAIR
   status: text('status').default('PENDING'), // PENDING, APPROVED, REJECTED
+  videoUrl: text('video_url'), 
+  videoDuration: integer('video_duration'), // Dalam detik
   location: text('location').default('IPB Dramaga'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const productsRelations = relations(products, ({ one, many }) => ({

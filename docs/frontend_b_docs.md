@@ -23,6 +23,7 @@ Lokasi: `src/components/layouts/`
 Lokasi: `src/modules/product/components/`
 - `ProductForm.jsx` : Form dinamis. Input Fields: Nama Produk, Harga (angka), Kondisi Barang, Kategori, Deskripsi.
 - `ImageUploader.jsx` : Area *Drag & Drop* foto R2. (Tampilkan *preview* gambar).
+- **MANDATORY**: Gunakan `src/lib/video.js` untuk kompresi video ke **1080p 30fps H.264** sebelum dikirim ke backend!
 
 Lokasi: `src/modules/admin/components/`
 - `QCActionButtons.jsx` : Tombol aksi grup per-baris tabel antrean: ❌ Tolak dan ✅ Terima.

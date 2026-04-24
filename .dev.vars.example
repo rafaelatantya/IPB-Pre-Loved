@@ -11,3 +11,7 @@ GOOGLE_CLIENT_SECRET="isi_client_secret_dari_google"
 # [NEXTAUTH]
 # Cara generate: ketik di terminal: npx auth secret
 AUTH_SECRET="random_string_huruf_acak_buat_enkripsi_cookies"
+
+# MULTI-USER TESTING CONFIG
+ALLOWED_DOMAINS="@apps.ipb.ac.id,@gmail.com"
+ADMIN_EMAILS="xxxxx@apps.ipb.ac.id" # Pisahkan dengan koma jika lebih dari satu

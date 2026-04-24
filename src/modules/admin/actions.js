@@ -14,7 +14,7 @@ export async function reviewProduct({ productId, decision, note }) {
   const session = await auth();
 
   if (session?.user?.role !== "ADMIN") {
-    return { success: false, error: "Unauthorized: Admin only" };
+    return { success: false, code: 403, error: "Unauthorized: Admin only" };
   }
 
   // Validasi Zod
@@ -25,6 +25,15 @@ export async function reviewProduct({ productId, decision, note }) {
 
   try {
     const db = await getContextDb();
+
+    // EDGE CASE: Cek apakah produk masih PENDING (mencegah double-review)
+    const currentProduct = await db.query.products.findFirst({
+      where: eq(products.id, productId)
+    });
+
+    if (!currentProduct || currentProduct.status !== "PENDING") {
+      return { success: false, error: "Produk sudah diproses atau tidak ditemukan" };
+    }
 
     // Jalankan dalam transaksi agar atomik
     await db.batch([
@@ -51,7 +60,69 @@ export async function reviewProduct({ productId, decision, note }) {
 }
 
 /**
- * Action: Ambil semua user dengan fitur search
+ * Action: Ambil Jumlah Antrean QC (Badge Summary)
+ */
+export async function getPendingQCCount() {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") return 0;
+
+  try {
+    const db = await getContextDb();
+    const result = await db.select({ count: sql`count(*)` })
+      .from(products)
+      .where(eq(products.status, "PENDING"));
+    
+    return result[0]?.count || 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
+ * Action: Blokir/Buka Blokir User
+ */
+export async function toggleBlockUser(userId, status) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+
+  // EDGE CASE: Dilarang blokir diri sendiri
+  if (userId === session.user.id) {
+    return { success: false, error: "Anda tidak bisa memblokir akun Anda sendiri" };
+  }
+
+  try {
+    const db = await getContextDb();
+    await db.update(users).set({ isBlocked: status }).where(eq(users.id, userId));
+    return { success: true, message: status ? "User diblokir" : "Blokir dibuka" };
+  } catch (error) {
+    return { success: false, error: "Gagal update status blokir" };
+  }
+}
+
+/**
+ * Action: Flag User (Tandai Mencurigakan)
+ */
+export async function toggleFlagUser(userId, status) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+
+  try {
+    const db = await getContextDb();
+    await db.update(users).set({ isFlagged: status }).where(eq(users.id, userId));
+    return { success: true, message: "Status flag diperbarui" };
+  } catch (error) {
+    return { success: false, error: "Gagal update flag" };
+  }
+}
+
+/**
+ * Action: Ambil semua user dengan fitur search & filter
  */
 export async function getAdminUsers(search = "") {
   const auth = await getAuth();
@@ -69,7 +140,8 @@ export async function getAdminUsers(search = "") {
       baseQuery = baseQuery.where(
         or(
           like(users.name, `%${search}%`),
-          like(users.email, `%${search}%`)
+          like(users.email, `%${search}%`),
+          like(users.userType, `%${search}%`)
         )
       );
     }

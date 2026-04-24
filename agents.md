@@ -46,6 +46,7 @@ Pastikan setiap interaksi database yang dibuat oleh AI menggunakan **Drizzle ORM
 6. **Edge Case & Security First**: Always identify potential security holes or "happy-path-only" logic. Proactively suggest and implement guards (e.g., checking if a user owns a resource before deleting it).
 7. **Automatic Status Reversion**: Any edit to an `APPROVED` product by a non-admin user MUST automatically set its status back to `PENDING` for re-review. This is a hard security rule to prevent "Bait & Switch" tactics.
 8. **Internal Session Authority**: Never trust `userId` or `role` parameters passed from the client-side for sensitive operations (Update/Delete/Create). Always retrieve these values internally using `getAuth()` in Server Actions.
+9. **System Boundaries Adherence**: Always read and follow the constraints defined in `docs/system_boundaries.md` for role-based access, media limits, and business rules.
 
 ## 7. ROLE-BASED AGENT INSTRUCTIONS
 Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend, 2 Frontend).

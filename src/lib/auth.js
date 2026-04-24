@@ -35,6 +35,12 @@ export function getAuthConfig(env) {
 
           const db = getDb(env);
           const existingUser = await db.select().from(users).where(eq(users.email, user.email)).get();
+          
+          // EDGE CASE: Blocked User
+          if (existingUser?.isBlocked) {
+            console.warn(`LOGIN DENIED: User [${user.email}] is BLOCKED`);
+            return false;
+          }
 
           if (!existingUser) {
             const isManualAdmin = ADMIN_EMAILS.includes(userEmail);
@@ -69,6 +75,12 @@ export function getAuthConfig(env) {
             const db = getDb(env);
             const dbUser = await db.select().from(users).where(eq(users.email, user.email)).get();
             
+            // EDGE CASE: Kick Blocked User
+            if (dbUser?.isBlocked) {
+              console.warn(`SESSION KICK: User [${userEmail}] is BLOCKED`);
+              return null; // NextAuth treats returning null as clearing the session/token
+            }
+
             // PRIORITAS: Selalu gunakan ID dari Database (Single Source of Truth)
             // agar sinkron dengan tabel products, wishlists, dll.
             if (dbUser) {

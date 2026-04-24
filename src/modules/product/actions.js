@@ -57,13 +57,23 @@ export async function createProductWithImage({ formData, imageFile }) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
+    return { success: false, code: 401, error: "Silakan login terlebih dahulu" };
   }
 
-  // Validasi dengan Zod
-  const validation = productSchema.safeParse(formData);
+  // 1. Validasi Awal Media
+  const imageCount = imageFiles.filter(f => f && f.size > 0).length;
+  const hasVideo = !!(videoFile && videoFile.size > 0);
+
+  // 2. Validasi dengan Zod (Termasuk Aturan Saklek)
+  const validation = productSchema.safeParse({
+    ...formData,
+    imageCount,
+    hasVideo,
+    videoDuration
+  });
+
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0].message };
+    return { success: false, code: 400, error: validation.error.errors[0].message };
   }
 
   const userId = session.user.id;
@@ -77,45 +87,65 @@ export async function createProductWithImage({ formData, imageFile }) {
     if (!bucket) throw new Error("R2 Bucket binding 'BUCKET' not found.");
 
     const productId = crypto.randomUUID();
-    let imageUrl = "";
-    let r2Key = "";
     
-    if (imageFile && imageFile.size > 0) {
-      r2Key = `products/${productId}-${Date.now()}-${imageFile.name}`;
-      const arrayBuffer = await imageFile.arrayBuffer();
-      await bucket.put(r2Key, arrayBuffer, {
-        httpMetadata: { contentType: imageFile.type }
+    // 3. Upload Video (Jika ada) - Max 50MB
+    let videoUrl = "";
+    if (hasVideo) {
+      if (videoFile.size > 50 * 1024 * 1024) throw new Error("Video terlalu besar (Maks 50MB)");
+      const videoKey = `products/v-${productId}-${Date.now()}.mp4`;
+      const videoBuffer = await videoFile.arrayBuffer();
+      await bucket.put(videoKey, videoBuffer, { httpMetadata: { contentType: videoFile.type } });
+      videoUrl = `/api/images/${videoKey}`;
+    }
+
+    // 4. Upload Images - Max 5MB per image
+    const imageRecords = [];
+    for (let i = 0; i < imageFiles.length; i++) {
+      const file = imageFiles[i];
+      if (!file || file.size === 0) continue;
+      if (file.size > 5 * 1024 * 1024) throw new Error(`Gambar ke-${i+1} terlalu besar (Maks 5MB)`);
+
+      const imgKey = `products/i-${productId}-${i}-${Date.now()}.jpg`;
+      const imgBuffer = await file.arrayBuffer();
+      await bucket.put(imgKey, imgBuffer, { httpMetadata: { contentType: file.type } });
+      
+      imageRecords.push({
+        id: crypto.randomUUID(),
+        productId,
+        r2Key: imgKey,
+        url: `/api/images/${imgKey}`,
+        sortOrder: i
       });
-      imageUrl = `/api/images/${r2Key}`; 
     }
 
     const initialStatus = userRole === "ADMIN" ? "APPROVED" : "PENDING";
 
-    await db.insert(products).values({
-      id: productId,
-      sellerId: userId,
-      categoryId: formData.categoryId, 
-      title: formData.title,
-      description: formData.description,
-      price: parseInt(formData.price),
-      condition: formData.condition,
-      location: formData.location || "IPB Dramaga",
-      status: initialStatus, 
-    }).run();
+    // 5. Simpan ke Database (Atomic)
+    await db.batch([
+      db.insert(products).values({
+        id: productId,
+        sellerId: userId,
+        categoryId: formData.categoryId, 
+        title: formData.title,
+        description: formData.description,
+        price: parseInt(formData.price),
+        condition: formData.condition,
+        location: formData.location || "IPB Dramaga",
+        status: initialStatus,
+        videoUrl,
+        videoDuration
+      }),
+      ...imageRecords.map(img => db.insert(productImages).values(img))
+    ]);
 
-    if (imageUrl) {
-      await db.insert(productImages).values({
-        id: crypto.randomUUID(),
-        productId,
-        r2Key,
-        url: imageUrl,
-        sortOrder: 0
-      }).run();
-    }
-
-    return { success: true, message: `Produk berhasil disimpan dengan status ${initialStatus}!` };
+    return { 
+      success: true, 
+      message: `Produk berhasil disimpan dengan status ${initialStatus}!`,
+      productId 
+    };
   } catch (error) {
-    return { success: false, error: "Gagal memproses produk: " + error.message };
+    console.error("Upload Error:", error);
+    return { success: false, error: "Gagal memproses media: " + error.message };
   }
 }
 
@@ -150,7 +180,7 @@ export async function deleteProduct(id) {
     const isAdmin = requesterRole === "ADMIN";
 
     if (!isAdmin && !isOwner) {
-        return { success: false, error: "Akses ditolak: Anda bukan pemilik produk ini" };
+        return { success: false, code: 403, error: "Akses ditolak: Anda bukan pemilik produk ini" };
     }
 
     // 3. Hapus
