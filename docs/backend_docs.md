@@ -139,7 +139,8 @@ Jangan mengimpor dari file `actions.js` tunggal lagi. Gunakan modul spesifik:
 import { ... } from "@/modules/admin/actions";   // Manajemen User & DB
 import { ... } from "@/modules/product/actions"; // CRUD Produk & QC
 import { ... } from "@/modules/category/actions"; // Manajemen Kategori
-import { getApprovedProducts } from "@/modules/catalog/services"; // Publik Katalog
+import { ... } from "@/modules/wishlist/actions"; // Manajemen Wishlist
+import { getApprovedProducts, getProductById, getFeaturedProducts } from "@/modules/catalog/services"; // Katalog & Detail
 ```
 
 ### B. Role-Based Logic (Frontend Rules)

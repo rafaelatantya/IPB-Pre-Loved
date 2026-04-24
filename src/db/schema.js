@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { sql, relations } from 'drizzle-orm';
 
 // Tabel Users - Filter domain @apps.ipb.ac.id nanti di level logic
@@ -92,11 +92,13 @@ export const qcReviewsRelations = relations(qcReviews, ({ one }) => ({
 }));
 
 export const wishlists = sqliteTable('wishlists', {
-  id: text('id').primaryKey(), // Pindah ke UUID
+  id: text('id').primaryKey(), 
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+  unq: uniqueIndex('wishlist_user_product_idx').on(table.userId, table.productId),
+}));
 
 export const wishlistsRelations = relations(wishlists, ({ one }) => ({
   user: one(users, {

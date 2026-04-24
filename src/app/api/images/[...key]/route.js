@@ -19,6 +19,11 @@ export async function GET(request, { params }) {
     const keyArray = await params.key;
     const key = keyArray.join("/");
 
+    // SECURITY: Hanya boleh akses folder 'products/'
+    if (!key.startsWith("products/")) {
+      return new Response("Forbidden: Access restricted to products only", { status: 403 });
+    }
+
     const object = await bucket.get(key);
 
     if (!object) {

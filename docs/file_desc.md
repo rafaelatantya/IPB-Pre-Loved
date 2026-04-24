@@ -16,7 +16,8 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/modules/admin/actions.js` | Server Actions khusus manajemen user dan inisialisasi DB |
 | `src/modules/product/actions.js` | Server Actions untuk CRUD produk (dengan security owner logic) |
 | `src/modules/category/actions.js` | Server Actions untuk manajemen kategori barang |
-| `src/modules/catalog/services.js` | Business logic/Services untuk query data katalog publik (Approved) |
+| `src/modules/wishlist/actions.js` | Server Actions untuk manajemen produk favorit (Wishlist) pembeli |
+| `src/modules/catalog/services.js` | Business logic/Services untuk query data katalog publik (Approved, Featured, & Detail) |
 | `docs/backend_docs.md` | Panduan teknis Backend & Integrasi Agent (Role-Based) |
 | `jsconfig.json` | Konfigurasi path aliasing `@/*` untuk memudahkan import modul |
 | `tailwind.config.js` | Konfigurasi framework CSS Tailwind untuk styling aplikasi |
@@ -28,3 +29,4 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/api/images/[...key]/route.js` | API Proxy untuk melayani file gambar dari R2 ke browser (Local & Prod) |
 | `drizzle.config.js` | Konfigurasi Drizzle Kit untuk jalankan Drizzle Studio (Lokal & Remote) |
 | `src/modules/auth/actions.js` | Server Actions untuk manajemen pendaftaran dan proses onboarding role |
+| `src/modules/wishlist/actions.js` | Server Actions untuk manajemen produk favorit (Wishlist) pembeli |
