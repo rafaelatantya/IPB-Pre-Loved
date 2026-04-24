@@ -5,7 +5,7 @@ import { products, users, categories, productImages } from "@/db/schema";
 import { desc, asc, eq, and, or, like, between, sql } from "drizzle-orm";
 
 /**
- * Service: Ambil produk yang sudah APPROVED dengan filter canggih
+ * Service: Ambil produk yang sudah APPROVED dengan filter canggih & Smart Search
  */
 export async function getApprovedProducts({ 
   search = "", 
@@ -21,14 +21,12 @@ export async function getApprovedProducts({
     const db = await getContextDb();
     const offset = (page - 1) * limit;
 
-    // EDGE CASE: Swap harga jika min > max
     let finalMin = minPrice;
     let finalMax = maxPrice;
     if (finalMin > finalMax) {
       [finalMin, finalMax] = [finalMax, finalMin];
     }
 
-    // 1. Membangun Conditions
     const conditions = [eq(products.status, "APPROVED")];
 
     if (search) {
@@ -48,12 +46,18 @@ export async function getApprovedProducts({
 
     conditions.push(between(products.price, finalMin, finalMax));
 
-    // 2. Membangun Sorting
-    let orderBy = desc(products.createdAt);
-    if (sortBy === "cheapest") orderBy = asc(products.price);
-    if (sortBy === "expensive") orderBy = desc(products.price);
+    let orderBy;
+    if (search) {
+        orderBy = sql`
+            (CASE WHEN ${products.title} LIKE ${`%${search}%`} THEN 10 ELSE 0 END) +
+            (CASE WHEN ${products.description} LIKE ${`%${search}%`} THEN 1 ELSE 0 END) DESC
+        `;
+    } else {
+        orderBy = desc(products.createdAt);
+        if (sortBy === "cheapest") orderBy = asc(products.price);
+        if (sortBy === "expensive") orderBy = desc(products.price);
+    }
 
-    // 3. Query Data
     const data = await db.query.products.findMany({
       where: and(...conditions),
       with: {
@@ -61,13 +65,11 @@ export async function getApprovedProducts({
         category: true,
         images: true,
       },
-      orderBy: [orderBy],
+      orderBy: [orderBy, desc(products.createdAt)],
       limit: limit,
       offset: offset,
     });
 
-    // 4. Hitung Total untuk Pagination
-    // (D1 optimization: Biasanya butuh query terpisah buat count)
     const countResult = await db.select({ count: sql`count(*)` })
       .from(products)
       .where(and(...conditions));
@@ -112,6 +114,40 @@ export async function getProductById(id) {
 }
 
 /**
+ * Service: AI-Like Recommendations (Complex IF Heuristics)
+ */
+export async function getRecommendedProducts(targetProductId, limit = 4) {
+  try {
+    const db = await getContextDb();
+    const base = await db.query.products.findFirst({ where: eq(products.id, targetProductId) });
+    if (!base) return { success: false, error: "Produk referensi tidak ditemukan" };
+
+    const candidates = await db.query.products.findMany({
+      where: and(eq(products.status, "APPROVED"), sql`${products.id} != ${targetProductId}`),
+      with: { category: true, images: true, seller: { columns: { name: true } } },
+      limit: 50
+    });
+
+    const scored = candidates.map(item => {
+      let score = 0;
+      if (item.categoryId === base.categoryId) score += 50;
+      const priceDiff = Math.abs(item.price - base.price);
+      if (priceDiff <= base.price * 0.25) score += 30;
+      if (item.condition === base.condition) score += 20;
+      if (item.location === base.location) score += 10;
+      const daysOld = (Date.now() - new Date(item.createdAt).getTime()) / (1000 * 3600 * 24);
+      if (daysOld < 3) score += 15;
+      return { ...item, _score: score };
+    });
+
+    const finalResult = scored.sort((a, b) => b._score - a._score).slice(0, limit);
+    return { success: true, data: finalResult };
+  } catch (error) {
+    return { success: false, error: "Gagal memuat rekomendasi" };
+  }
+}
+
+/**
  * Service: Ambil Produk Unggulan (Featured Finds)
  */
 export async function getFeaturedProducts(limit = 4) {
@@ -124,10 +160,9 @@ export async function getFeaturedProducts(limit = 4) {
         category: true,
         images: true,
       },
-      orderBy: [desc(products.createdAt)], // Sementara latest as featured
+      orderBy: [desc(products.createdAt)],
       limit: limit,
     });
-
     return { success: true, data: result };
   } catch (error) {
     return { success: false, error: "Gagal memuat produk unggulan" };
