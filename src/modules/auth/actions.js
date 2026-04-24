@@ -2,13 +2,23 @@
 import { getContextDb } from "@/lib/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getAuth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 /**
  * Menyelesaikan proses onboarding dengan memilih role dan mengisi nomor WA
  */
-export async function completeOnboarding({ userId, role, whatsappNumber }) {
-  if (!userId || !role || !whatsappNumber) {
+export async function completeOnboarding({ role, whatsappNumber }) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const userId = session.user.id;
+
+  if (!role || !whatsappNumber) {
     return { success: false, error: "Data tidak lengkap" };
   }
 

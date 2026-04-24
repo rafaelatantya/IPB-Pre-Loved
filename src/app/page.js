@@ -1,28 +1,21 @@
-"use client";
-
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { User, ShieldCheck, LogOut, ArrowRight } from "lucide-react";
+import { getAuth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import LogoutButton from "@/components/auth/LogoutButton"; // Kita butuh client component buat logout
 
-export default function Home() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default async function Home() {
+  const auth = await getAuth();
+  const session = await auth();
 
-  // Safeguard client-side (Meskipun sudah ada middleware, ini mencegah flicker)
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+  // Guard: Harus login
+  if (!session) {
+    redirect("/login");
+  }
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+  // Guard: Harus beres onboarding
+  if (session?.user?.role === "ONBOARDING") {
+    redirect("/onboarding");
   }
 
   return (
@@ -70,12 +63,7 @@ export default function Home() {
             </div>
           </div>
 
-          <button 
-            onClick={() => signOut()}
-            className="mt-8 w-full flex items-center justify-center gap-2 py-3 text-xs text-red-500 hover:text-red-700 font-bold uppercase tracking-widest transition-all hover:bg-red-50 rounded-xl"
-          >
-            <LogOut className="w-4 h-4" /> Keluar Sesi
-          </button>
+          <LogoutButton />
         </div>
       )}
 

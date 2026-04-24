@@ -101,3 +101,19 @@ export function getAuthConfig(env) {
   };
 }
 
+/**
+ * Helper to get NextAuth 'auth' object within Server Actions (Edge compatible)
+ */
+export async function getAuth() {
+  const { getRequestContext } = await import("@cloudflare/next-on-pages");
+  const NextAuth = (await import("next-auth")).default;
+  
+  let env = process.env;
+  try {
+    const ctx = getRequestContext();
+    if (ctx?.env) env = { ...env, ...ctx.env };
+  } catch (e) {}
+
+  return NextAuth(getAuthConfig(env)).auth;
+}
+
