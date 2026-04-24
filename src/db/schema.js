@@ -6,7 +6,7 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(), 
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  role: text('role').default('BUYER'), // BUYER, SELLER, ADMIN
+  role: text('role').default('ONBOARDING'), // ONBOARDING, BUYER, SELLER, ADMIN
   whatsappNumber: text('whatsapp_number'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });

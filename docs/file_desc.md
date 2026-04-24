@@ -27,3 +27,4 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/admin-test/page.js` | Dashboard modular untuk pengujian CRUD Backend (User, Category, R2 Product) |
 | `src/app/api/images/[...key]/route.js` | API Proxy untuk melayani file gambar dari R2 ke browser (Local & Prod) |
 | `drizzle.config.js` | Konfigurasi Drizzle Kit untuk jalankan Drizzle Studio (Lokal & Remote) |
+| `src/modules/auth/actions.js` | Server Actions untuk manajemen pendaftaran dan proses onboarding role |

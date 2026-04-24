@@ -38,7 +38,7 @@ export function getAuthConfig(env) {
 
           if (!existingUser) {
             const isManualAdmin = ADMIN_EMAILS.includes(userEmail);
-            const initialRole = isManualAdmin ? "ADMIN" : "BUYER";
+            const initialRole = isManualAdmin ? "ADMIN" : "ONBOARDING";
 
             await db.insert(users).values({
               id: user.id || crypto.randomUUID(),
@@ -77,11 +77,11 @@ export function getAuthConfig(env) {
             } else {
               // Fallback jika user benar-benar baru (sedang proses sign-in)
               token.id = user.id;
-              token.role = "BUYER";
+              token.role = "ONBOARDING";
             }
           } catch (e) {
             console.error("JWT Callback Error:", e);
-            if (!token.role) token.role = "BUYER";
+            if (!token.role) token.role = "ONBOARDING";
           }
         }
         return token;

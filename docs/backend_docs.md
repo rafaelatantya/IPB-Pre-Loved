@@ -4,34 +4,35 @@ Selamat datang di *Backend Documentation* IPB Pre Loved! Dokumen ini dibuat agar
 
 ---
 
-## 🛠️ 1. PEMBAGIAN KERJA & FOLDER STRUCTURE
+## 🏗️ 2. MODULAR MONOLITH BOUNDARIES
 
-Tim menggunakan **Next.js (App Router)** sebagai Full-Stack Framework.
+Untuk menjaga agar kode tidak saling tumpang tindih (*spaghetti code*), kita membagi logika ke dalam modul-modul di `src/modules/`:
 
-### 💻 Developer 1: Backend (Data & Logic)
-**Target:** Cloudflare D1 (Database), R2 (Storage), NextAuth (SSO IPB).
-- `src/db/schema.js`: Master definisi tabel database (Drizzle ORM).
-- `src/lib/db.js`: Koneksi Drizzle & Context Helpers (`getEnv`, `getContextDb`).
-- `src/lib/storage.js`: Koneksi AWS S3 Client ke Cloudflare R2 untuk upload foto.
-- `src/lib/auth.js` & `src/app/api/auth/[...nextauth]/route.js`: Integrasi Google OAuth.
-- `src/modules/*/actions.js`: Server Actions modular (Admin, Product, Category).
-- `src/modules/catalog/services.js`: Public services untuk fetching data katalog.
-
-### 🎨 Developer 2: Frontend A (Mode Pembeli)
-**Target:** UI/UX Katalog, Pencarian, Wishlist, Integrasi WhatsApp.
-- `src/app/(public)/*`: Semua halaman yang bisa diakses user biasa (Katalog, Detail, Wishlist).
-- `src/components/layouts/Navbar.jsx`: Harus berisi *Search Bar* dan *Tombol Switch Mode* (Pembeli/Penjual/Admin).
-- `src/lib/whatsapp.js`: Fungsi untuk nge-generate link `wa.me` dengan pesan otomatis.
-
-### 🏗️ Developer 3: Frontend B (Mode Dashboard & Penjual)
-**Target:** Form Upload Produk, QC Dashboard, UI Shadcn.
-- `src/app/(seller)/*` & `src/app/(admin)/*`: Halaman dashboard dengan *Sidebar*.
-- `src/components/ui/*`: Copy-paste komponen *Shadcn UI* (Button, Input, Badge, Dialog, dll).
-- Tanggung jawab bikin *form validasi* menggunakan tipe data yang disepakati dengan Backend (Zod).
+1.  **`auth`**: Mengelola pendaftaran, login, dan proses **Onboarding**.
+2.  **`product`**: Logika utama untuk CRUD produk, upload gambar ke R2, dan manajemen stok/status produk oleh penjual.
+3.  **`catalog`**: (Public Read) Mengambil data produk yang sudah di-*approve* untuk ditampilkan ke pembeli. Tidak boleh ada logika mutasi data di sini.
+4.  **`admin`**: Fitur eksklusif admin: QC (Approve/Reject), manajemen user, dan melihat log sistem.
+5.  **`category`**: Manajemen kategori barang (CRUD).
+6.  **`wishlist`**: Logika menyimpan/menghapus barang favorit user.
 
 ---
 
-## 🗄️ 2. DATABASE SCHEMA MANDATORY (DRIZZLE)
+## 🚀 3. ONBOARDING FLOW (BARU)
+
+Sesuai kesepakatan terbaru, kita tidak langsung memberikan role `BUYER` secara otomatis tanpa pilihan.
+
+**Alur Pendaftaran:**
+1.  **First Sign-In:** User login via Google IPB.
+2.  **Detection:** Backend cek apakah email sudah ada di DB.
+3.  **Auto-Assign:** Jika belum ada, buat user baru dengan `role: "ONBOARDING"`.
+4.  **Redirect:** Frontend akan mendeteksi role ini dan memaksa user masuk ke halaman `/onboarding`.
+5.  **Selection:** User memilih antara `BUYER` atau `SELLER` dan mengisi nomor WhatsApp.
+6.  **Completion:** Server Action `completeOnboarding` dipanggil untuk mengupdate role permanen.
+    - *Note:* User tetap bisa membuka fitur role lain nantinya (misal: Buyer mau jualan), tapi di awal harus memilih salah satu sebagai identitas utama.
+
+---
+
+## 🗄️ 4. DATABASE SCHEMA MANDATORY (DRIZZLE)
 
 Berikut adalah struktur tabel yang harus diimplementasikan oleh Backend di `src/db/schema.js` berdasarkan UML Class Diagram:
 
