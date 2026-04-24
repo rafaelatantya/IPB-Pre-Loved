@@ -116,3 +116,30 @@ export const wishlistsRelations = relations(wishlists, ({ one }) => ({
     references: [products.id],
   }),
 }));
+
+export const notifications = sqliteTable('notifications', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  type: text('type').default('INFO'), // INFO, SUCCESS, WARNING, DANGER
+  isRead: integer('is_read', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const adminLogs = sqliteTable('admin_logs', {
+  id: text('id').primaryKey(),
+  adminId: text('adminId').notNull().references(() => users.id),
+  action: text('action').notNull(), // REVIEW_PRODUCT, BLOCK_USER, etc.
+  targetId: text('targetId'),
+  details: text('details'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+}));
+
+export const adminLogsRelations = relations(adminLogs, ({ one }) => ({
+  admin: one(users, { fields: [adminLogs.adminId], references: [users.id] }),
+}));

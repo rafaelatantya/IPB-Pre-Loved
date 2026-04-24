@@ -38,17 +38,35 @@ export async function reviewProduct({ productId, decision, note }) {
     // Jalankan dalam transaksi agar atomik
     await db.batch([
       // 1. Update status produk
-      db.update(products)
-        .set({ status: decision === "APPROVED" ? "APPROVED" : "REJECTED" })
-        .where(eq(products.id, productId)),
+      db.update(products).set({ status: decision }).where(eq(products.id, productId)),
       
-      // 2. Catat di tabel QC Reviews
+      // 2. Simpan Log Review
       db.insert(qcReviews).values({
         id: crypto.randomUUID(),
         productId,
         adminId: session.user.id,
         decision,
         note: note || "",
+      }),
+
+      // 3. Log Aktivitas Admin (Audit Trail)
+      db.insert(adminLogs).values({
+        id: crypto.randomUUID(),
+        adminId: session.user.id,
+        action: "REVIEW_PRODUCT",
+        targetId: productId,
+        details: `Decision: ${decision}. Note: ${note || "none"}`,
+      }),
+
+      // 4. Kirim Notifikasi ke Seller
+      db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: currentProduct.sellerId,
+        title: decision === "APPROVED" ? "Produk Disetujui!" : "Produk Ditolak",
+        message: decision === "APPROVED" 
+          ? `Produk "${currentProduct.title}" Anda sekarang sudah tayang di katalog.`
+          : `Produk "${currentProduct.title}" ditolak. Alasan: ${note || "Melanggar aturan."}`,
+        type: decision === "APPROVED" ? "SUCCESS" : "DANGER",
       })
     ]);
 
@@ -87,7 +105,7 @@ export async function toggleBlockUser(userId, status) {
   const auth = await getAuth();
   const session = await auth();
 
-  if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+  if (session?.user?.role !== "ADMIN") return { success: false, code: 403, error: "Unauthorized" };
 
   // EDGE CASE: Dilarang blokir diri sendiri
   if (userId === session.user.id) {
@@ -96,7 +114,18 @@ export async function toggleBlockUser(userId, status) {
 
   try {
     const db = await getContextDb();
-    await db.update(users).set({ isBlocked: status }).where(eq(users.id, userId));
+    
+    await db.batch([
+      db.update(users).set({ isBlocked: status }).where(eq(users.id, userId)),
+      db.insert(adminLogs).values({
+        id: crypto.randomUUID(),
+        adminId: session.user.id,
+        action: status ? "BLOCK_USER" : "UNBLOCK_USER",
+        targetId: userId,
+        details: status ? "Account suspended" : "Account reactivated",
+      })
+    ]);
+
     return { success: true, message: status ? "User diblokir" : "Blokir dibuka" };
   } catch (error) {
     return { success: false, error: "Gagal update status blokir" };
