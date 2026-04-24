@@ -33,5 +33,6 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/lib/video.js` | Utility frontend untuk kompresi video 1080p 30fps H.264 (FFmpeg) |
 | `src/lib/image.js` | Utility frontend untuk kompresi gambar ke 12MP WebP |
 | `src/modules/auth/actions.js` | Server Actions untuk manajemen pendaftaran dan proses onboarding role |
-| `src/modules/user/actions.js` | Server Actions untuk manajemen profil user (Seller/Buyer Settings) |
+| `src/modules/user/actions.js` | Server Actions untuk manajemen profil user (Seller/Buyer Settings & Upgrade Role) |
 | `src/modules/wishlist/actions.js` | Server Actions untuk manajemen produk favorit (Wishlist) pembeli |
+| `src/modules/notification/actions.js` | Server Actions untuk mengambil dan menandai notifikasi (Approve/Reject) |

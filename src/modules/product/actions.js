@@ -5,7 +5,6 @@ import { products, productImages, qcReviews } from "@/db/schema";
 import { eq, sql, desc, and } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
 import { productSchema } from "@/lib/validation";
-import { getEnv } from "@/lib/env";
 
 /**
  * Action: Ambil daftar produk (untuk penjual/admin)
@@ -14,9 +13,7 @@ export async function getProducts() {
   const auth = await getAuth();
   const session = await auth();
 
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  if (!session?.user?.id) return { success: false, code: 401 };
 
   try {
     const db = await getContextDb();
@@ -49,8 +46,12 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
   const auth = await getAuth();
   const session = await auth();
 
-  if (!session?.user?.id) {
-    return { success: false, code: 401, error: "Silakan login terlebih dahulu" };
+  if (!session?.user?.id) return { success: false, code: 401 };
+
+  // 🛡️ SECURITY: Hanya SELLER atau ADMIN yang bisa upload barang
+  const userRole = session.user.role;
+  if (userRole !== "SELLER" && userRole !== "ADMIN") {
+    return { success: false, code: 403, error: "Anda harus terdaftar sebagai Seller untuk berjualan." };
   }
 
   const isInternal = (url) => url.startsWith("/api/images/products/");
@@ -71,9 +72,7 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
   try {
     const db = await getContextDb();
     const productId = crypto.randomUUID();
-    const userRole = session.user.role;
     const userId = session.user.id;
-
     const initialStatus = userRole === "ADMIN" ? "APPROVED" : "PENDING";
 
     await db.batch([
@@ -101,35 +100,8 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
 
     return { success: true, message: `Berhasil! Status: ${initialStatus}`, productId };
   } catch (error) {
+    console.error("Create Product Error:", error);
     return { success: false, error: "Gagal menyimpan produk" };
-  }
-}
-
-/**
- * Action: Hapus Produk
- */
-export async function deleteProduct(id) {
-  const auth = await getAuth();
-  const session = await auth();
-
-  if (!session?.user?.id) return { success: false, code: 401 };
-
-  try {
-    const db = await getContextDb();
-    const product = await db.query.products.findFirst({ where: eq(products.id, id) });
-    if (!product) return { success: false, error: "Produk tidak ditemukan" };
-
-    const isAdmin = session.user.role === "ADMIN";
-    const isOwner = product.sellerId === session.user.id;
-
-    if (!isAdmin && !isOwner) {
-        return { success: false, code: 403, error: "Akses ditolak" };
-    }
-
-    await db.delete(products).where(eq(products.id, id));
-    return { success: true, message: "Produk dihapus" };
-  } catch (error) {
-    return { success: false, error: "Gagal menghapus" };
   }
 }
 
@@ -142,6 +114,12 @@ export async function updateProduct(id, formData) {
 
   if (!session?.user?.id) return { success: false, code: 401 };
 
+  // 🛡️ SECURITY: Role Check
+  const userRole = session.user.role;
+  if (userRole !== "SELLER" && userRole !== "ADMIN") {
+    return { success: false, code: 403, error: "Akses ditolak." };
+  }
+
   const validation = productSchema.safeParse(formData);
   if (!validation.success) return { success: false, code: 400, error: validation.error.errors[0].message };
 
@@ -150,7 +128,7 @@ export async function updateProduct(id, formData) {
     const product = await db.query.products.findFirst({ where: eq(products.id, id) });
 
     if (!product) return { success: false, error: "Produk tidak ditemukan" };
-    const isAdmin = session.user.role === "ADMIN";
+    const isAdmin = userRole === "ADMIN";
     const isOwner = product.sellerId === session.user.id;
 
     if (!isOwner && !isAdmin) return { success: false, code: 403, error: "Akses ditolak" };
@@ -181,6 +159,12 @@ export async function markProductAsSold(id) {
   const session = await auth();
 
   if (!session?.user?.id) return { success: false, code: 401 };
+
+  // 🛡️ SECURITY: Role Check
+  const userRole = session.user.role;
+  if (userRole !== "SELLER" && userRole !== "ADMIN") {
+    return { success: false, code: 403, error: "Akses ditolak." };
+  }
 
   try {
     const db = await getContextDb();
@@ -222,5 +206,33 @@ export async function updateImageOrder(productId, imageIds) {
     return { success: true, message: "Urutan foto diperbarui" };
   } catch (error) {
     return { success: false, error: "Gagal update urutan" };
+  }
+}
+
+/**
+ * Action: Hapus Produk
+ */
+export async function deleteProduct(id) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (!session?.user?.id) return { success: false, code: 401 };
+
+  try {
+    const db = await getContextDb();
+    const product = await db.query.products.findFirst({ where: eq(products.id, id) });
+    if (!product) return { success: false, error: "Produk tidak ditemukan" };
+
+    const isAdmin = session.user.role === "ADMIN";
+    const isOwner = product.sellerId === session.user.id;
+
+    if (!isAdmin && !isOwner) {
+        return { success: false, code: 403, error: "Akses ditolak" };
+    }
+
+    await db.delete(products).where(eq(products.id, id));
+    return { success: true, message: "Produk dihapus" };
+  } catch (error) {
+    return { success: false, error: "Gagal menghapus" };
   }
 }

@@ -11,13 +11,22 @@ Dokumen ini mendefinisikan batasan akses (RBAC) dan aturan sistem untuk setiap r
 | Login Google (@apps.ipb.ac.id) | ❌ | ✅ | ✅ | ✅ |
 | Wishlist (Add/Remove) | ❌ | ✅ | ✅ | ✅ |
 | Jual Barang (Create Listing) | ❌ | ❌ | ✅ | ✅ |
+| Tandai Terjual (Sold Out) | ❌ | ❌ | ✅ | ✅ |
 | Edit/Hapus Barang Sendiri | ❌ | ❌ | ✅ | ✅ |
+| Urutkan Foto (Sorting) | ❌ | ❌ | ✅ | ✅ |
+| Lihat Notifikasi (Approve/Reject) | ❌ | ✅ | ✅ | ✅ |
 | Akses Dashboard Seller | ❌ | ❌ | ✅ | ✅ |
 | Moderasi QC (Approve/Reject) | ❌ | ❌ | ❌ | ✅ |
 | Blokir/Flag User | ❌ | ❌ | ❌ | ✅ |
-| Edit Barang Milik Orang Lain | ❌ | ❌ | ❌ | ✅ |
+| Lihat Audit Logs (Aktivitas Admin) | ❌ | ❌ | ❌ | ✅ |
 
 ---
+
+## 🔄 2. Alur Transisi Role (Upgrade)
+1. **Initial State**: Setiap user baru secara default adalah `BUYER`.
+2. **Opt-in Seller**: Buyer yang ingin berjualan harus melakukan "Upgrade" melalui profil.
+3. **Requirement**: Upgrade memerlukan validasi nomor WhatsApp aktif.
+4. **Permanent**: Sekali menjadi `SELLER`, user akan memiliki akses `BUYER` dan `SELLER` secara permanen.
 
 ## 🛠️ 2. Aturan Media & Penyimpanan
 
