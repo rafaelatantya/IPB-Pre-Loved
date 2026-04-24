@@ -160,3 +160,61 @@ export async function deleteProduct(id) {
     return { success: false, error: "Gagal menghapus produk: " + error.message };
   }
 }
+
+/**
+ * Action: Update Produk
+ * Catatan: Jika penjual (non-admin) mengedit, status kembali ke PENDING.
+ */
+export async function updateProduct(id, formData) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // Validasi Zod
+  const validation = productSchema.safeParse(formData);
+  if (!validation.success) {
+    return { success: false, error: validation.error.errors[0].message };
+  }
+
+  try {
+    const db = await getContextDb();
+    
+    // 1. Cek Kepemilikan
+    const product = await db.query.products.findFirst({
+        where: eq(products.id, id)
+    });
+
+    if (!product) return { success: false, error: "Produk tidak ditemukan" };
+
+    const isOwner = product.sellerId === session.user.id;
+    const isAdmin = session.user.role === "ADMIN";
+
+    if (!isOwner && !isAdmin) {
+        return { success: false, error: "Akses ditolak" };
+    }
+
+    // 2. Tentukan Status Baru
+    // Jika bukan admin, paksa status jadi PENDING lagi untuk di-review ulang
+    const newStatus = isAdmin ? (formData.status || product.status) : "PENDING";
+
+    await db.update(products).set({
+      title: formData.title,
+      description: formData.description,
+      price: parseInt(formData.price),
+      categoryId: formData.categoryId,
+      condition: formData.condition,
+      location: formData.location || "IPB Dramaga",
+      status: newStatus,
+    }).where(eq(products.id, id));
+
+    return { 
+        success: true, 
+        message: isAdmin ? "Produk diperbarui" : "Produk diperbarui dan masuk antrean QC ulang" 
+    };
+  } catch (error) {
+    return { success: false, error: "Gagal memperbarui produk: " + error.message };
+  }
+}

@@ -33,21 +33,24 @@ Lokasi: `src/modules/admin/components/`
 - [ ] **Dashboard Empty States**: Tabel *"Kosong"* jika user baru registrasi dan tidak punya produk jualan. Status tag Badge `Pending`/`Approved` harus dimarkup berdasarkan text.
 
 ## 🤖 Integrasi Backend (Panduan untuk AI Agent)
-Frontend B bekerja dengan data terproteksi. Pastikan Agent menggunakan modular actions berikut:
+Frontend B bekerja dengan data terproteksi. Backend secara otomatis mengambil `userId` dari session, jadi Anda tidak perlu mengirimkannya sebagai parameter.
 
 ```javascript
 // Import modular actions
-import { getProducts, deleteProduct } from "@/modules/product/actions";
-import { updateProductStatus } from "@/modules/product/actions"; // QC Admin
-import { getCategories } from "@/modules/category/actions";
+import { getProducts, createProductWithImage, updateProduct, deleteProduct } from "@/modules/product/actions";
+import { updateSellerProfile, getUserProfile } from "@/modules/user/actions";
 
-// PRIVACY FIRST: List Produkku (Mode Penjual)
-// Berikan sellerId agar user hanya melihat barangnya sendiri
-const myProducts = await getProducts(session.user.id);
+// LIST PRODUKKU (Mode Penjual)
+// Backend otomatis memfilter produk milik user yang login
+const { data: myProducts } = await getProducts();
 
-// SECURITY: Penghapusan Produk
-// Wajib menyertakan ID user dan Role untuk validasi di backend
-const result = await deleteProduct(productId, session.user.id, session.user.role);
+// UPDATE PRODUK
+// PENTING: Jika role bukan ADMIN, status otomatis kembali ke PENDING!
+const result = await updateProduct(productId, formData);
+
+// UPDATE PROFIL (WhatsApp)
+const updateResult = await updateSellerProfile({ whatsappNumber: "0812..." });
 ```
 
-- **PENTING**: Admin QC tetap bisa melihat semua produk dengan memanggil `getProducts()` tanpa parameter (null).
+- **PENTING**: Saat memanggil `updateProduct`, informasikan kepada user bahwa barang akan masuk antrean moderasi ulang (status reset ke `PENDING`).
+- **SECURITY**: Jangan pernah mengirim `userId` atau `role` dari client-side form. Backend sudah menanganinya secara aman di server.

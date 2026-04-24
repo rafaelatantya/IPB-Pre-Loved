@@ -43,7 +43,9 @@ Pastikan setiap interaksi database yang dibuat oleh AI menggunakan **Drizzle ORM
 3. **Root Cause First:** DILARANG melakukan "UI Hacks" (seperti menambahkan opsi manual/shortcut) untuk menutupi bug di level data atau backend. Jika ada ketidaksinkronan data (misal: ID tidak cocok), AI WAJIB mencari akarnya di level Database, Auth, atau Actions sebelum menyentuh UI.
 4. **Formal Mode for Docs:** Jika diminta membuat dokumen akademik (UML, DFD, LKP), gunakan gaya bahasa formal dan akademis.
 5. **Casual Mode for Dev:** Jika membantu coding atau diskusi teknis, gunakan bahasa yang santai dan langsung pada intinya (praktis).
-6. **Edge Case & Security First:** AI wajib proaktif memikirkan skenario terburuk (*edge cases*) dan keamanan data. DILARANG hanya mengerjakan fungsionalitas "happy path". Contoh: Selalu gunakan session untuk `userId` di Server Actions (bukan input client), buat proteksi rute berlapis (onboarding guard), dan validasi input. Jangan tunggu user bertanya baru sadar ada lubang keamanan.
+6. **Edge Case & Security First**: Always identify potential security holes or "happy-path-only" logic. Proactively suggest and implement guards (e.g., checking if a user owns a resource before deleting it).
+7. **Automatic Status Reversion**: Any edit to an `APPROVED` product by a non-admin user MUST automatically set its status back to `PENDING` for re-review. This is a hard security rule to prevent "Bait & Switch" tactics.
+8. **Internal Session Authority**: Never trust `userId` or `role` parameters passed from the client-side for sensitive operations (Update/Delete/Create). Always retrieve these values internally using `getAuth()` in Server Actions.
 
 ## 7. ROLE-BASED AGENT INSTRUCTIONS
 Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend, 2 Frontend).

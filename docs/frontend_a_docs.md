@@ -34,11 +34,21 @@ Lokasi: `src/components/layouts/`
 Frontend A harus mengambil data produk yang statusnya **APPROVED** saja. Gunakan modular service berikut:
 
 ```javascript
-// Import service katalog publik
-import { getApprovedProducts } from "@/modules/catalog/services";
+// Import service katalog & wishlist
+import { getApprovedProducts, getProductById, getFeaturedProducts } from "@/modules/catalog/services";
+import { toggleWishlist, isProductWishlisted, getWishlist } from "@/modules/wishlist/actions";
 
-// Contoh penggunaan di Server Component (Sangat Direkomendasikan)
-const { success, data, error } = await getApprovedProducts(categoryId);
+// Contoh Ambil Katalog dengan Filter
+const { data, pagination } = await getApprovedProducts({
+  search: "Buku",
+  minPrice: 0,
+  maxPrice: 500000,
+  sortBy: "cheapest" // "latest", "expensive"
+});
+
+// Contoh Cek Status Wishlist (Halaman Detail)
+const wishlisted = await isProductWishlisted(productId);
 ```
 
 - **PENTING**: Jangan melakukan filter status `APPROVED` secara manual di sisi client. Panggil service di atas agar hanya data yang valid yang dikirim oleh server.
+- **PAGINATION**: Gunakan objek `pagination` (totalPages, currentPage) untuk membangun tombol navigasi halaman.
