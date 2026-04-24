@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
+import { onboardingSchema } from "@/lib/validation";
+
 /**
  * Menyelesaikan proses onboarding dengan memilih role dan mengisi nomor WA
  */
@@ -16,16 +18,13 @@ export async function completeOnboarding({ role, whatsappNumber }) {
     return { success: false, error: "Unauthorized" };
   }
 
+  // Validasi dengan Zod
+  const validation = onboardingSchema.safeParse({ role, whatsappNumber });
+  if (!validation.success) {
+    return { success: false, error: validation.error.errors[0].message };
+  }
+
   const userId = session.user.id;
-
-  if (!role || !whatsappNumber) {
-    return { success: false, error: "Data tidak lengkap" };
-  }
-
-  // Validasi role
-  if (!["BUYER", "SELLER"].includes(role)) {
-    return { success: false, error: "Role tidak valid" };
-  }
 
   try {
     const db = await getContextDb();

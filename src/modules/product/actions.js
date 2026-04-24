@@ -4,19 +4,28 @@ import { getContextDb, getEnv } from "@/lib/db";
 import { products, productImages } from "@/db/schema";
 import { desc, eq, and, or } from "drizzle-orm";
 
+import { getAuth } from "@/lib/auth";
+import { productSchema } from "@/lib/validation";
+
 /**
  * Action: Ambil produk (Testing & Dashboard)
- * Jika sellerId diberikan (Non-Admin), ambil produk milik sendiri ATAU yang sudah APPROVED.
+ * Jika user bukan admin, hanya ambil produk milik sendiri ATAU yang sudah APPROVED.
  */
-export async function getProducts(sellerId = null) {
+export async function getProducts() {
+  const auth = await getAuth();
+  const session = await auth();
+
   try {
     const db = await getContextDb();
     
-    // Kondisi filter
+    // Kondisi filter: 
+    // - Admin: Bisa lihat semua.
+    // - User: Lihat produk miliknya sendiri ATAU yang sudah APPROVED oleh orang lain.
     let whereCondition = undefined;
-    if (sellerId) {
+    if (session?.user?.role !== "ADMIN") {
+      const userId = session?.user?.id || "guest";
       whereCondition = or(
-        eq(products.sellerId, sellerId),
+        eq(products.sellerId, userId),
         eq(products.status, "APPROVED")
       );
     }
@@ -24,7 +33,9 @@ export async function getProducts(sellerId = null) {
     const result = await db.query.products.findMany({
       where: whereCondition,
       with: {
-        seller: true,
+        seller: {
+          columns: { name: true, email: true, whatsappNumber: true }
+        },
         category: true,
         images: true,
       },
@@ -41,7 +52,23 @@ export async function getProducts(sellerId = null) {
 /**
  * Action: Create Product with Image
  */
-export async function createProductWithImage({ formData, imageFile, userRole = "BUYER" }) {
+export async function createProductWithImage({ formData, imageFile }) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // Validasi dengan Zod
+  const validation = productSchema.safeParse(formData);
+  if (!validation.success) {
+    return { success: false, error: validation.error.errors[0].message };
+  }
+
+  const userId = session.user.id;
+  const userRole = session.user.role;
+
   try {
     const env = await getEnv();
     const db = await getContextDb();
@@ -66,12 +93,12 @@ export async function createProductWithImage({ formData, imageFile, userRole = "
 
     await db.insert(products).values({
       id: productId,
-      sellerId: formData.sellerId,
-      categoryId: formData.categoryId || null, 
+      sellerId: userId,
+      categoryId: formData.categoryId, 
       title: formData.title,
       description: formData.description,
-      price: parseInt(formData.price) || 0,
-      condition: formData.condition || "GOOD",
+      price: parseInt(formData.price),
+      condition: formData.condition,
       location: formData.location || "IPB Dramaga",
       status: initialStatus, 
     }).run();
@@ -93,22 +120,19 @@ export async function createProductWithImage({ formData, imageFile, userRole = "
 }
 
 /**
- * Action: Update Status Produk (QC Admin)
+ * Action: Hapus Produk (Security Internalized)
  */
-export async function updateProductStatus(productId, status) {
-  try {
-    const db = await getContextDb();
-    await db.update(products).set({ status }).where(eq(products.id, productId));
-    return { success: true, message: `Produk berhasil di-${status.toLowerCase()}` };
-  } catch (error) {
-    return { success: false, error: `Gagal mengubah status: ${error.message}` };
-  }
-}
+export async function deleteProduct(id) {
+  const auth = await getAuth();
+  const session = await auth();
 
-/**
- * Action: Hapus Produk (Security Updated)
- */
-export async function deleteProduct(id, requesterId, requesterRole) {
+  if (!session?.user?.id) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const requesterId = session.user.id;
+  const requesterRole = session.user.role;
+
   try {
     const db = await getContextDb();
     
