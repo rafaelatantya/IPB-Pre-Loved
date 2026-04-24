@@ -62,24 +62,14 @@ Berikut panduan dan batasan unik untuk masing-masing peran:
 
 ---
 
-## 8. 🚨 FRONTEND AI TESTING & TROUBLESHOOTING FLOW
-Karena pengembangan frontend dan backend sangat terikat pada ekosistem Cloudflare, setiap *AI Agent* yang melayani developer Frontend (Frontend A & B) **WAJIB** mengikuti *flow* ini ketika mencoba men-jalankan *(run)* atau mencari jalan keluar dari *error* selama *testing*.
+## 8. 🚨 RUN & TESTING FLOW (READ CAREFULLY)
+Untuk menjalankan project dari nol, semua AI Agent **WAJIB** mengikuti panduan resmi di [README.md](file:///home/lenovo/projects/IPB-Pre-Loved/README.md).
 
-**Tahap 1: Verifikasi Pre-Flight (Sebelum Run)**
-1. **Cek Kredensial:** Pastikan `.dev.vars` dan `.env.local` eksis. Jika hanya ada `.dev.vars`, jalankan `cp .dev.vars .env.local` agar `next dev` bisa membaca *environment variables*.
-2. **Cek Dependency:** Jalankan `npm install --legacy-peer-deps` (wajib pakai flag ini karena ada _conflict_ versi `next-on-pages` dan Next.js 15).
-
-**Tahap 2: Execution Command (DILARANG PAKAI `npm run dev` BAE)**
-- Secara bawaan, Next.js akan mendeteksi `next dev`. Tapi karena kita butuh *binding* Cloudflare D1/R2, AI HARUS meminta eksekusi ini ke terminal:
-  `npm run build && npx wrangler pages dev .next --remote`
-  *(Catatan: flag `--remote` menghubungkan frontend lokal langsung ke database Cloudflare di internet). Jika hanya ingin testing UI cepat tanpa build, gunakan `npx next dev --port 3001` (pastikan sudah Sinkronisasi `.env.local` di Tahap 1).*
-
-**Tahap 3: Resolusi Error Spesifik (DO NOT HALLUCINATE FIXES)**
-If command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdasarkan daftar ini sebelum mengubah *source code*:
-- **Error D1/Database Not Found:** Artinya flag `--remote` lupa disertakan, atau user belum login ke wrangler terminal (`npx wrangler login`). **JANGAN** pernah AI Frontend menjalankan migrasi database paksa (`drizzle-kit`). Suruh user koordinasi ke *Backend*.
-- **Error API Route Fetching / Auth.js pecah:** Ingat ini Edge Workers! Node.js API tradisional seperti `fs` dan `path` tidak akan jalan. Cek *actions* apakah terbebas dari Node modules.
-- **Modular Imports:** Jika action tidak ketemu, pastikan mengimpor dari folder modul yang benar (misal: `@/modules/product/actions`).
-- **Error Hydration UI:** Frontend AI bebas memperbaiki kode React Components.
+**Quick Summary for Agents:**
+1. **Dependencies**: `npm install --legacy-peer-deps` (untuk menghindari konflik Next.js 15).
+2. **Environment**: Copy `.dev.vars.example` ke `.dev.vars` dan isi secret keys.
+3. **Database**: Selalu jalankan `npx wrangler d1 migrations apply DB --local` sebelum testing pertama kali.
+4. **Execution**: Gunakan `npx wrangler dev` (Recommended) agar binding D1/R2 berfungsi dengan benar.
 
 ---
 
@@ -91,7 +81,7 @@ If command di Tahap 2 *error* atau *crash*, AI Frontend harus mendiagnosa berdas
 - **Marketplace Logic**: Non-admin dapat melihat produk `APPROVED` milik orang lain, namun produk `PENDING` tetap terproteksi hanya untuk pemilik dan Admin.
 - **Image Proxy**: Selalu gunakan path relatif `/api/images/` untuk menampilkan gambar dari R2.
 - **Drizzle Studio**: Jalankan `npx drizzle-kit studio` untuk visualisasi data relasional secara GUI.
-- **Run Dev**: Selalu jalankan `npm run pages:dev` agar binding D1/R2 sinkron dengan database ID asli.
+- **Run Dev**: Gunakan panduan di `README.md`.
 
 ---
 *Note to AI: Read and adhere to these rules strictly whenever solving a task in this workspace.*

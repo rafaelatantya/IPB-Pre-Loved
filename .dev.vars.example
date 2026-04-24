@@ -1,17 +1,17 @@
-# [CLOUDFLARE R2 CREDENTIALS]
-R2_ACCOUNT_ID="isi_account_id_cloudflare_anda"
-R2_ACCESS_KEY_ID="isi_access_key"
-R2_SECRET_ACCESS_KEY="isi_secret_key"
-R2_BUCKET_NAME="ipb-preloved-images"
-
-# [GOOGLE OAUTH]
-GOOGLE_CLIENT_ID="isi_client_id_dari_google_console"
-GOOGLE_CLIENT_SECRET="isi_client_secret_dari_google"
-
 # [NEXTAUTH]
 # Cara generate: ketik di terminal: npx auth secret
-AUTH_SECRET="random_string_huruf_acak_buat_enkripsi_cookies"
+AUTH_SECRET="random_string_acak_buat_enkripsi_session"
 
-# MULTI-USER TESTING CONFIG
-ALLOWED_DOMAINS="@apps.ipb.ac.id,@gmail.com"
-ADMIN_EMAILS="xxxxx@apps.ipb.ac.id" # Pisahkan dengan koma jika lebih dari satu
+# [GOOGLE OAUTH]
+# Ambil dari Google Cloud Console
+AUTH_GOOGLE_ID="isi_client_id_dari_google_console"
+AUTH_GOOGLE_SECRET="isi_client_secret_dari_google"
+
+# [APP CONFIG]
+# Pisahkan dengan koma jika lebih dari satu
+ALLOWED_DOMAINS="@apps.ipb.ac.id"
+ADMIN_EMAILS="admin1@apps.ipb.ac.id,admin2@apps.ipb.ac.id"
+
+# [NOTES]
+# R2 Storage menggunakan Native Binding ("BUCKET") di wrangler.toml.
+# Tidak perlu Access Key / Secret Key di file ini.

@@ -5,9 +5,9 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 
 | File / Folder Path | Deskripsi Fungsi |
 | --- | --- |
+| `README.md` | Panduan instalasi cepat (Run from Scratch) dan dokumentasi utama project |
 | `src/db/schema.js` | Struktur rancangan tabel database D1 menggunakan Drizzle ORM |
 | `src/lib/db.js` | Helper koneksi Drizzle + Context Helpers (`getEnv`, `getContextDb`) |
-| `src/lib/storage.js` | Inisiasi client/koneksi AWS S3-SDK untuk upload object ke Cloudflare R2 |
 | `src/lib/auth.js` | Konfigurasi inti dan callback rules pembatasan domain NextAuth (SSO Google) |
 | `src/app/api/auth/[...nextauth]/route.js` | Route handler yang mengakomodir standard fetch Edge dari library NextAuth |
 | `src/middleware.js` | Midleware pelindung rute SSR Next.js berdasarkan Role (SELLER/ADMIN bypass rules) |
