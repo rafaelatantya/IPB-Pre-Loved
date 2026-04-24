@@ -23,7 +23,8 @@ Lokasi: `src/components/layouts/`
 Lokasi: `src/modules/product/components/`
 - `ProductForm.jsx` : Form dinamis. Input Fields: Nama Produk, Harga (angka), Kondisi Barang, Kategori, Deskripsi.
 - `ImageUploader.jsx` : Area *Drag & Drop* foto R2. (Tampilkan *preview* gambar).
-- **MANDATORY**: Gunakan `src/lib/video.js` untuk kompresi video ke **1080p 30fps H.264** sebelum dikirim ke backend!
+- **MANDATORY (Video)**: Gunakan `src/lib/video.js` untuk kompresi video ke 1080p 30fps H.264!
+- **MANDATORY (Image)**: Gunakan `src/lib/image.js` untuk kompresi foto ke **12MP WebP (Quality 0.8)** sebelum dikirim ke backend!
 
 Lokasi: `src/modules/admin/components/`
 - `QCActionButtons.jsx` : Tombol aksi grup per-baris tabel antrean: ❌ Tolak dan ✅ Terima.
@@ -37,20 +38,23 @@ Lokasi: `src/modules/admin/components/`
 Frontend B bekerja dengan data terproteksi. Backend secara otomatis mengambil `userId` dari session, jadi Anda tidak perlu mengirimkannya sebagai parameter.
 
 ```javascript
-// Import modular actions
-import { getProducts, createProductWithImage, updateProduct, deleteProduct } from "@/modules/product/actions";
-import { updateSellerProfile, getUserProfile } from "@/modules/user/actions";
+// Import modular actions & utilities
+import { getProducts, createProduct, updateProduct, deleteProduct } from "@/modules/product/actions";
+import { uploadWithProgress } from "@/lib/upload";
 
-// LIST PRODUKKU (Mode Penjual)
-// Backend otomatis memfilter produk milik user yang login
-const { data: myProducts } = await getProducts();
+// UPLOAD MEDIA DENGAN PROGRESS BAR
+// Jangan gunakan Server Action untuk upload file besar (Video).
+// Gunakan helper ini untuk mendapatkan persen progress:
+const result = await uploadWithProgress(file, "video", (percent) => {
+  console.log(`Upload progress: ${percent}%`);
+});
 
-// UPDATE PRODUK
-// PENTING: Jika role bukan ADMIN, status otomatis kembali ke PENDING!
-const result = await updateProduct(productId, formData);
-
-// UPDATE PROFIL (WhatsApp)
-const updateResult = await updateSellerProfile({ whatsappNumber: "0812..." });
+// CREATE PRODUK (Kirim URL hasil upload tadi)
+const productResult = await createProduct({ 
+  formData, 
+  imageUrls: [result.url], // Gunakan URL dari API Upload
+  ... 
+});
 ```
 
 - **PENTING**: Saat memanggil `updateProduct`, informasikan kepada user bahwa barang akan masuk antrean moderasi ulang (status reset ke `PENDING`).

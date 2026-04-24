@@ -29,13 +29,13 @@ Berikut daftar fungsi modular yang siap digunakan oleh Frontend:
 
 | Modul | Fungsi Utama | Kegunaan |
 | --- | --- | --- |
+| **Media** | `POST /api/upload` | Upload file (Image/Video) dengan progress bar. |
 | **Catalog** | `getApprovedProducts(filters)` | Ambil data publik dengan filter (Search, Price, Category, Condition). |
-| **Catalog** | `getProductById(id)` | Detail produk lengkap (images + seller info). |
-| **Product** | `createProductWithImage(...)` | Upload barang baru (status otomatis `PENDING`). |
+| **Catalog** | `getProductById(id)` | Detail produk lengkap (images + video + seller info). |
+| **Product** | `createProduct({ urls, ... })` | Simpan produk (validasi aturan 3 foto / 1+1 video). |
 | **Product** | `updateProduct(id, ...)` | Edit barang (status reset ke `PENDING` jika non-admin). |
-| **Admin** | `reviewProduct({ id, decision, note })` | Admin Approve/Reject produk + Log review. |
-| **User** | `updateSellerProfile({ wa })` | Update nomor WhatsApp di Settings. |
-| **Wishlist** | `toggleWishlist(id)` | Tambah/Hapus barang dari wishlist. |
+| **Admin** | `reviewProduct(...)` | Admin Approve/Reject produk + Log review. |
+| **User** | `updateSellerProfile(...)` | Update nomor WhatsApp di Settings. |
 
 ## 🛠️ Aturan Pengembangan (PENTING)
 

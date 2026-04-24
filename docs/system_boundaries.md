@@ -22,10 +22,13 @@ Dokumen ini mendefinisikan batasan akses (RBAC) dan aturan sistem untuk setiap r
 ## 🛠️ 2. Aturan Media & Penyimpanan
 
 ### 📸 Foto
-- **Batas Ukuran**: Maksimal **5MB** per file.
-- **Format**: JPEG, PNG, WEBP.
+- **Batas Ukuran**: Maksimal **5MB** per file (sebelum kompresi).
+- **Format Output**: **WebP** (sangat disarankan untuk efisiensi).
 - **Minimal**: 3 Foto (jika tanpa video).
-- **Compression**: Sangat disarankan kompresi di sisi client sebelum upload untuk menghemat bandwidth.
+- **Spesifikasi Teknis (Enforced)**:
+    - **Resolusi**: Maksimal 12MP (long side 4032px).
+    - **Target Kualitas**: 0.8 (80%) WebP compression.
+- **Enforcement Plan**: Kompresi dilakukan di **sisi Client (Frontend)** menggunakan library seperti `browser-image-compression` untuk mengubah JPEG berat menjadi WebP ringan tanpa kehilangan detail 12MP-nya.
 
 ### 🎥 Video
 - **Batas Ukuran**: Maksimal **50MB** per file.
@@ -43,8 +46,10 @@ Dokumen ini mendefinisikan batasan akses (RBAC) dan aturan sistem untuk setiap r
 ### 🛡️ 3. Aturan Keamanan "Hardened"
 1. **Bait & Switch Protection**: Setiap pengeditan pada produk yang sudah `APPROVED` akan memaksa status kembali ke `PENDING`.
 2. **Domain Restriction**: Hanya email dengan domain `@apps.ipb.ac.id` yang diizinkan masuk (kecuali email admin yang didaftarkan khusus di environment).
-3. **Session Consistency**: `userId` selalu diambil dari session server (`getAuth()`), bukan dari parameter client-side.
-4. **Image Proxy Access**: Akses ke `/api/images/*` hanya diizinkan untuk folder `products/`.
+3. **Internal Session Authority**: Never trust `userId` or `role` parameters passed from the client-side for sensitive operations. Always retrieve internally via `getAuth()`.
+4. **MIME Validation**: API Upload hanya menerima file dengan header `image/*` atau `video/*`. Ekstensi file wajib sesuai dengan kontennya.
+5. **Media URL Safety**: Fungsi `createProduct` hanya menerima URL yang berasal dari `/api/images/products/`. URL eksternal akan dibuang secara otomatis.
+6. **Progress Bar Standard**: Semua upload media wajib menggunakan `/api/upload` (API Route) agar user mendapatkan feedback progress bar yang akurat.
 
 ---
 

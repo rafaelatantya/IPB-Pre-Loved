@@ -50,9 +50,10 @@ export async function getProducts() {
 }
 
 /**
- * Action: Create Product with Image
+ * Action: Create Product (Final Version)
+ * Menggunakan URL media hasil upload dari /api/upload
  */
-export async function createProductWithImage({ formData, imageFile }) {
+export async function createProduct({ formData, imageUrls = [], videoUrl = "", videoDuration = 0 }) {
   const auth = await getAuth();
   const session = await auth();
 
@@ -60,15 +61,16 @@ export async function createProductWithImage({ formData, imageFile }) {
     return { success: false, code: 401, error: "Silakan login terlebih dahulu" };
   }
 
-  // 1. Validasi Awal Media
-  const imageCount = imageFiles.filter(f => f && f.size > 0).length;
-  const hasVideo = !!(videoFile && videoFile.size > 0);
+  // 1. Security Check: Pastikan URL media berasal dari sistem kita sendiri
+  const isInternal = (url) => url.startsWith("/api/images/products/");
+  const safeImages = imageUrls.filter(url => isInternal(url));
+  const safeVideo = videoUrl && isInternal(videoUrl) ? videoUrl : "";
 
-  // 2. Validasi dengan Zod (Termasuk Aturan Saklek)
+  // 2. Validasi Aturan Media (3 Foto atau 1 Foto + 1 Video 5s)
   const validation = productSchema.safeParse({
     ...formData,
-    imageCount,
-    hasVideo,
+    imageCount: safeImages.length,
+    hasVideo: !!safeVideo,
     videoDuration
   });
 
@@ -76,66 +78,36 @@ export async function createProductWithImage({ formData, imageFile }) {
     return { success: false, code: 400, error: validation.error.errors[0].message };
   }
 
-  const userId = session.user.id;
-  const userRole = session.user.role;
-
   try {
-    const env = await getEnv();
     const db = await getContextDb();
-    const bucket = env.BUCKET;
-
-    if (!bucket) throw new Error("R2 Bucket binding 'BUCKET' not found.");
-
     const productId = crypto.randomUUID();
-    
-    // 3. Upload Video (Jika ada) - Max 50MB
-    let videoUrl = "";
-    if (hasVideo) {
-      if (videoFile.size > 50 * 1024 * 1024) throw new Error("Video terlalu besar (Maks 50MB)");
-      const videoKey = `products/v-${productId}-${Date.now()}.mp4`;
-      const videoBuffer = await videoFile.arrayBuffer();
-      await bucket.put(videoKey, videoBuffer, { httpMetadata: { contentType: videoFile.type } });
-      videoUrl = `/api/images/${videoKey}`;
-    }
-
-    // 4. Upload Images - Max 5MB per image
-    const imageRecords = [];
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      if (!file || file.size === 0) continue;
-      if (file.size > 5 * 1024 * 1024) throw new Error(`Gambar ke-${i+1} terlalu besar (Maks 5MB)`);
-
-      const imgKey = `products/i-${productId}-${i}-${Date.now()}.jpg`;
-      const imgBuffer = await file.arrayBuffer();
-      await bucket.put(imgKey, imgBuffer, { httpMetadata: { contentType: file.type } });
-      
-      imageRecords.push({
-        id: crypto.randomUUID(),
-        productId,
-        r2Key: imgKey,
-        url: `/api/images/${imgKey}`,
-        sortOrder: i
-      });
-    }
+    const userRole = session.user.role;
+    const userId = session.user.id;
 
     const initialStatus = userRole === "ADMIN" ? "APPROVED" : "PENDING";
 
-    // 5. Simpan ke Database (Atomic)
+    // 3. Batch Insert (Atomic)
     await db.batch([
       db.insert(products).values({
         id: productId,
         sellerId: userId,
-        categoryId: formData.categoryId, 
+        categoryId: formData.categoryId,
         title: formData.title,
         description: formData.description,
         price: parseInt(formData.price),
         condition: formData.condition,
         location: formData.location || "IPB Dramaga",
         status: initialStatus,
-        videoUrl,
-        videoDuration
+        videoUrl: safeVideo,
+        videoDuration: safeVideo ? videoDuration : 0
       }),
-      ...imageRecords.map(img => db.insert(productImages).values(img))
+      ...safeImages.map((url, i) => db.insert(productImages).values({
+        id: crypto.randomUUID(),
+        productId,
+        url,
+        r2Key: url.replace("/api/images/", ""),
+        sortOrder: i
+      }))
     ]);
 
     return { 
@@ -144,8 +116,8 @@ export async function createProductWithImage({ formData, imageFile }) {
       productId 
     };
   } catch (error) {
-    console.error("Upload Error:", error);
-    return { success: false, error: "Gagal memproses media: " + error.message };
+    console.error("Create Product Error:", error);
+    return { success: false, error: "Gagal menyimpan produk: " + error.message };
   }
 }
 
