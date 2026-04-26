@@ -1,6 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { ChevronRight, Leaf, Heart, MessageCircle, ShieldCheck, CheckCircle2 } from "lucide-react";
+
+export const runtime = 'edge';
 import ProductCard from "@/modules/catalog/components/ProductCard";
 
 // Mock Product Data

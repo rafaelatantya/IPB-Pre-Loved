@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { getAdminUsers, toggleUserRole, deleteUser, initializeDatabaseInternal } from "@/modules/admin/actions";
+import { getAdminUsers, toggleUserRole, deleteUser, initializeDatabaseInternal, reviewProduct } from "@/modules/admin/actions";
 import { getCategories, addCategory, deleteCategory } from "@/modules/category/actions";
-import { getProducts, createProductWithImage, updateProductStatus, deleteProduct } from "@/modules/product/actions";
+import { getProducts, createProduct, deleteProduct } from "@/modules/product/actions";
 import { CheckCircle2, XCircle, LogOut, User, ShieldCheck, ShoppingCart, Store, Trash2, Plus, RefreshCcw, Image as ImageIcon, Check, X, Search } from "lucide-react";
 
 export default function AdminTestPage() {
@@ -108,26 +108,45 @@ export default function AdminTestPage() {
   async function handleUploadProduct(e) {
     e.preventDefault();
     setLoading(true);
-    setStatusText("Uploading to R2 & DB...");
+    setStatusText("Uploading to R2...");
     
     try {
       const formData = new FormData(e.target);
       const imageFile = formData.get("image");
       
-      const data = {
+      if (!imageFile || imageFile.size === 0) {
+        throw new Error("Pilih gambar dulu!");
+      }
+
+      // 1. Upload ke API
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", imageFile);
+      uploadFormData.append("type", "image");
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || "Upload gagal");
+
+      setStatusText("Saving to DB...");
+
+      // 2. Simpan ke DB
+      const productData = {
           title: formData.get("title"),
           price: formData.get("price"),
           description: formData.get("description"),
           categoryId: formData.get("categoryId"),
-          sellerId: isAdmin ? formData.get("sellerId") : session?.user?.id, 
+          sellerId: isAdmin ? (formData.get("sellerId") || session?.user?.id) : session?.user?.id, 
           condition: formData.get("condition") || "GOOD",
           location: formData.get("location") || "IPB Dramaga"
       };
 
-      const res = await createProductWithImage({ 
-        formData: data, 
-        imageFile, 
-        userRole: session?.user?.role 
+      const res = await createProduct({ 
+        formData: productData, 
+        imageUrls: [uploadData.url]
       });
       
       if (res.success) {
@@ -149,7 +168,11 @@ export default function AdminTestPage() {
 
   async function handleUpdateStatus(productId, newStatus) {
     setLoading(true);
-    const res = await updateProductStatus(productId, newStatus);
+    const res = await reviewProduct({ 
+      productId, 
+      decision: newStatus, 
+      note: "Reviewed via Admin Test Panel" 
+    });
     alert(res.message || res.error);
     fetchAll();
   }
@@ -416,7 +439,7 @@ export default function AdminTestPage() {
                                   </>
                                 )}
                                 {(isAdmin || p.sellerId === session?.user?.id) && (
-                                  <button onClick={() => deleteProduct(p.id, session?.user?.id, session?.user?.role).then(fetchAll)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                  <button onClick={() => deleteProduct(p.id).then(fetchAll)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 )}
