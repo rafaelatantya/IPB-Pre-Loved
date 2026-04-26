@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-import { setupDevPlatform } from '@cloudflare/next-on-pages/next-dev';
+// import { setupDevPlatform } from '@cloudflare/next-on-pages/next-dev';
 
 const nextConfig = {
   // Cloudflare Pages butuh runtime edge untuk Server Actions agar bisa akses D1/R2
@@ -7,8 +7,8 @@ const nextConfig = {
 };
 
 // Hanya panggil setupDevPlatform saat development
-if (process.env.NODE_ENV === 'development') {
-  await setupDevPlatform();
-}
+// if (process.env.NODE_ENV === 'development') {
+//   await setupDevPlatform();
+// }
 
 export default nextConfig;

@@ -11,16 +11,20 @@ export default function middleware(req) {
                    cookies.get("__Secure-authjs.session-token");
 
   const isLoginPage = nextUrl.pathname === '/login';
+  const isPublicPage = nextUrl.pathname === '/' || 
+                       nextUrl.pathname.startsWith('/catalog') || 
+                       nextUrl.pathname.startsWith('/product/');
+  
   const isPublicFile = nextUrl.pathname.startsWith('/_next') || 
                        nextUrl.pathname.includes('/api/auth') ||
                        nextUrl.pathname.includes('favicon.ico');
 
-  // 1. Biarkan akses ke halaman login atau file publik
-  if (isLoginPage || isPublicFile) {
+  // 1. Biarkan akses ke halaman login, halaman publik, atau file publik
+  if (isLoginPage || isPublicPage || isPublicFile) {
     return NextResponse.next();
   }
 
-  // 2. Jika tidak ada token, paksa redirect ke /login untuk SEMUA route lain
+  // 2. Jika tidak ada token, paksa redirect ke /login untuk rute terproteksi (Dashboard/Admin)
   if (!hasToken) {
     console.log(`[Middleware Strict] Unauthorized access to ${nextUrl.pathname}, redirecting to /login`);
     return NextResponse.redirect(new URL('/login', nextUrl));
