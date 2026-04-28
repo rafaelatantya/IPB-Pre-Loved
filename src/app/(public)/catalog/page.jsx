@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronRight, Leaf, LayoutGrid, X, ChevronDown, Check, ChevronLeft, Search } from "lucide-react";
+import { Search, ChevronDown, Check, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import ProductCard from "@/modules/catalog/components/ProductCard";
 
 const DUMMY_CATALOG = [
@@ -16,38 +16,42 @@ const DUMMY_CATALOG = [
 ];
 
 const CATEGORY_OPTIONS = [
-  { label: "All Items", value: "" },
-  { label: "Buku", value: "BUKU" },
-  { label: "Electronics", value: "ELECTRONICS" },
-  { label: "Dorm Essentials", value: "DORM ESSENTIALS" },
+  { label: "Buku & Modul", value: "BUKU" },
+  { label: "Elektronik", value: "ELECTRONICS" },
+  { label: "Kebutuhan Kost", value: "DORM ESSENTIALS" },
+  { label: "Peralatan Praktikum", value: "PERALATAN PRAKTIKUM" },
   { label: "Fashion", value: "FASHION" }
 ];
 
-const LOCATION_OPTIONS = ["DRAMAGA", "BARANANGSIANG", "GUNUNG GEDE"];
+const CONDITION_OPTIONS = [
+  { label: "Baru", value: "BARU" },
+  { label: "Like New", value: "LIKE NEW" },
+  { label: "Baik", value: "BAIK" },
+  { label: "Cukup", value: "CUKUP" }
+];
 
 function CatalogContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Parse current URL params
+  const searchQueryParam = searchParams.get("search") || "";
   const activeCategory = searchParams.get("category") || "";
-  const activeLocations = searchParams.get("location")?.split(",").filter(Boolean) || [];
+  const activeConditions = searchParams.get("condition")?.split(",").filter(Boolean) || [];
   const minPriceParam = searchParams.get("minPrice") || "";
   const maxPriceParam = searchParams.get("maxPrice") || "";
   const sortParam = searchParams.get("sort") || "terbaru";
 
-  // Local state for price inputs
+  const [searchQuery, setSearchQuery] = useState(searchQueryParam);
   const [minPrice, setMinPrice] = useState(minPriceParam);
   const [maxPrice, setMaxPrice] = useState(maxPriceParam);
 
-  // Sync local state when URL changes
   useEffect(() => {
     setMinPrice(minPriceParam);
     setMaxPrice(maxPriceParam);
-  }, [minPriceParam, maxPriceParam]);
+    setSearchQuery(searchQueryParam);
+  }, [minPriceParam, maxPriceParam, searchQueryParam]);
 
-  // Helper to update URL params
   const updateQueryParam = (key, value) => {
     const params = new URLSearchParams(searchParams);
     if (value) {
@@ -58,26 +62,36 @@ function CatalogContent() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Click Handlers
-  const handleCategoryClick = (val) => updateQueryParam("category", val);
+  const handleSearch = () => updateQueryParam("search", searchQuery);
 
-  const handleLocationToggle = (loc) => {
-    let newLocations = [...activeLocations];
-    if (newLocations.includes(loc)) {
-      newLocations = newLocations.filter(l => l !== loc);
+  const handleCategoryClick = (val) => {
+    if (activeCategory === val) {
+      updateQueryParam("category", "");
     } else {
-      newLocations.push(loc);
+      updateQueryParam("category", val);
     }
-    updateQueryParam("location", newLocations.join(","));
   };
 
-  const handleApplyPrice = () => {
+  const handleConditionToggle = (cond) => {
+    let newConditions = [...activeConditions];
+    if (newConditions.includes(cond)) {
+      newConditions = newConditions.filter(c => c !== cond);
+    } else {
+      newConditions.push(cond);
+    }
+    updateQueryParam("condition", newConditions.join(","));
+  };
+
+  const handleApplyFilters = () => {
     const params = new URLSearchParams(searchParams);
     if (minPrice) params.set("minPrice", minPrice);
     else params.delete("minPrice");
     
     if (maxPrice) params.set("maxPrice", maxPrice);
     else params.delete("maxPrice");
+
+    if (searchQuery) params.set("search", searchQuery);
+    else params.delete("search");
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
@@ -86,149 +100,83 @@ function CatalogContent() {
     router.push(pathname, { scroll: false });
   };
 
-  const handleRemoveFilter = (key, valueToRemove) => {
-    if (key === "location") {
-      handleLocationToggle(valueToRemove);
-    } else {
-      updateQueryParam(key, "");
-    }
-  };
-
-  // Apply filters to data
+  // Filter Data
   let filteredCatalog = DUMMY_CATALOG.filter((item) => {
+    if (searchQueryParam && !item.title.toLowerCase().includes(searchQueryParam.toLowerCase())) return false;
     if (activeCategory && item.category !== activeCategory) return false;
-    if (activeLocations.length > 0 && !activeLocations.includes(item.location)) return false;
+    if (activeConditions.length > 0 && !activeConditions.includes(item.condition)) return false;
     if (minPriceParam && item.price < parseInt(minPriceParam)) return false;
     if (maxPriceParam && item.price > parseInt(maxPriceParam)) return false;
     return true;
   });
 
-  // Apply sorting
+  // Sort Data
   if (sortParam === "termurah") {
     filteredCatalog.sort((a, b) => a.price - b.price);
   } else if (sortParam === "termahal") {
     filteredCatalog.sort((a, b) => b.price - a.price);
   } else {
-    // terbaru (default array order / reverse id)
     filteredCatalog.sort((a, b) => parseInt(b.id) - parseInt(a.id));
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 md:px-8">
-      {/* Top Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-[#5C6060] font-medium mb-4">
-          <Link href="/" className="hover:text-[#303334] transition">Beranda</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-[#303334]">Katalog</span>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-extrabold text-[#303334] mb-2 tracking-tight">Telusuri Produk</h1>
-            <p className="text-[#5C6060] font-medium text-base">Temukan barang berkualitas dari rekan mahasiswa IPB.</p>
-          </div>
-          
-          <div className="flex-shrink-0">
-            <div className="px-4 py-2 bg-[#B9EEAB] rounded-full flex items-center gap-2 shadow-sm">
-              <Leaf className="w-4 h-4 text-[#2D5A27]" />
-              <span className="text-[#2D5A27] text-xs font-bold tracking-wide uppercase">GREEN CAMPUS INITIATIVE</span>
-            </div>
+    <div className="w-full relative bg-gradient-to-t from-[#F9F9F9] to-white flex flex-col items-center">
+      
+      {/* Search Bar Section */}
+      <div className="w-full bg-[#F8FAFC] py-4 px-6 md:px-10 flex justify-center border-b border-[#E2E8F0]">
+        <div className="w-full max-w-[1440px] flex justify-center">
+          <div className="w-full max-w-[800px] h-12 px-4 bg-white shadow-md rounded-lg flex items-center">
+            <Search className="w-[18px] h-[18px] text-[#777777] mr-3" />
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="SEARCH CATALOG..." 
+              className="flex-1 bg-transparent border-none outline-none text-[#777777] text-xs font-normal font-['Inter'] uppercase tracking-[1.20px]"
+            />
+            <button 
+              onClick={handleSearch}
+              className="ml-4 px-4 py-2 bg-[#2563EB] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-md flex justify-center items-center hover:bg-blue-700 transition"
+            >
+              <span className="text-[#F0FDF4] text-xs font-semibold font-['Poppins'] leading-[14.40px]">Cari Barang</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      {/* Main Layout */}
+      <div className="w-full max-w-[1440px] px-6 md:px-10 py-12 bg-[#F8FAFC] flex flex-col lg:flex-row gap-12">
         
-        {/* Sidebar */}
-        <aside className="w-full lg:w-72 flex-shrink-0 bg-[#F4F3F3] rounded-2xl p-6 flex flex-col gap-8">
+        {/* Sidebar Filters */}
+        <aside className="w-full lg:w-72 flex-shrink-0 bg-transparent flex flex-col gap-8">
           
-          {/* Categories */}
+          <div className="w-full pb-3 flex justify-between items-end">
+            <h2 className="text-black text-xl font-extrabold tracking-tight">Filters</h2>
+            <button onClick={handleResetFilters} className="text-[#2563EB] text-sm font-semibold hover:underline">
+              Reset
+            </button>
+          </div>
+
+          {/* Kategori */}
           <div>
-            <h3 className="text-[#303334] text-sm font-bold tracking-[1.4px] uppercase mb-4">CATEGORIES</h3>
+            <h3 className="text-[#303334] text-sm font-bold tracking-[1.4px] uppercase mb-4">KATEGORI</h3>
             <div className="flex flex-col gap-3">
               {CATEGORY_OPTIONS.map((cat) => {
                 const isActive = activeCategory === cat.value;
                 return (
-                  <label key={cat.label} className="flex items-center gap-3 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="category"
-                      className="hidden" 
-                      checked={isActive} 
-                      onChange={() => handleCategoryClick(cat.value)}
-                    />
-                    {isActive ? (
-                       <div className="w-4 h-4 rounded-[4px] bg-[#5F5E5E] shadow-sm transition"></div>
-                    ) : (
-                       <div className="w-4 h-4 rounded-[4px] bg-[#D1D5DB] group-hover:bg-[#9CA3AF] transition shadow-sm"></div>
-                    )}
-                    <span className={`text-sm font-medium transition ${isActive ? 'text-[#303334]' : 'text-[#5C6060] group-hover:text-[#303334]'}`}>
+                  <label 
+                    key={cat.value} 
+                    className="flex items-center gap-3 cursor-pointer group"
+                    onClick={() => handleCategoryClick(cat.value)}
+                  >
+                    <div className={`w-5 h-5 rounded-[4px] flex justify-center items-center shadow-sm transition-all ${isActive ? 'bg-[#2563EB]' : 'bg-white border border-[#2563EB] group-hover:bg-blue-50'}`}>
+                       {isActive && (
+                          <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                       )}
+                    </div>
+                    <span className={`text-sm font-medium transition-colors ${isActive ? 'text-black font-bold' : 'text-[#5C6060] group-hover:text-black'}`}>
                       {cat.label}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Price Range */}
-          <div>
-            <h3 className="text-[#303334] text-sm font-bold tracking-[1.4px] uppercase mb-4">PRICE RANGE</h3>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 flex flex-col gap-2">
-                <span className="text-[#5C6060] text-[10px] font-bold">MIN</span>
-                <div className="bg-white rounded-lg px-3 py-2.5 shadow-sm border border-gray-100 flex items-center">
-                   <span className="text-[#6B7280] font-medium text-sm mr-1">Rp</span>
-                   <input 
-                     type="number" 
-                     value={minPrice} 
-                     onChange={(e) => setMinPrice(e.target.value)}
-                     className="w-full text-[#303334] text-sm font-medium bg-transparent border-none outline-none p-0" 
-                     placeholder="0"
-                   />
-                </div>
-              </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <span className="text-[#5C6060] text-[10px] font-bold">MAX</span>
-                <div className="bg-white rounded-lg px-3 py-2.5 shadow-sm border border-gray-100 flex items-center">
-                   <span className="text-[#6B7280] font-medium text-sm mr-1">Rp</span>
-                   <input 
-                     type="number" 
-                     value={maxPrice} 
-                     onChange={(e) => setMaxPrice(e.target.value)}
-                     className="w-full text-[#303334] text-sm font-medium bg-transparent border-none outline-none p-0" 
-                     placeholder="5jt+"
-                   />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Location */}
-          <div>
-            <h3 className="text-[#303334] text-sm font-bold tracking-[1.4px] uppercase mb-4">LOCATION</h3>
-            <div className="flex flex-col gap-3">
-              {LOCATION_OPTIONS.map((loc) => {
-                const isActive = activeLocations.includes(loc);
-                return (
-                  <label key={loc} className="flex items-center gap-3 cursor-pointer group">
-                    <input 
-                      type="checkbox" 
-                      className="hidden" 
-                      checked={isActive} 
-                      onChange={() => handleLocationToggle(loc)}
-                    />
-                    {isActive ? (
-                       <div className="w-5 h-5 rounded md bg-[#5F5E5E] flex items-center justify-center shadow-sm transition">
-                         <Check className="w-3.5 h-3.5 text-white" />
-                       </div>
-                    ) : (
-                       <div className="w-5 h-5 rounded border border-[#B0B2B3] bg-white group-hover:border-gray-500 transition shadow-sm"></div>
-                    )}
-                    <span className={`text-sm font-medium transition ${isActive ? 'text-[#303334]' : 'text-[#5C6060] group-hover:text-[#303334]'}`}>
-                      {loc.charAt(0) + loc.slice(1).toLowerCase()}
                     </span>
                   </label>
                 )
@@ -236,127 +184,156 @@ function CatalogContent() {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-3 pt-2">
-            <button onClick={handleApplyPrice} className="w-full py-3 bg-[#5F5E5E] text-[#FAF7F6] font-bold rounded-xl shadow-sm hover:bg-[#4a4a4a] transition">
-              Apply Filters
-            </button>
-            <button onClick={handleResetFilters} className="w-full py-3 text-[#5C6060] text-xs font-bold hover:text-[#303334] transition">
-              Reset all filters
-            </button>
+          {/* Harga */}
+          <div>
+            <h3 className="text-[#303334] text-sm font-bold tracking-[1.4px] uppercase mb-4">HARGA</h3>
+            
+            {/* Price Inputs */}
+            <div className="flex items-center gap-3">
+               <div className="flex-1 flex flex-col gap-2">
+                  <span className="text-[#5C6060] text-[10px] font-bold">MIN</span>
+                  <div className="bg-white rounded-lg px-3 py-2.5 shadow-sm border border-[#2563EB]/20 flex items-center">
+                    <span className="text-black text-sm font-normal mr-1">Rp</span>
+                    <input 
+                      type="number" 
+                      value={minPrice} 
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      className="w-full bg-transparent border-none outline-none text-black text-sm font-medium"
+                      placeholder="0"
+                    />
+                  </div>
+               </div>
+               <div className="flex-1 flex flex-col gap-2">
+                  <span className="text-[#5C6060] text-[10px] font-bold">MAX</span>
+                  <div className="bg-white rounded-lg px-3 py-2.5 shadow-sm border border-[#2563EB]/20 flex items-center">
+                    <span className="text-black text-sm font-normal mr-1">Rp</span>
+                    <input 
+                      type="number" 
+                      value={maxPrice} 
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-full bg-transparent border-none outline-none text-black text-sm font-medium"
+                      placeholder="500k"
+                    />
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          {/* Kondisi */}
+          <div>
+            <h3 className="text-[#303334] text-sm font-bold tracking-[1.4px] uppercase mb-4">KONDISI</h3>
+            <div className="flex flex-col gap-3">
+              {CONDITION_OPTIONS.map((cond) => {
+                const isActive = activeConditions.includes(cond.value);
+                return (
+                  <label 
+                    key={cond.value} 
+                    className="flex items-center gap-3 cursor-pointer group"
+                    onClick={() => handleConditionToggle(cond.value)}
+                  >
+                    <div className={`w-5 h-5 rounded-[4px] flex justify-center items-center shadow-sm transition-all ${isActive ? 'bg-[#2563EB]' : 'bg-white border border-[#2563EB] group-hover:bg-blue-50'}`}>
+                       {isActive && (
+                          <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                       )}
+                    </div>
+                    <span className={`text-sm font-medium transition-colors ${isActive ? 'text-black font-bold' : 'text-[#5C6060] group-hover:text-black'}`}>
+                      {cond.label}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Apply Button */}
+          <div className="pt-2">
+             <button 
+               onClick={handleApplyFilters} 
+               className="w-full py-3 bg-[#2563EB] text-white font-bold rounded-xl shadow-sm hover:bg-blue-700 transition"
+             >
+               Apply Filters
+             </button>
           </div>
 
         </aside>
 
-        {/* Right Content */}
-        <div className="flex-1 flex flex-col gap-6 w-full">
+        {/* Right Content / Product Grid */}
+        <div className="flex-1 flex flex-col gap-8 w-full max-w-[852px]">
           
-          {/* Top Bar (Active filters & sort) */}
-          <div className="bg-[#F4F3F3] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Top Bar (Count & Sort) */}
+          <div className="w-full pb-4 border-b border-[#020617] flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-black text-lg font-semibold font-['Poppins'] leading-[21.60px]">
+                {filteredCatalog.length}
+              </span>
+              <span className="text-[#777777] text-base font-normal font-['Poppins'] leading-[19.20px]">
+                ITEMS FOUND
+              </span>
+            </div>
             
-            <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-[#303334] text-sm font-bold">Menampilkan {filteredCatalog.length} produk</span>
-              
-              {(activeCategory || activeLocations.length > 0 || minPriceParam || maxPriceParam) && (
-                <div className="hidden sm:block w-px h-5 bg-[#B0B2B3]"></div>
-              )}
-              
-              {/* Active Filters Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {activeCategory && (
-                  <button onClick={() => handleRemoveFilter("category")} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 transition">
-                    <span className="text-[#303334] text-[11px] font-bold">{CATEGORY_OPTIONS.find(c => c.value === activeCategory)?.label || activeCategory}</span>
-                    <X className="w-3 h-3 text-[#303334]" />
-                  </button>
-                )}
-                {activeLocations.map((loc) => (
-                  <button key={loc} onClick={() => handleRemoveFilter("location", loc)} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 transition">
-                    <span className="text-[#303334] text-[11px] font-bold">{loc.charAt(0) + loc.slice(1).toLowerCase()}</span>
-                    <X className="w-3 h-3 text-[#303334]" />
-                  </button>
-                ))}
-                {minPriceParam && (
-                  <button onClick={() => handleRemoveFilter("minPrice")} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 transition">
-                    <span className="text-[#303334] text-[11px] font-bold">Min: Rp {parseInt(minPriceParam).toLocaleString('id-ID')}</span>
-                    <X className="w-3 h-3 text-[#303334]" />
-                  </button>
-                )}
-                {maxPriceParam && (
-                  <button onClick={() => handleRemoveFilter("maxPrice")} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 transition">
-                    <span className="text-[#303334] text-[11px] font-bold">Max: Rp {parseInt(maxPriceParam).toLocaleString('id-ID')}</span>
-                    <X className="w-3 h-3 text-[#303334]" />
-                  </button>
-                )}
-              </div>
+            <div className="flex items-center gap-4">
+               <span className="text-[#777777] text-sm font-normal font-['Poppins'] leading-[16.80px]">SORT BY</span>
+               <div className="relative">
+                  <select 
+                    value={sortParam}
+                    onChange={(e) => updateQueryParam("sort", e.target.value)}
+                    className="appearance-none flex items-center px-4 py-2 bg-transparent border border-[#2563EB] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-md text-[#2563EB] text-xs font-semibold font-['Poppins'] leading-[14.40px] pr-10 outline-none cursor-pointer"
+                  >
+                    <option value="terbaru">Terbaru</option>
+                    <option value="termurah">Termurah</option>
+                    <option value="termahal">Termahal</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                     <ChevronDown className="w-4 h-4 text-[#2563EB]" strokeWidth={3} />
+                  </div>
+               </div>
             </div>
-
-            {/* Sort By */}
-            <div className="flex items-center gap-3">
-              <span className="text-[#5C6060] text-xs font-bold tracking-wider uppercase">SORT BY:</span>
-              <div className="relative">
-                <select 
-                  value={sortParam}
-                  onChange={(e) => updateQueryParam("sort", e.target.value)}
-                  className="appearance-none flex items-center py-2 pl-4 pr-10 bg-transparent border border-transparent hover:border-gray-300 rounded-xl transition text-[#303334] text-sm font-bold outline-none cursor-pointer"
-                >
-                  <option value="terbaru">Terbaru</option>
-                  <option value="termurah">Termurah</option>
-                  <option value="termahal">Termahal</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-
           </div>
 
           {/* Product Grid */}
           {filteredCatalog.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
               {filteredCatalog.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                  <Search className="w-6 h-6 text-gray-400" />
                </div>
                <h3 className="text-lg font-bold text-[#303334] mb-2">Tidak ada produk ditemukan</h3>
-               <p className="text-[#5C6060] text-sm max-w-sm">Coba sesuaikan filter kategori, lokasi, atau rentang harga untuk menemukan produk yang lo cari.</p>
-               <button onClick={handleResetFilters} className="mt-6 px-6 py-2 bg-[#F4F3F3] text-[#303334] font-bold rounded-xl hover:bg-gray-200 transition">
+               <p className="text-[#5C6060] text-sm max-w-sm mb-6">Coba sesuaikan filter kategori, kondisi, atau rentang harga.</p>
+               <button onClick={handleResetFilters} className="px-6 py-2 bg-[#F4F3F3] text-[#303334] font-bold rounded-xl hover:bg-gray-200 transition">
                  Reset Filter
                </button>
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination Mockup */}
           {filteredCatalog.length > 0 && (
-            <div className="pt-8 flex justify-center">
-              <div className="flex items-center gap-2 p-2 bg-[#F4F3F3] rounded-2xl">
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-[#5C6060] hover:bg-gray-200 transition">
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#5F5E5E] text-[#FAF7F6] font-bold shadow-sm">
+            <div className="w-full pt-8 border-t border-[#020617] flex justify-center items-center gap-2">
+               <button className="w-10 h-10 bg-white border border-[#C6C6C6] flex justify-center items-center hover:bg-gray-50 transition">
+                  <ChevronLeft className="w-4 h-4 text-black" strokeWidth={3} />
+               </button>
+               <button className="w-10 h-10 bg-black border border-black flex justify-center items-center text-white text-sm font-bold font-['Inter'] leading-tight">
                   1
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-[#5C6060] font-bold hover:bg-gray-200 transition">
+               </button>
+               <button className="w-10 h-10 bg-white border border-[#C6C6C6] flex justify-center items-center text-black text-sm font-medium font-['Inter'] leading-tight hover:bg-gray-50 transition">
                   2
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-[#5C6060] font-bold hover:bg-gray-200 transition">
+               </button>
+               <button className="w-10 h-10 bg-white border border-[#C6C6C6] flex justify-center items-center text-black text-sm font-medium font-['Inter'] leading-tight hover:bg-gray-50 transition">
                   3
-                </button>
-                <div className="px-2 text-[#5C6060]">...</div>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-[#5C6060] font-bold hover:bg-gray-200 transition">
-                  12
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-[#5C6060] hover:bg-gray-200 transition">
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+               </button>
+               <span className="px-2 text-[#777777] text-base font-normal font-['Inter'] leading-normal">...</span>
+               <button className="w-10 h-10 bg-white border border-[#C6C6C6] flex justify-center items-center hover:bg-gray-50 transition">
+                  <ChevronRight className="w-4 h-4 text-black" strokeWidth={3} />
+               </button>
             </div>
           )}
 
         </div>
+
       </div>
     </div>
   );
@@ -364,14 +341,12 @@ function CatalogContent() {
 
 export default function CatalogPage() {
   return (
-    <div className="bg-[#FBF9F9] min-h-screen pt-24 pb-20 font-sans">
-      <Suspense fallback={
-        <div className="min-h-[50vh] flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-[#3C6A35] border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      }>
-        <CatalogContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <CatalogContent />
+    </Suspense>
   );
 }
