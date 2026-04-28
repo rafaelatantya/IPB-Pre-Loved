@@ -17,7 +17,7 @@ export default function middleware(req) {
   
   const isPublicFile = nextUrl.pathname.startsWith('/_next') || 
                        nextUrl.pathname.includes('/api/auth') ||
-                       nextUrl.pathname.includes('favicon.ico');
+                       nextUrl.pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|ico)$/);
 
   // 1. Biarkan akses ke halaman login, halaman publik, atau file publik
   if (isLoginPage || isPublicPage || isPublicFile) {
@@ -34,6 +34,6 @@ export default function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
 

@@ -13,8 +13,8 @@ Ini adalah inti dari *IPB Pre-Loved* bagian publik.
 - [x] **Setup Navbar & Footer UI** (`Navbar.jsx` & `Footer.jsx`).
 - [x] **Bikin Landing Page / Beranda** (`src/app/(public)/page.jsx`).
 - [x] **Bikin Halaman Katalog Utama** (`src/app/(public)/catalog/page.jsx`).
-- [ ] **Logika Pencarian & Filter Katalog**: Hook `SearchBar` dan `FilterSidebar` menggunakan `useSearchParams` bawaan NextJS biar kalau user ngetik atau nge-klik filter, URL-nya berubah dan barangnya ikut ke-*filter*.
-- [ ] **Halaman Detail Produk Dinamis** (`src/app/(public)/product/[id]/page.jsx`): Tampilan saat barang diklik. Wajib ada gambar produk, info penjual, deskripsi, harga, dan tombol "Hubungi Penjual".
+- [x] **Logika Pencarian & Filter Katalog**: Hook `SearchBar` dan `FilterSidebar` menggunakan `useSearchParams` bawaan NextJS biar kalau user ngetik atau nge-klik filter, URL-nya berubah dan barangnya ikut ke-*filter*.
+- [x] **Halaman Detail Produk Dinamis** (`src/app/(public)/product/[id]/page.jsx`): Tampilan saat barang diklik. Wajib ada gambar produk, info penjual, deskripsi, harga, dan tombol "Hubungi Penjual".
 - [ ] **Fungsi Tombol WhatsApp** (`src/lib/whatsapp.js`): Bikin *helper function* buat ngirim pesan rapi ke WA penjual (contoh: *"Halo kak, saya tertarik beli barang X..."*). Pasang ini di tombol "Hubungi Penjual" yang ada di Halaman Detail Produk.
 
 ---
@@ -22,10 +22,10 @@ Ini adalah inti dari *IPB Pre-Loved* bagian publik.
 ## 🟡 Prioritas Menengah (Penting untuk Fitur & Autentikasi)
 Bagian ini berkaitan dengan interaksi user (*micro-interactions*) dan state pas user udah *Login*.
 
-- [ ] **Dropdown Navbar (State Login)**: Kalau user udah login, ganti tombol "Masuk" di *Navbar* jadi *Avatar Profil* yang pas diklik muncul menu *dropdown* "Menuju Dashboard Penjual" (nanti di-link ke area Frontend B).
+- [x] **Dropdown Navbar (State Login)**: Kalau user udah login, ganti tombol "Masuk" di *Navbar* jadi *Avatar Profil* yang pas diklik muncul menu *dropdown* "Menuju Dashboard Penjual" (nanti di-link ke area Frontend B).
 - [ ] **Halaman Wishlist** (`src/app/(public)/wishlist/page.jsx`): Tampilan bentuk *grid* biasa dari barang-barang yang user *like* /*save*.
 - [ ] **Logika Tombol Hati (Wishlist)**: Di dalam `ProductCard` dan *Halaman Detail Produk*, bikin tombol hati bisa aktif/nonaktif pas diklik. (Sementara pakai *state* lokal aja sebelum databasenya siap).
-- [ ] **Tampilan "Empty State" (Pencarian Kosong)**: Bikin desain visual kecil kalau pas nge-*search* nama barang, ternyata barangnya nggak ada di *array*.
+- [x] **Tampilan "Empty State" (Pencarian Kosong)**: Bikin desain visual kecil kalau pas nge-*search* nama barang, ternyata barangnya nggak ada di *array*.
 
 ---
 
