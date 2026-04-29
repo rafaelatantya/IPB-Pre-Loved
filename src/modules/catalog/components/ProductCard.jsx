@@ -1,63 +1,56 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, MapPin, Tag } from "lucide-react";
 
 const ProductCard = ({ product }) => {
-  const categoryName = product.category?.name || product.category || 'BARANG BEKAS';
-  const sellerName = product.sellerName || "Mhs IPB";
-
   return (
-    <Link href={`/product/${product.id}`} className="group w-full max-w-[268px] mx-auto md:mx-0">
-      <div className="bg-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] flex flex-col items-start transition-transform duration-300 hover:scale-[1.02]">
-        
-        {/* Image Section */}
-        <div className="w-full h-[200px] relative flex flex-col overflow-hidden">
-          <img 
-            src={product.image} 
-            alt={product.title}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="relative z-10 w-full p-4 flex justify-between items-start">
-            {/* Category Badge */}
-            <div className="h-[22px] px-2 py-0.5 bg-[#2563EB] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-[36px] flex justify-center items-center">
-              <span className="text-[#F0FDF4] text-xs font-semibold font-['Poppins'] leading-[14.40px]">
-                {categoryName.toUpperCase()}
-              </span>
-            </div>
-
-            {/* Heart Button */}
-            <div className="w-8 h-8 bg-[#EF4444] rounded-full flex justify-center items-center shadow-sm hover:bg-red-600 transition-colors">
-               <Heart className="w-[15px] h-[14px] text-white fill-white" />
-            </div>
+    <Link href={`/product/${product.id}`} className="group bg-white border border-[#E2E8F0] overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full">
+      {/* Image Container */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+        <img 
+          src={product.image} 
+          alt={product.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute top-3 right-3">
+          <button 
+            className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 transition-colors shadow-sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <Heart className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="absolute bottom-3 left-3">
+          <div className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded text-[10px] font-bold text-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+            <Tag className="w-3 h-3" />
+            {product.category}
           </div>
         </div>
+      </div>
 
-        {/* Info Section */}
-        <div className="w-full p-4 bg-white border-t border-[#C6C6C6] flex flex-col gap-2">
-          <div className="w-full overflow-hidden">
-             <h3 className="text-black text-sm font-semibold font-['Poppins'] leading-[16.80px] line-clamp-2">
-               {product.title}
-             </h3>
-          </div>
-          
-          <div className="w-full pt-2 flex justify-between items-center">
-             <div className="text-black text-xl font-semibold font-['Poppins'] leading-normal">
-               Rp {product.price.toLocaleString('id-ID')}
-             </div>
-             <div className="h-[22px] px-2 py-0.5 bg-[#DCFCE7] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-[36px] flex justify-center items-center">
-                <span className="text-[#16A34A] text-xs font-semibold font-['Poppins'] leading-[14.40px]">
-                  {product.condition}
-                </span>
-             </div>
-          </div>
-
-          <div className="w-full overflow-hidden mt-1">
-             <p className="text-[#64748B] text-xs font-semibold font-['Poppins'] leading-[14.40px]">
-               {sellerName}
-             </p>
-          </div>
+      {/* Content */}
+      <div className="p-4 flex flex-col flex-1 gap-2">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-black text-sm font-semibold line-clamp-1 group-hover:text-blue-600 transition-colors uppercase tracking-tight">
+            {product.title}
+          </h3>
+          <p className="text-blue-600 text-lg font-bold">
+            Rp {product.price.toLocaleString("id-ID")}
+          </p>
         </div>
-        
+
+        <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between text-[10px] text-gray-500 font-medium uppercase tracking-widest">
+          <div className="flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            {product.location}
+          </div>
+          <span>{product.timePosted || "Baru"}</span>
+        </div>
       </div>
     </Link>
   );

@@ -1,218 +1,242 @@
-import React from "react";
-import Link from "next/link";
-import { MessageCircle, Heart, MapPin, AlertCircle } from "lucide-react";
+"use client";
 
-export const runtime = 'edge';
+import React, { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { 
+  Heart, 
+  MessageCircle, 
+  MapPin, 
+  ShieldCheck, 
+  ArrowLeft, 
+  Tag, 
+  Clock, 
+  Share2,
+  CheckCircle2,
+  Info
+} from "lucide-react";
+import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";
 
-// Mock Product Data
-const DUMMY_PRODUCT = {
+// Mock Data untuk Detail
+const PRODUCT_DETAIL = {
   id: "1",
-  title: "Laptop Asus Vivobook S14",
-  price: 4250000,
-  condition: "Like New",
-  category: "ELEKTRONIK",
-  location: "Dramaga",
-  timePosted: "2 days ago",
-  images: [
-    "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1603302576837-37561b2e2302?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop",
-  ],
-  description: "Halo kawan-kawan! Mau jual laptop pegangan wajib nih buat yang lagi ngambil matkul pemrograman atau struktur data. Isinya ngebahas fondasi logika, array, linked list, sampai sorting yang diimplementasiin langsung pakai bahasa pemrograman Java. Cocok banget buat anak SSMI yang lagi butuh referensi tambahan selain slide dosen.\n\nMinus Barang: Ada bekas stiker di bagian bawah casing.\nAlasan Jual: Udah lulus matkulnya semester kemaren dan lagi mau decluttering biar agak lega.\nLokasi COD: Bisa ketemuan langsung di sekitaran Kantin Cyber, Perpustakaan LSI, atau depan Grha Widya Wisuda (GWW).",
+  title: "Jas Laboratorium Ukuran L - Kondisi Sangat Baik",
+  price: 80000,
+  category: "PRAKTIKUM",
+  condition: "BAIK",
+  location: "DRAMAGA, BOGOR",
+  timePosted: "2 HARI LALU",
   seller: {
-    name: "Andi (Mahasiswa IPB)",
+    name: "Andi Mahasiswa",
+    joined: "SEPTEMBER 2023",
     verified: true,
-    joined: "2023",
-    status: "Student",
-    replyTime: "Typically replies in 1-2 hours",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop"
-  }
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200",
+    rating: 4.8,
+    totalSales: 12
+  },
+  description: "Jas laboratorium warna putih, ukuran L. Baru dipakai 1 semester untuk praktikum Kimia Dasar. Kondisi masih sangat putih, tidak ada noda kimia yang membekas, kancing lengkap. \n\nCocok untuk mahasiswa baru yang mencari perlengkapan praktikum dengan harga terjangkau. Bahan kain tebal dan nyaman dipakai lama di lab.",
+  images: [
+    "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=800",
+    "https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=800",
+    "https://images.unsplash.com/photo-1581093450021-4a7360e9a6b5?q=80&w=800"
+  ],
+  specs: [
+    { label: "UKURAN", value: "L (LARGE)" },
+    { label: "BAHAN", value: "KATUN DRILL" },
+    { label: "WARNA", value: "PUTIH BERSIH" }
+  ]
 };
 
-const DUMMY_RECOMMENDATIONS = [
-  { id: "101", title: "iPad Air 4 64GB Silver", price: 5100000, condition: "LIKE NEW", category: "ELECTRONICS", image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=500&auto=format&fit=crop", location: "BABAKAN", timePosted: "3 HARI LALU" },
-  { id: "102", title: "Sony WH-1000XM4 Mulus", price: 2450000, condition: "BAIK", category: "ELECTRONICS", image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=500&auto=format&fit=crop", location: "DRAMAGA", timePosted: "5 JAM LALU" },
-  { id: "103", title: "Backpack Tigernu Waterproof", price: 250000, condition: "CUKUP", category: "FASHION", image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=500&auto=format&fit=crop", location: "CILIBENDE", timePosted: "1 MINGGU LALU" },
-  { id: "104", title: "Logitech MX Master 2S", price: 650000, condition: "LIKE NEW", category: "ELECTRONICS", image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=500&auto=format&fit=crop", location: "DRAMAGA", timePosted: "1 HARI LALU" },
+const RECOMMENDED = [
+  { id: "4", title: "Buku Kalkulus Edisi 9", price: 150000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop", location: "BABAKAN" },
+  { id: "8", title: "Modul Praktikum Fisika", price: 25000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA" },
 ];
 
 export default function ProductDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const [activeImage, setActiveImage] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
   return (
-    <div className="w-full relative bg-gradient-to-t from-[#F9F9F9] to-white flex flex-col items-center">
+    <div className="w-full min-h-screen bg-white font-sans">
       
-      {/* Product Detail Layout */}
-      <div className="w-full max-w-[1440px] px-6 md:px-10 py-8 md:py-12 bg-[#F8FAFC] flex flex-col gap-10">
-        
-        {/* Breadcrumb */}
-        <div className="w-full flex justify-start items-center gap-2 mt-4 md:mt-0">
-            <Link href="/catalog" className="text-[#777777] text-sm font-normal font-['Poppins'] leading-[16.80px] hover:text-black transition">
-              KATALOG
-            </Link>
-            <div className="w-[4.32px] h-[7px] bg-[#777777]" />
-            <div className="text-[#020617] text-sm font-normal font-['Poppins'] leading-[16.80px]">
-              PRODUCT DETAIL
-            </div>
-        </div>
-
-        {/* Main 2-Column Grid */}
-        <div className="w-full flex flex-col lg:flex-row gap-10 items-start">
-            
-            {/* Left Column (Images & Description) */}
-            <div className="flex-1 flex flex-col gap-6 w-full">
-                
-                {/* Images */}
-                <div className="flex flex-col gap-6 w-full">
-                    <div className="w-full aspect-[4/3] md:h-[510px] bg-gray-100 border border-[#C6C6C6] relative overflow-hidden flex justify-center items-center group">
-                        <img 
-                          src={DUMMY_PRODUCT.images[0]} 
-                          alt={DUMMY_PRODUCT.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 gap-4 w-full h-[80px] md:h-[158px]">
-                        <div className="h-full bg-gray-100 border border-[#C6C6C6] overflow-hidden cursor-pointer hover:border-black transition-colors">
-                           <img src={DUMMY_PRODUCT.images[1]} alt="thumb 1" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="h-full bg-gray-100 border border-[#C6C6C6] overflow-hidden cursor-pointer hover:border-black transition-colors">
-                           <img src={DUMMY_PRODUCT.images[2]} alt="thumb 2" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="h-full bg-gray-100 border border-[#C6C6C6] overflow-hidden cursor-pointer hover:border-black transition-colors">
-                           <img src={DUMMY_PRODUCT.images[3]} alt="thumb 3" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="h-full bg-gray-800 border border-[#C6C6C6] flex justify-center items-center relative overflow-hidden cursor-pointer">
-                            <img src={DUMMY_PRODUCT.images[0]} alt="thumb 4" className="w-full h-full object-cover opacity-50 hover:opacity-40 transition-opacity" />
-                            <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-                              <span className="text-white text-base md:text-xl font-bold font-['Inter']">+3</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Description */}
-                <div className="w-full pt-8 flex flex-col">
-                    <div className="w-full pt-8 border-t border-[#C6C6C6] flex flex-col gap-6">
-                        <h2 className="text-black text-lg font-semibold font-['Poppins'] leading-[21.60px]">
-                          DESCRIPTION
-                        </h2>
-                        <div className="text-black text-base font-normal font-['Poppins'] leading-[19.20px] text-justify whitespace-pre-wrap">
-                          {DUMMY_PRODUCT.description}
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            {/* Right Column (Info & Actions) */}
-            <div className="w-full lg:w-[472px] flex flex-col gap-8 shrink-0 lg:sticky lg:top-24">
-                
-                {/* Header Info */}
-                <div className="flex flex-col gap-4">
-                    <div className="h-6 px-2.5 py-0.5 bg-[#ECFEFF] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-[36px] flex justify-center items-center gap-2 self-start">
-                        <div className="w-3 h-3 relative overflow-hidden flex justify-center items-center">
-                            <div className="w-2.5 h-2.5 bg-[#06B6D4] rounded-sm" />
-                        </div>
-                        <div className="text-[#06B6D4] text-xs font-semibold font-['Poppins'] leading-[14.40px]">
-                          Admin Verified
-                        </div>
-                    </div>
-                    <h1 className="text-black text-3xl md:text-[40px] font-semibold font-['Poppins'] leading-[1.2] md:leading-[48px]">
-                        {DUMMY_PRODUCT.title}
-                    </h1>
-                    <div className="text-black text-2xl font-normal font-['Poppins'] leading-[28.80px]">
-                        Rp {DUMMY_PRODUCT.price.toLocaleString('id-ID')}
-                    </div>
-                </div>
-
-                {/* Attributes Card */}
-                <div className="w-full p-6 bg-white border border-[#E2E8F0] flex flex-col gap-6">
-                    <div className="flex flex-col gap-1">
-                        <div className="text-[#777777] text-xs font-normal font-['Poppins'] leading-[14.40px]">KATEGORI</div>
-                        <div className="text-black text-sm font-normal font-['Poppins'] leading-[16.80px]">{DUMMY_PRODUCT.category}</div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <div className="text-[#777777] text-xs font-normal font-['Poppins'] leading-[14.40px]">KONDISI</div>
-                        <div className="text-black text-sm font-normal font-['Poppins'] leading-[16.80px]">{DUMMY_PRODUCT.condition}</div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <div className="text-[#777777] text-xs font-normal font-['Poppins'] leading-[14.40px]">LOKASI</div>
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-3.5 h-3.5 text-black" />
-                            <div className="text-black text-sm font-normal font-['Poppins'] leading-[16.80px]">{DUMMY_PRODUCT.location}</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Seller Card */}
-                <div className="w-full p-6 bg-white border border-[#E2E8F0] flex items-center gap-4">
-                    <img 
-                      className="w-12 h-12 border border-[#C6C6C6] rounded-full object-cover" 
-                      src={DUMMY_PRODUCT.seller.avatar} 
-                      alt={DUMMY_PRODUCT.seller.name} 
-                    />
-                    <div className="flex-1 flex flex-col gap-1">
-                        <div className="text-[#777777] text-xs font-normal font-['Poppins'] leading-[14.40px]">
-                          IDENTITAS PENJUAL
-                        </div>
-                        <div className="text-black text-lg font-semibold font-['Poppins'] leading-[21.60px]">
-                          {DUMMY_PRODUCT.seller.name}
-                        </div>
-                        <div className="text-[#5E5E5E] text-xs font-normal font-['Poppins'] leading-[14.40px]">
-                          {DUMMY_PRODUCT.seller.status} • Joined {DUMMY_PRODUCT.seller.joined}
-                        </div>
-                        <div className="pt-2 flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 bg-[#777777] rounded-full" />
-                            <div className="text-[#777777] text-xs font-normal font-['Poppins'] leading-[14.40px]">
-                              {DUMMY_PRODUCT.seller.replyTime}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="w-full flex flex-col gap-2">
-                    <button className="w-full h-[46px] px-[18px] py-3 bg-[#16A34A] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-md flex justify-center items-center gap-2 hover:bg-green-700 transition">
-                        <MessageCircle className="w-4 h-4 text-[#F0FDF4]" />
-                        <span className="text-[#F0FDF4] text-sm font-semibold font-['Poppins'] leading-[16.80px]">HUBUNGI VIA WHATSAPP</span>
-                    </button>
-                    <button className="w-full h-[46px] px-[18px] py-3 bg-[#2563EB] shadow-[0px_1px_2px_rgba(105,81,255,0.05)] rounded-md flex justify-center items-center gap-2 hover:bg-blue-700 transition">
-                        <Heart className="w-4 h-4 text-[#F0FDF4]" />
-                        <span className="text-[#F0FDF4] text-sm font-semibold font-['Poppins'] leading-[16.80px]">TAMBAH KE WISHLIST</span>
-                    </button>
-                </div>
-
-                {/* Disclaimer */}
-                <div className="w-full p-4 bg-[#E2E2E2] border border-[#C6C6C6] flex items-start gap-3">
-                    <AlertCircle className="w-4 h-4 text-[#5E5E5E] shrink-0 mt-0.5" />
-                    <div className="text-[#5E5E5E] text-xs font-normal font-['Poppins'] leading-[14.40px]">
-                      System strictly prohibits transactions outside the platform framework.<br/>
-                      Meet in designated safe zones on campus.
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-      </div>
-
-      {/* Similar Recommendations Section */}
-      <div className="w-full max-w-[1440px] px-6 md:px-10 pb-20 pt-10 flex flex-col gap-8 bg-[#F8FAFC]">
-        <div className="flex items-end justify-between border-b border-[#C6C6C6] pb-4">
-          <div>
-            <h2 className="text-[#303334] text-2xl font-bold mb-1">Rekomendasi Serupa</h2>
-            <p className="text-[#5C6060] text-sm">Mungkin kamu juga membutuhkan ini untuk kuliah.</p>
+      {/* NAVIGATION BAR */}
+      <div className="w-full border-b border-[#E2E8F0] sticky top-0 bg-white/80 backdrop-blur-md z-30">
+        <div className="w-full px-6 md:px-10 h-16 flex items-center justify-between">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-[#0F172A] font-bold text-xs uppercase tracking-widest hover:text-[#2563EB] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali
+          </button>
+          <div className="flex items-center gap-4">
+            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors"><Share2 className="w-5 h-5 text-gray-500" /></button>
+            <button 
+              onClick={() => setIsWishlisted(!isWishlisted)}
+              className={`p-2 hover:bg-gray-100 rounded-full transition-colors ${isWishlisted ? "text-red-500" : "text-gray-500"}`}
+            >
+              <Heart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
+            </button>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
-          {DUMMY_RECOMMENDATIONS.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
       </div>
 
+      <div className="w-full px-6 md:px-10 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* LEFT: IMAGE GALLERY (7 Columns) */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            <div className="aspect-square bg-[#F8FAFC] overflow-hidden border border-[#E2E8F0] rounded-3xl relative">
+              <img 
+                src={PRODUCT_DETAIL.images[activeImage]} 
+                alt="Product Preview" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {PRODUCT_DETAIL.images.map((_, idx) => (
+                  <div key={idx} className={`h-1.5 rounded-full transition-all ${activeImage === idx ? "w-8 bg-[#2563EB]" : "w-2 bg-gray-300"}`}></div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              {PRODUCT_DETAIL.images.map((img, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all ${activeImage === idx ? "border-[#2563EB]" : "border-transparent opacity-60 hover:opacity-100"}`}
+                >
+                  <img src={img} className="w-full h-full object-cover" alt={`Thumb ${idx}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT: INFO & ACTIONS (5 Columns) */}
+          <div className="lg:col-span-5 flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-blue-50 text-[#2563EB] text-[10px] font-bold rounded-full uppercase tracking-widest border border-blue-100">
+                  {PRODUCT_DETAIL.category}
+                </span>
+                <span className="px-3 py-1 bg-green-50 text-[#16A34A] text-[10px] font-bold rounded-full uppercase tracking-widest border border-green-100">
+                  {PRODUCT_DETAIL.condition}
+                </span>
+              </div>
+              
+              <h1 className="text-[#0F172A] text-3xl md:text-4xl font-bold leading-tight tracking-tight">
+                {PRODUCT_DETAIL.title}
+              </h1>
+              
+              <div className="flex items-baseline gap-2">
+                <span className="text-[#2563EB] text-4xl font-extrabold">
+                  Rp {PRODUCT_DETAIL.price.toLocaleString("id-ID")}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-6 py-4 border-y border-gray-100 text-[#64748B] text-xs font-semibold uppercase tracking-widest">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#2563EB]" />
+                  {PRODUCT_DETAIL.location}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  {PRODUCT_DETAIL.timePosted}
+                </div>
+              </div>
+            </div>
+
+            {/* SELLER CARD */}
+            <div className="p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-3xl flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                    <img src={PRODUCT_DETAIL.seller.avatar} alt="Seller" />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1">
+                      <span className="text-black font-bold uppercase text-sm tracking-wide">{PRODUCT_DETAIL.seller.name}</span>
+                      {PRODUCT_DETAIL.seller.verified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50" />}
+                    </div>
+                    <span className="text-[#64748B] text-[10px] font-bold uppercase tracking-widest">BERGABUNG {PRODUCT_DETAIL.seller.joined}</span>
+                  </div>
+                </div>
+                <button className="text-[#2563EB] text-xs font-bold underline uppercase tracking-widest">PROFIL</button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-white rounded-2xl border border-gray-100 flex flex-col items-center gap-1">
+                  <span className="text-black font-bold text-sm">{PRODUCT_DETAIL.seller.rating}</span>
+                  <span className="text-[#94A3B8] text-[9px] font-bold uppercase tracking-tighter">RATING</span>
+                </div>
+                <div className="p-3 bg-white rounded-2xl border border-gray-100 flex flex-col items-center gap-1">
+                  <span className="text-black font-bold text-sm">{PRODUCT_DETAIL.seller.totalSales}</span>
+                  <span className="text-[#94A3B8] text-[9px] font-bold uppercase tracking-tighter">TERJUAL</span>
+                </div>
+              </div>
+
+              <button className="w-full h-14 bg-[#16A34A] text-white font-bold uppercase tracking-[2px] rounded-2xl flex justify-center items-center gap-3 hover:bg-[#15803d] transition-all shadow-md group">
+                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                HUBUNGI VIA WHATSAPP
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 text-black font-bold text-xs uppercase tracking-widest border-b border-gray-100 pb-2">
+                <Info className="w-4 h-4" />
+                Spesifikasi
+              </div>
+              <div className="grid grid-cols-2 gap-y-4">
+                {PRODUCT_DETAIL.specs.map((spec, idx) => (
+                  <div key={idx} className="flex flex-col gap-1">
+                    <span className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tight">{spec.label}</span>
+                    <span className="text-black text-sm font-semibold">{spec.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DESCRIPTION SECTION */}
+        <div className="mt-20 flex flex-col gap-8 max-w-4xl">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-black text-xl font-bold uppercase tracking-widest border-b-2 border-black pb-4 inline-block self-start">DESKRIPSI PRODUK</h2>
+            <p className="text-[#475569] text-lg leading-relaxed whitespace-pre-line">
+              {PRODUCT_DETAIL.description}
+            </p>
+          </div>
+
+          <div className="p-8 bg-blue-50/50 border border-blue-100 rounded-3xl flex flex-col sm:flex-row items-center gap-6">
+            <ShieldCheck className="w-16 h-16 text-[#2563EB] shrink-0" strokeWidth={1} />
+            <div className="flex flex-col gap-2">
+              <h3 className="text-[#2563EB] text-lg font-bold uppercase tracking-wide">Transaksi Aman Khusus IPB</h3>
+              <p className="text-[#64748B] text-sm leading-relaxed">
+                Pastikan transaksi dilakukan dengan sistem Cash on Delivery (COD) di lingkungan kampus IPB. Selalu periksa kondisi barang secara langsung sebelum melakukan pembayaran.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* RECOMMENDED SECTION */}
+        <div className="mt-32 flex flex-col gap-12">
+          <div className="flex justify-between items-end">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">REKOMENDASI UNTUK ANDA</h2>
+              <div className="w-20 h-1 bg-black"></div>
+            </div>
+            <Link href="/catalog" className="text-black text-sm font-semibold underline uppercase tracking-widest">LIHAT LAINNYA</Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {RECOMMENDED.map((prod) => (
+              <ProductCard key={prod.id} product={prod} />
+            ))}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

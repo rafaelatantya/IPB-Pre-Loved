@@ -29,7 +29,7 @@ export default function LandingPage() {
     <div className="w-full relative bg-gradient-to-t from-[#F9F9F9] to-white flex flex-col items-center font-sans">
         
         {/* HERO SECTION */}
-        <div className="w-full max-w-[1440px] px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col lg:flex-row justify-between items-center gap-12">
+        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col lg:flex-row justify-between items-center gap-12">
             <div className="flex-1 flex flex-col justify-start items-start gap-8">
                 <div className="flex flex-col justify-start items-start gap-4">
                     <h1 className="text-[#0F172A] text-4xl md:text-5xl lg:text-[48px] font-semibold leading-tight break-words">IPB Preloved</h1>
@@ -86,7 +86,7 @@ export default function LandingPage() {
         </div>
 
         {/* TEMUAN PILIHAN */}
-        <div className="w-full max-w-[1440px] px-6 md:px-10 py-16 md:py-24 bg-white flex flex-col gap-12">
+        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-white flex flex-col gap-12">
             <div className="w-full flex justify-between items-end">
                 <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">TEMUAN PILIHAN</h2>
                 <Link href="/catalog" className="text-black text-sm md:text-base font-semibold underline leading-relaxed uppercase">LIHAT SEMUA</Link>
@@ -100,7 +100,7 @@ export default function LandingPage() {
         </div>
 
         {/* TEMUAN KATEGORI */}
-        <div className="w-full max-w-[1440px] px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col gap-12">
+        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col gap-12">
             <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">TEMUAN KATEGORI</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-[600px]">
@@ -139,7 +139,7 @@ export default function LandingPage() {
         </div>
 
         {/* FEATURES */}
-        <div className="w-full max-w-[1440px] px-6 md:px-10 py-16 md:py-24 bg-white">
+        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-white">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 <div className="p-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl flex flex-col gap-4 group hover:shadow-md transition-all">
@@ -170,7 +170,7 @@ export default function LandingPage() {
         </div>
 
         {/* CTA SECTION */}
-        <div className="w-full max-w-[1440px] px-6 md:px-10 py-24 md:py-32 bg-[#EAF2FF] flex flex-col justify-center items-center gap-8 mb-24 md:mb-0">
+        <div className="w-full px-6 md:px-10 py-24 md:py-32 bg-[#EAF2FF] flex flex-col justify-center items-center gap-8 mb-24 md:mb-0">
             <h2 className="text-black text-base md:text-lg font-medium uppercase tracking-widest text-center">SIAP Menjual BARANG ANDA?</h2>
             <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/catalog?sell=true" className="px-8 py-4 bg-[#2563EB] flex justify-center items-center hover:bg-blue-700 transition-all shadow-md">

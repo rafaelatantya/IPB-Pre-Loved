@@ -12,6 +12,7 @@ export function getAuthConfig(env) {
         clientSecret: env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET,
       }),
     ],
+
     pages: {
       signIn: "/login",
       error: "/login",
