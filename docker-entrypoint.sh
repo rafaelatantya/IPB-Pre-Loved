@@ -18,6 +18,10 @@ npm run db:push:local || echo "⚠️ Migration failed, but continuing..."
 echo "🌱 Seeding initial data..."
 npx wrangler d1 execute DB --local --file=seed.sql --persist-to ./local-db-info || echo "⚠️ Seeding failed, but continuing..."
 
+# 3. Build Project (Generate .vercel/output/static)
+echo "🏗️ Building project for Cloudflare Pages..."
+npm run pages:build
+
 # 4. Jalankan Server
 echo "⚡ Starting Cloudflare Pages dev server..."
 # Menggunakan --ip 0.0.0.0 supaya bisa diakses dari luar container (Host OS)
