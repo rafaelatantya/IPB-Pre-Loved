@@ -1,21 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Search, MapPin, Grid, MessageCircle, Heart, Tag, ShieldCheck } from "lucide-react";
 import ProductCard from "@/modules/catalog/components/ProductCard";
-
-const FEATURED_PRODUCTS = [
-  { id: "1", title: "Jas Laboratorium Ukuran L", price: 80000, condition: "BAIK", category: "PRAKTIKUM", image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "2 HARI LALU" },
-  { id: "2", title: "Kalkulator Scientific Casio", price: 200000, condition: "LIKE NEW", category: "ELEKTRONIK", image: "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "5 JAM LALU" },
-  { id: "3", title: "Meja Belajar Lipat Kayu", price: 50000, condition: "CUKUP", category: "FURNITUR", image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=400&auto=format&fit=crop", location: "CILIBENDE", timePosted: "1 MINGGU LALU" },
-  { id: "4", title: "Buku Kalkulus Edisi 9", price: 150000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop", location: "BABAKAN", timePosted: "3 HARI LALU" },
-];
+import { getApprovedProducts } from "@/modules/catalog/services";
+import { upgradeToSeller } from "@/modules/user/actions";
 
 export default function LandingPage() {
   const router = useRouter();
+  const { data: session, status, update } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  useEffect(() => {
+    async function loadFeatured() {
+      if (status === "authenticated") {
+        try {
+          const data = await getApprovedProducts({ limit: 4 });
+          setFeaturedProducts(data);
+        } catch (error) {
+          console.error("Failed to load featured products:", error);
+        }
+      }
+    }
+    loadFeatured();
+  }, [status]);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -24,6 +37,40 @@ export default function LandingPage() {
       router.push(`/catalog`);
     }
   };
+
+  const handleJualSekarang = async () => {
+    if (status !== "authenticated") {
+      router.push("/login");
+      return;
+    }
+
+    const userRole = session?.user?.role;
+
+    if (userRole === "BUYER") {
+      setIsUpgrading(true);
+      const res = await upgradeToSeller();
+      if (res.success) {
+        await update(); // Refresh session client-side
+        router.push("/dashboard");
+      } else {
+        alert(res.error || "Gagal upgrade ke Seller");
+      }
+      setIsUpgrading(false);
+    } else if (userRole === "ADMIN") {
+      router.push("/admin/dashboard");
+    } else {
+      // Jika sudah SELLER
+      router.push("/dashboard");
+    }
+  };
+
+  const loginPrompt = (
+    <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+      <p className="text-gray-500 uppercase tracking-widest text-xs font-bold italic">
+        anda harus signup/login terlebih dahulu
+      </p>
+    </div>
+  );
 
   return (
     <div className="w-full relative bg-gradient-to-t from-[#F9F9F9] to-white flex flex-col items-center font-sans">
@@ -93,9 +140,17 @@ export default function LandingPage() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {FEATURED_PRODUCTS.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                ))}
+                {status === "authenticated" ? (
+                  featuredProducts.length > 0 ? (
+                    featuredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))
+                  ) : (
+                    <p className="col-span-full text-center text-gray-500 py-10 uppercase tracking-widest text-xs font-bold">Memuat produk...</p>
+                  )
+                ) : (
+                  loginPrompt
+                )}
             </div>
         </div>
 
@@ -103,38 +158,44 @@ export default function LandingPage() {
         <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col gap-12">
             <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">TEMUAN KATEGORI</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-[600px]">
-                <Link href="/catalog?category=PERALATAN PRAKTIKUM" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
-                    <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Peralatan Praktikum" />
-                    <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                    <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                        <span className="text-black text-lg font-semibold uppercase tracking-wide">PERALATAN PRAKTIKUM</span>
-                    </div>
-                </Link>
-                
-                <Link href="/catalog?category=ELECTRONICS" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
-                    <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Elektronik" />
-                    <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                    <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                        <span className="text-black text-lg font-semibold uppercase tracking-wide">ELEKTRONIK</span>
-                    </div>
-                </Link>
+            <div className="w-full">
+              {status === "authenticated" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-[600px]">
+                    <Link href="/catalog?category=PERALATAN PRAKTIKUM" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                        <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Peralatan Praktikum" />
+                        <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
+                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
+                            <span className="text-black text-lg font-semibold uppercase tracking-wide">PERALATAN PRAKTIKUM</span>
+                        </div>
+                    </Link>
+                    
+                    <Link href="/catalog?category=ELECTRONICS" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                        <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Elektronik" />
+                        <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
+                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
+                            <span className="text-black text-lg font-semibold uppercase tracking-wide">ELEKTRONIK</span>
+                        </div>
+                    </Link>
 
-                <Link href="/catalog?category=DORM ESSENTIALS" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
-                    <img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=1200&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Kebutuhan Kost" />
-                    <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                    <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                        <span className="text-black text-lg font-semibold uppercase tracking-wide">KEBUTUHAN KOST</span>
-                    </div>
-                </Link>
+                    <Link href="/catalog?category=DORM ESSENTIALS" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                        <img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=1200&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt="Kebutuhan Kost" />
+                        <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
+                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
+                            <span className="text-black text-lg font-semibold uppercase tracking-wide">KEBUTUHAN KOST</span>
+                        </div>
+                    </Link>
 
-                <Link href="/catalog?category=BUKU" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
-                    <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Buku & Modul" />
-                    <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                    <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                        <span className="text-black text-lg font-semibold uppercase tracking-wide">BUKU & MODUL</span>
-                    </div>
-                </Link>
+                    <Link href="/catalog?category=BUKU" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                        <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Buku & Modul" />
+                        <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
+                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
+                            <span className="text-black text-lg font-semibold uppercase tracking-wide">BUKU & MODUL</span>
+                        </div>
+                    </Link>
+                </div>
+              ) : (
+                loginPrompt
+              )}
             </div>
         </div>
 
@@ -173,9 +234,15 @@ export default function LandingPage() {
         <div className="w-full px-6 md:px-10 py-24 md:py-32 bg-[#EAF2FF] flex flex-col justify-center items-center gap-8 mb-24 md:mb-0">
             <h2 className="text-black text-base md:text-lg font-medium uppercase tracking-widest text-center">SIAP Menjual BARANG ANDA?</h2>
             <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/catalog?sell=true" className="px-8 py-4 bg-[#2563EB] flex justify-center items-center hover:bg-blue-700 transition-all shadow-md">
-                    <span className="text-white text-base font-bold uppercase tracking-[1.6px]">JUAL SEKARANG</span>
-                </Link>
+                <button 
+                  onClick={handleJualSekarang}
+                  disabled={isUpgrading}
+                  className="px-8 py-4 bg-[#2563EB] flex justify-center items-center hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
+                >
+                    <span className="text-white text-base font-bold uppercase tracking-[1.6px]">
+                      {isUpgrading ? "Sedang Upgrade..." : "JUAL SEKARANG"}
+                    </span>
+                </button>
                 <Link href="/catalog" className="px-8 py-4 border border-black flex justify-center items-center hover:bg-white transition-all">
                     <span className="text-black text-base font-bold uppercase tracking-[1.6px]">CARI BARANG</span>
                 </Link>

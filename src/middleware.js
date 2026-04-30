@@ -11,9 +11,7 @@ export default function middleware(req) {
                    cookies.get("__Secure-authjs.session-token");
 
   const isLoginPage = nextUrl.pathname === '/login';
-  const isPublicPage = nextUrl.pathname === '/' || 
-                       nextUrl.pathname.startsWith('/catalog') || 
-                       nextUrl.pathname.startsWith('/product/');
+  const isPublicPage = nextUrl.pathname === '/';
   
   const isPublicFile = nextUrl.pathname.startsWith('/_next') || 
                        nextUrl.pathname.includes('/api/auth') ||

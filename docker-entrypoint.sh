@@ -1,5 +1,5 @@
 #!/bin/sh
-# Version: 1.0.1
+# Version: 1.0.2
 set -e
 
 echo "🚀 Starting IPB Pre-Loved Development Environment..."
@@ -14,15 +14,17 @@ fi
 echo "📦 Applying database migrations..."
 npm run db:push:local || echo "⚠️ Migration failed, but continuing..."
 
-# 3. Seed Data (Idempotent)
-echo "🌱 Seeding initial data..."
+# 3. Seed Data & Media (Mega Seed V4)
+echo "🌱 Seeding initial data and internal media..."
 npx wrangler d1 execute DB --local --file=seed.sql --persist-to ./local-db-info || echo "⚠️ Seeding failed, but continuing..."
+bash scripts/seed-media.sh || echo "⚠️ Media seeding failed, but continuing..."
 
-# 3. Build Project (Generate .vercel/output/static)
+# 4. Build Project (Generate .vercel/output/static)
 echo "🏗️ Building project for Cloudflare Pages..."
 npm run pages:build
 
-# 4. Jalankan Server
+# 5. Jalankan Server
 echo "⚡ Starting Cloudflare Pages dev server..."
 # Menggunakan --ip 0.0.0.0 supaya bisa diakses dari luar container (Host OS)
-npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 BUCKET --persist-to ./local-db-info --ip 0.0.0.0 --port 8788
+# Menggunakan bucket (lowercase) sesuai standar project terkini
+npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 bucket --persist-to ./local-db-info --ip 0.0.0.0 --port 8788

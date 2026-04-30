@@ -1,28 +1,43 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Search, Filter, Grid, List, ChevronDown, MapPin, Tag, Clock } from "lucide-react";
 import ProductCard from "@/modules/catalog/components/ProductCard";
+import { getApprovedProducts } from "@/modules/catalog/services";
+import { useSearchParams } from "next/navigation";
 
-const DUMMY_CATALOG = [
-  { id: "1", title: "Jas Laboratorium Ukuran L", price: 80000, condition: "BAIK", category: "PRAKTIKUM", image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "2 HARI LALU" },
-  { id: "2", title: "Kalkulator Scientific Casio", price: 200000, condition: "LIKE NEW", category: "ELEKTRONIK", image: "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "5 JAM LALU" },
-  { id: "3", title: "Meja Belajar Lipat Kayu", price: 50000, condition: "CUKUP", category: "FURNITUR", image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=400&auto=format&fit=crop", location: "CILIBENDE", timePosted: "1 MINGGU LALU" },
-  { id: "4", title: "Buku Kalkulus Edisi 9", price: 150000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop", location: "BABAKAN", timePosted: "3 HARI LALU" },
-  { id: "5", title: "Printer HP Ink Tank 315", price: 1200000, condition: "BAIK", category: "ELEKTRONIK", image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "1 HARI LALU" },
-  { id: "6", title: "Sepeda Gunung Polygon", price: 2500000, condition: "LIKE NEW", category: "HOBI", image: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "4 HARI LALU" },
-  { id: "7", title: "Kemeja Putih Formal", price: 45000, condition: "CUKUP", category: "FASHION", image: "https://images.unsplash.com/photo-1598033129183-c4f50c7176c8?q=80&w=400&auto=format&fit=crop", location: "BARANANGSIANG", timePosted: "6 JAM LALU" },
-  { id: "8", title: "Modul Praktikum Fisika", price: 25000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA", timePosted: "12 JAM LALU" },
-];
+// Sub-component untuk handle logic search params
+function CatalogContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+  const initialCategory = searchParams.get("category") || "SEMUA KATEGORI";
 
-export default function CatalogPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("SEMUA KATEGORI");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+
+  useEffect(() => {
+    async function loadProducts() {
+      setLoading(true);
+      try {
+        const data = await getApprovedProducts({
+          q: searchQuery,
+          category: selectedCategory === "SEMUA KATEGORI" ? "" : selectedCategory,
+        });
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
+  }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] flex flex-col items-center font-sans">
-      
-      {/* HEADER SECTION */}
+    <>
+      {/* HEADER SECTION (Tetap di dalam agar bisa akses searchQuery) */}
       <div className="w-full bg-white border-b border-[#E2E8F0] flex justify-center items-center py-12 md:py-16">
         <div className="w-full px-6 md:px-10 flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -97,7 +112,9 @@ export default function CatalogPage() {
         {/* PRODUCT GRID */}
         <div className="flex-1 flex flex-col gap-8">
           <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-sm">
-            <span className="text-[#64748B] text-sm font-medium">Menampilkan <span className="text-[#0F172A] font-bold">8 Produk</span></span>
+            <span className="text-[#64748B] text-sm font-medium">
+              {loading ? "Memuat data..." : `Menampilkan ${products.length} Produk`}
+            </span>
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-1 p-1 bg-[#F1F5F9] rounded-lg">
                 <button className="p-2 bg-white text-[#2563EB] rounded-md shadow-sm"><Grid className="w-4 h-4" /></button>
@@ -111,19 +128,30 @@ export default function CatalogPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {DUMMY_CATALOG.map((product) => (
+            {!loading && products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+            {!loading && products.length === 0 && (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-[#64748B]">
+                <p>Tidak ada produk yang ditemukan.</p>
+              </div>
+            )}
           </div>
 
           {/* PAGINATION */}
           <div className="flex justify-center items-center gap-2 py-10">
             <button className="w-10 h-10 flex justify-center items-center rounded-xl bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#2563EB] hover:text-white transition-all shadow-sm">1</button>
-            <button className="w-10 h-10 flex justify-center items-center rounded-xl bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#2563EB] hover:text-white transition-all shadow-sm">2</button>
-            <button className="w-10 h-10 flex justify-center items-center rounded-xl bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#2563EB] hover:text-white transition-all shadow-sm">3</button>
           </div>
         </div>
       </div>
-    </div>
+    </>
+  );
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<div className="w-full h-screen flex items-center justify-center">Memuat Katalog...</div>}>
+      <CatalogContent />
+    </Suspense>
   );
 }

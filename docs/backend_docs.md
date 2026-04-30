@@ -7,15 +7,16 @@ Kita menggunakan **Modular Monolith** dengan Next.js App Router. Setiap fitur ut
 
 ### 1. Keamanan & Role (Guard Logic)
 Sistem memiliki 4 role utama:
-- `GUEST`: Belum login. Cuma bisa liat katalog.
-- `ONBOARDING`: Sudah login IPB tapi belum pilih role (Buyer/Seller). Dipaksa masuk `/onboarding`.
+- `GUEST`: Belum login. Cuma bisa liat Landing Page (Beranda). Akses ke Katalog & Detail Produk dilarang (Redirect ke Login).
+- `ONBOARDING`: Sudah login IPB tapi belum pilih role (Buyer/Seller). Dipaksa masuk `/onboarding` oleh `OnboardingGuard`.
 - `BUYER`: Pengguna umum yang bisa belanja & wishlist.
 - `SELLER`: Pengguna yang bisa buka Dashboard Penjual & listing barang.
-- `ADMIN`: Pengguna dengan akses ke QC Dashboard.
+- `ADMIN`: Pengguna dengan akses ke QC Dashboard dan Bypass rute publik.
 
 ### 2. Alur Onboarding (Security First)
 - User baru (Google Login) otomatis dapet role `ONBOARDING`.
 - Tidak bisa akses beranda katalog sebelum pilih role via `/onboarding`.
+- **Onboarding Guard**: Menggunakan komponen `OnboardingGuard.jsx` di Root Layout yang secara proaktif mengalihkan user `ONBOARDING` menjauh dari rute utama.
 - Server Action: `completeOnboarding({ role, whatsappNumber })` dari `@/modules/auth/actions`.
 - **Hard Rule**: Sekali role dipilih, user tidak bisa balik ke state `ONBOARDING`.
 
@@ -42,7 +43,8 @@ Berikut daftar fungsi modular yang siap digunakan oleh Frontend:
 > [!IMPORTANT]
 > 1. **Jangan instal package yang makan memori besar** atau berbayar, gunakan ekosistem Cloudflare.
 > 2. **Dilarang bikin fitur Keranjang/Checkout/Chatting**, semuanya direct ke WhatsApp!
-> 3. Jangan ubah *schema database* tanpa persetujuan lewat grup, karena ini ngaruh banget ke query UI/UX.
+> 3. Jangan ubah *schema database* tanpa persetujuan lewat grup. Pastikan jalankan `npm run db:generate` jika mengubah `schema.js`.
+> 4. **Middleware Protection**: Seluruh rute `/catalog` dan `/product` wajib login (Internal IPB Only).
 
 ---
 

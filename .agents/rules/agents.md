@@ -52,6 +52,12 @@ Pastikan setiap interaksi database yang dibuat oleh AI menggunakan **Drizzle ORM
 7. **Automatic Status Reversion**: Any edit to an `APPROVED` product by a non-admin user MUST automatically set its status back to `PENDING` for re-review. This is a hard security rule to prevent "Bait & Switch" tactics.
 8. **Internal Session Authority**: Never trust `userId` or `role` parameters passed from the client-side for sensitive operations (Update/Delete/Create). Always retrieve these values internally using `getAuth()` in Server Actions.
 9. **System Boundaries Adherence**: Always read and follow the constraints defined in `docs/system_boundaries.md` for role-based access, media limits, and business rules.
+10. **Mandatory Documentation Review**: Before proposing any architectural change, implementing a core feature, or suggesting new packages, the AI MUST explicitly check for relevant Knowledge Items (KIs) and read the corresponding documents in the `docs/` directory. Failure to do so is considered a breach of developer trust and project consistency.
+11. **Hierarchy of Truth (Sequence Check)**: Every time a user sends a request, the AI MUST follow this exact sequence of checking before writing/modifying code:
+    1. Check `agents.md` (for behavioral & project rules)
+    2. Check `docs/` directory (for technical specs & system boundaries)
+    3. Check `README.md` (for environment & setup info)
+    4. Only then, analyze code files and implement changes.
 
 ## 7. ROLE-BASED AGENT INSTRUCTIONS
 Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend, 2 Frontend).

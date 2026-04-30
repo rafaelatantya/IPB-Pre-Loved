@@ -9,7 +9,7 @@ export const runtime = "edge";
 export async function GET(request, { params }) {
   try {
     const env = await getEnv();
-    const bucket = env.BUCKET;
+    const bucket = env.bucket;
 
     if (!bucket) {
       return new Response("R2 Bucket not found", { status: 500 });

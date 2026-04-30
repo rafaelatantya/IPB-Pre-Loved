@@ -1,5 +1,6 @@
 import "./globals.css";
 import AuthContext from "./AuthContext";
+import OnboardingGuard from "@/components/auth/OnboardingGuard";
 
 
 export const metadata = {
@@ -12,7 +13,9 @@ export default function RootLayout({ children }) {
     <html lang="id">
       <body>
         <AuthContext>
-          <main>{children}</main>
+          <OnboardingGuard>
+            <main>{children}</main>
+          </OnboardingGuard>
         </AuthContext>
       </body>
     </html>

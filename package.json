@@ -9,11 +9,13 @@
     "build": "next build",
     "start": "next start",
     "pages:build": "npx @cloudflare/next-on-pages",
-    "pages:dev": "npm run pages:build && npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 BUCKET --persist-to ./local-db-info",
+    "pages:dev": "npm run pages:build && npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 bucket --persist-to ./local-db-info",
     "db:generate": "drizzle-kit generate",
+    "db:seed": "npx wrangler d1 execute DB --local --file=./seed.sql --persist-to ./local-db-info",
+    "db:seed:media": "bash scripts/seed-media.sh",
     "db:push:local": "echo \"y\" | npx wrangler d1 migrations apply DB --local --persist-to ./local-db-info",
     "db:push:remote": "npx wrangler d1 migrations apply DB --remote",
-    "db:wipe": "rm -rf .wrangler/state ./local-db-info && npm run db:push:local"
+    "db:wipe": "rm -rf .wrangler/state ./local-db-info && npm run db:push:local && npm run db:seed && npm run db:seed:media"
   },
   "repository": {
     "type": "git",

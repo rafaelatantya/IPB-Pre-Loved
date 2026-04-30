@@ -26,19 +26,19 @@ export async function compressVideo(file) {
   await ffmpeg.writeFile(name, await fetchFile(file));
 
   // Jalankan Command FFmpeg sesuai spek System Boundaries:
-  // -vf "scale='min(1920,iw)':-2" -> Max 1080p, jaga aspect ratio
+  // -vf "scale='min(1280,iw)':-2" -> Max 720p, jaga aspect ratio
   // -r 30 -> 30 FPS
   // -c:v libx264 -> Codec H.264
-  // -b:v 5000k -maxrate 5000k -bufsize 10000k -> VBR 5000kbps peak
+  // -b:v 2500k -maxrate 2500k -bufsize 5000k -> VBR 2500kbps peak
   // -preset fast -> Kecepatan kompresi
   await ffmpeg.exec([
     '-i', name,
-    '-vf', "scale='min(1920,iw)':-2", 
+    '-vf', "scale='min(1280,iw)':-2", 
     '-r', '30',
     '-c:v', 'libx264',
-    '-b:v', '5000k',
-    '-maxrate', '5000k',
-    '-bufsize', '10000k',
+    '-b:v', '2500k',
+    '-maxrate', '2500k',
+    '-bufsize', '5000k',
     '-preset', 'fast',
     '-c:a', 'aac', // Audio standard
     'output.mp4'

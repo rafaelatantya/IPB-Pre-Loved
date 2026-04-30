@@ -23,12 +23,12 @@ docker-compose up --build
 ## Perintah Penting Lainnya
 
 -   **Menghentikan Container:** `docker-compose down`
--   **Reset Database:** Hapus folder `./local-db-info` lalu jalankan `docker-compose up` kembali.
--   **Masuk ke Terminal Container:** `docker exec -it ipb-preloved-web bash`
+-   **Reset Database:** Jalankan `npm run db:wipe` (disarankan dari dalam container) untuk menghapus data lama dan menerapkan migrasi terbaru.
+-   **Update Schema:** Jika ada perubahan di `schema.js`, jalankan `npm run db:generate` untuk membuat file migrasi baru sebelum melakukan deploy atau reset.
 
 ## Troubleshooting
 -   **Port Conflict:** Jika muncul error `Address already in use`, pastikan tidak ada proses `npm run pages:dev` yang sedang berjalan di luar Docker.
--   **Database Error:** Jika schema tidak sinkron, jalankan `npx drizzle-kit push` dari dalam container.
+-   **Database Error (No column found):** Ini tandanya migrasi lu ketinggalan. Solusinya: Jalankan `npm run db:generate` lalu `npm run db:wipe`.
 
 ---
 *Kembali ke: [Agents Rules](../.agents/rules/agents.md) | [File Dictionary](./file_desc.md)*

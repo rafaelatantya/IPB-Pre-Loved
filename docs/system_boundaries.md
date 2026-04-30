@@ -45,9 +45,9 @@ Dokumen ini mendefinisikan batasan akses (RBAC) dan aturan sistem untuk setiap r
 - **Minimal**: 1 Video + 1 Foto (sebagai alternatif dari aturan 3 foto).
 - **Format & Codec**: **MP4 (H.264)**.
 - **Spesifikasi Teknis (Enforced)**:
-    - **Resolusi**: Maksimal 1080p (FHD).
+    - **Resolusi**: Maksimal 720p (HD).
     - **Frame Rate**: 30 FPS.
-    - **Bitrate**: VBR 5000kbps peak.
+    - **Bitrate**: VBR 2500kbps peak.
 - **Enforcement Plan**: Kompresi wajib dilakukan di **sisi Client (Frontend)** menggunakan `ffmpeg.wasm` atau library sejenis sebelum di-upload ke backend untuk menjaga performa server edge.
 
 ---

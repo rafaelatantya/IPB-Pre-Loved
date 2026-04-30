@@ -55,5 +55,5 @@ Silahkan cek folder `docs/` untuk detail lebih mendalam:
 ## 🛡️ Security Rules
 1. Hanya email `@apps.ipb.ac.id` yang diizinkan masuk.
 2. Penjual wajib upload 3 foto atau 1 foto + 1 video (min 5 detik).
-3. Semua upload video otomatis dikompresi di sisi client.
+3. Semua upload video otomatis dikompresi ke 720p di sisi client.
 4. Admin memiliki otoritas penuh untuk memoderasi produk dan user.

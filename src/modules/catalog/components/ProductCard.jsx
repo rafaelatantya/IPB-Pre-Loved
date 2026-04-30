@@ -5,12 +5,16 @@ import Link from "next/link";
 import { Heart, MapPin, Tag } from "lucide-react";
 
 const ProductCard = ({ product }) => {
+  // Logic untuk handle data asli vs dummy
+  const imageUrl = product.productImages?.[0]?.url || product.image || "/placeholder-product.png";
+  const categoryName = product.category?.name || product.category || "UMUM";
+
   return (
     <Link href={`/product/${product.id}`} className="group bg-white border border-[#E2E8F0] overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full">
       {/* Image Container */}
       <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
         <img 
-          src={product.image} 
+          src={imageUrl} 
           alt={product.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -28,7 +32,7 @@ const ProductCard = ({ product }) => {
         <div className="absolute bottom-3 left-3">
           <div className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded text-[10px] font-bold text-black uppercase tracking-wider shadow-sm flex items-center gap-1">
             <Tag className="w-3 h-3" />
-            {product.category}
+            {categoryName}
           </div>
         </div>
       </div>
@@ -40,7 +44,7 @@ const ProductCard = ({ product }) => {
             {product.title}
           </h3>
           <p className="text-blue-600 text-lg font-bold">
-            Rp {product.price.toLocaleString("id-ID")}
+            Rp {product.price?.toLocaleString("id-ID") || 0}
           </p>
         </div>
 
@@ -49,7 +53,7 @@ const ProductCard = ({ product }) => {
             <MapPin className="w-3 h-3" />
             {product.location}
           </div>
-          <span>{product.timePosted || "Baru"}</span>
+          <span>{product.createdAt ? new Date(product.createdAt).toLocaleDateString() : (product.timePosted || "Baru")}</span>
         </div>
       </div>
     </Link>

@@ -46,7 +46,7 @@ export async function POST(req) {
 
     // 3. Persiapan R2
     const { env } = getRequestContext();
-    const bucket = env.BUCKET;
+    const bucket = env.bucket;
     const prefix = type === "image" ? "i" : "v";
     const ext = type === "image" ? "webp" : "mp4";
     const key = `products/${prefix}-${crypto.randomUUID()}-${Date.now()}.${ext}`;
