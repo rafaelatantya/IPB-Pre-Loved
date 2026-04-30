@@ -15,9 +15,12 @@
     "db:generate": "drizzle-kit generate",
     "db:seed": "npx wrangler d1 execute DB --local --file=./drizzle/seed.sql --persist-to ./local-db-info",
     "db:seed:media": "bash scripts/seed-media.sh",
+    "db:seed:media:remote": "bash scripts/seed-media.sh --remote",
     "db:push:local": "echo \"y\" | npx wrangler d1 migrations apply DB --local --persist-to ./local-db-info",
     "db:push:remote": "npx wrangler d1 migrations apply DB --remote",
-    "db:wipe": "rm -rf .wrangler/state ./local-db-info && npm run db:push:local && npm run db:seed && npm run db:seed:media",
+    "db:wipe": "npm run db:wipe:local",
+    "db:wipe:local": "rm -rf ./local-db-info/v3/d1 && npm run db:push:local && npm run db:seed",
+    "db:wipe:remote": "echo '🚨 BAHAYA: Anda akan menghapus database PRODUKSI (Cloudflare)! Lanjut? (y/N)' && read confirm && [ \"$confirm\" = \"y\" ] && npx wrangler d1 migrations apply DB --remote && npx wrangler d1 execute DB --remote --command='DELETE FROM wishlists; DELETE FROM product_images; DELETE FROM qc_reviews; DELETE FROM products; DELETE FROM users; DELETE FROM categories;' && npx wrangler d1 execute DB --remote --file=./drizzle/seed.sql",
     "db:reset": "rm -rf ./local-db-info/v3/d1 && npm run db:push:local && npm run db:seed"
   },
   "repository": {

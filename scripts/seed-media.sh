@@ -5,7 +5,7 @@
 
 set -e
 
-BUCKET_NAME="bucket"
+BUCKET_NAME="ipb-preloved-images"
 TEMP_DIR="./scripts/seed-assets"
 mkdir -p $TEMP_DIR
 
@@ -48,12 +48,19 @@ for i in "${!VIDEO_URLS[@]}"; do
 done
 wait
 
-# 3. UPLOAD TO R2 SEQUENTIALLY (To avoid SQLITE_BUSY)
-echo "📤 Uploading to local R2 sequentially (Safety First)..."
+# 3. UPLOAD TO R2 SEQUENTIALLY
+WRANGLER_FLAGS="--local --persist-to ./local-db-info"
+if [ "$1" == "--remote" ]; then
+    WRANGLER_FLAGS=""
+    echo "📤 Uploading to REMOTE R2 (Production)..."
+else
+    echo "📤 Uploading to local R2 (Development)..."
+fi
+
 for i in {1..45}
 do
     if [ -f "$TEMP_DIR/prod_$i.jpg" ]; then
-        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" --local --persist-to ./local-db-info > /dev/null
+        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" $WRANGLER_FLAGS --remote > /dev/null
         echo "   [UPLOAD] Img $i/45 done"
     fi
 done
@@ -61,9 +68,9 @@ done
 for i in {1..3}
 do
     if [ -f "$TEMP_DIR/video_$i.mp4" ]; then
-        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" --local --persist-to ./local-db-info > /dev/null
+        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" $WRANGLER_FLAGS --remote > /dev/null
         echo "   [UPLOAD] Vid $i/3 done"
     fi
 done
 
-echo "✨ SAFE-TURBO SEED COMPLETE! All 48 unique assets are ready in R2."
+echo "✨ SEED MEDIA COMPLETE! All assets are ready in R2."
