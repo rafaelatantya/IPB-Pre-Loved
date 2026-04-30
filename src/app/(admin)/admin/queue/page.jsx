@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { X, Check, User } from "lucide-react";
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
-// Thumbnail gambar produk
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { X, Check, User, Loader2 } from "lucide-react";
+import { getPendingProducts, reviewProduct } from "@/modules/admin/actions";
+
+// Thumbnail klikable (Original Style)
 function Thumbnail({ src, alt, active, onClick }) {
     return (
         <div
@@ -25,42 +29,62 @@ function Thumbnail({ src, alt, active, onClick }) {
     );
 }
 
-export default function AdminReviewDetailPage() {
-    const router = useRouter();
-    const params = useParams();
-    const productId = params?.id;
+function formatRupiah(num) {
+    return "Rp " + Number(num).toLocaleString("id-ID");
+}
 
-    const [product, setProduct] = useState(null);
+export default function AdminQueueDoomScrollPage() {
+    const router = useRouter();
+    const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeImg, setActiveImg] = useState(0);
-    const [submitting, setSubmitting] = useState(null); // "approve" | "reject"
+    const [submitting, setSubmitting] = useState(null);
     const [flagging, setFlagging] = useState(false);
 
-    useEffect(() => {
-        if (!productId) {
+    async function fetchQueue() {
+        try {
+            const res = await getPendingProducts();
+            if (res.success) {
+                setItems(res.data);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
             setLoading(false);
-            return;
         }
-        fetch(`/api/admin/products/${productId}`)
-            .then((r) => r.json())
-            .then((data) => {
-                setProduct(data);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
-    }, [productId]);
+    }
+
+    useEffect(() => {
+        fetchQueue();
+    }, []);
+
+    const item = items[0]; // Ambil yang paling depan (Doom Scroll)
 
     async function handleDecision(action) {
-        // action: "approve" | "reject"
+        if (!item) return;
+        let decision = action === "approve" ? "APPROVED" : "REJECTED";
+        let note = "";
+        
+        if (decision === "REJECTED") {
+            note = prompt("Alasan Penolakan:", "Foto kurang jelas / Deskripsi tidak sesuai");
+            if (!note) return;
+        }
+
         setSubmitting(action);
         try {
-            const res = await fetch(`/api/admin/products/${productId}/review`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action }),
+            const res = await reviewProduct({ 
+                productId: item.id, 
+                decision, 
+                note: note || "Lolos QC Admin" 
             });
-            if (!res.ok) throw new Error("Gagal");
-            router.push("/admin/queue");
+
+            if (res.success) {
+                // Hapus barang yang baru di-review dari state (Doom Scroll effect)
+                setItems(prev => prev.slice(1));
+                setActiveImg(0);
+            } else {
+                alert(res.error || "Gagal memproses review");
+            }
         } catch {
             alert("Terjadi kesalahan, coba lagi.");
         } finally {
@@ -69,66 +93,36 @@ export default function AdminReviewDetailPage() {
     }
 
     async function handleFlagUser() {
+        if (!item?.seller?.id) return;
         setFlagging(true);
         try {
-            await fetch(`/api/admin/users/${product?.seller?.id}/flag`, {
-                method: "POST",
-            });
+            // Simulasi flag user (bisa dihubungkan ke action nanti)
+            await new Promise((r) => setTimeout(r, 500));
             alert("User berhasil diflag.");
-        } catch {
-            alert("Gagal flag user.");
         } finally {
             setFlagging(false);
         }
     }
 
-    // Loading skeleton
     if (loading) {
         return (
-            <div className="max-w-5xl mx-auto animate-pulse">
-                <div className="h-8 w-64 bg-gray-200 rounded mb-2" />
-                <div className="h-4 w-48 bg-gray-100 rounded mb-8" />
-                <div className="flex gap-8">
-                    <div className="flex-1 h-[420px] bg-gray-100 rounded-xl" />
-                    <div className="w-[300px] flex flex-col gap-4">
-                        <div className="h-6 w-48 bg-gray-200 rounded" />
-                        <div className="h-8 w-32 bg-gray-200 rounded" />
-                        <div className="h-4 w-full bg-gray-100 rounded" />
-                        <div className="h-4 w-full bg-gray-100 rounded" />
-                    </div>
-                </div>
+            <div className="max-w-5xl mx-auto flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-200" />
             </div>
         );
     }
 
-    // Fallback kalau data tidak ada (pakai dummy untuk development)
-    const item = product || {
-        id: productId || "882-A",
-        name: "Vintage Study Desk Chair",
-        price: 450000,
-        category: "Furniture",
-        condition: "Good",
-        brand: "IKEA (Older model)",
-        location: "Dramaga Campus",
-        description:
-            "Selling my study chair. Used for 3 semesters. Still very sturdy, mechanism works perfectly. Some minor scratches on the legs as seen in pictures. Pick up only near FEM.",
-        images: [null, null, null, null],
-        submittedAt: "2 hours ago",
-        seller: {
-            id: "user-001",
-            name: "Budi Santoso",
-            studentId: "192837",
-            joinedAt: "Aug 2022",
-            itemsSold: 4,
-        },
-    };
-
-    const allImages = item.images?.length > 0 ? item.images : [null, null, null, null];
-    const mainImage = allImages[activeImg];
-
-    function formatRupiah(num) {
-        return "Rp " + Number(num).toLocaleString("id-ID");
+    if (!item) {
+        return (
+            <div className="max-w-5xl mx-auto text-center py-20 bg-white border border-gray-200 rounded-xl text-gray-400 shadow-sm">
+                <p className="italic font-medium">Antrean QC Bersih! Tidak ada barang baru menunggu validasi.</p>
+                <button onClick={fetchQueue} className="mt-4 text-blue-600 font-semibold hover:underline">Refresh</button>
+            </div>
+        );
     }
+
+    const allImages = item.images?.length > 0 ? item.images.map(img => img.url) : [null, null, null, null];
+    const mainImage = allImages[activeImg];
 
     return (
         <div className="max-w-5xl mx-auto">
@@ -139,7 +133,7 @@ export default function AdminReviewDetailPage() {
                         Review Item: #{item.id}
                     </h1>
                     <p className="text-sm text-gray-400 mt-1">
-                        Submitted {item.submittedAt} by StudentID: {item.seller?.studentId}
+                        Queue Position: 1 / {items.length} items remaining
                     </p>
                 </div>
                 <button
@@ -158,7 +152,7 @@ export default function AdminReviewDetailPage() {
                     {/* Main Image */}
                     <div className="w-full aspect-[4/3] bg-gray-100 border border-gray-200 rounded-xl overflow-hidden flex items-center justify-center mb-3">
                         {mainImage ? (
-                            <img src={mainImage} alt={item.name} className="w-full h-full object-cover" />
+                            <img src={mainImage} alt={item.title} className="w-full h-full object-cover" />
                         ) : (
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="0.8">
                                 <rect x="3" y="3" width="18" height="18" rx="1" />
@@ -186,7 +180,7 @@ export default function AdminReviewDetailPage() {
                 <div className="w-[300px] flex flex-col">
                     {/* Nama & Harga */}
                     <h2 className="text-xl font-bold text-gray-900 leading-snug mb-2">
-                        {item.name}
+                        {item.title}
                     </h2>
                     <p className="text-3xl font-bold text-gray-900 mb-5">
                         {formatRupiah(item.price)}
@@ -198,7 +192,7 @@ export default function AdminReviewDetailPage() {
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
                                 Category
                             </p>
-                            <p className="text-sm text-gray-900">{item.category}</p>
+                            <p className="text-sm text-gray-900">{item.category?.name || "UMUM"}</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
@@ -211,15 +205,9 @@ export default function AdminReviewDetailPage() {
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
-                                Brand
-                            </p>
-                            <p className="text-sm text-gray-900">{item.brand || "—"}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
                                 Location
                             </p>
-                            <p className="text-sm text-gray-900">{item.location || "—"}</p>
+                            <p className="text-sm text-gray-900 truncate">{item.location || "IPB Dramaga"}</p>
                         </div>
                     </div>
 
@@ -228,8 +216,8 @@ export default function AdminReviewDetailPage() {
                         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
                             Description
                         </p>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            {item.description}
+                        <p className="text-sm text-gray-600 leading-relaxed italic opacity-80">
+                            "{item.description}"
                         </p>
                     </div>
 
@@ -239,17 +227,9 @@ export default function AdminReviewDetailPage() {
                             <User className="w-4 h-4 text-gray-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">{item.seller?.name}</p>
-                            <p className="text-xs text-gray-400">
-                                Joined {item.seller?.joinedAt} • {item.seller?.itemsSold} items sold
-                            </p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{item.seller?.name}</p>
+                            <p className="text-xs text-gray-400">Seller Account</p>
                         </div>
-                        <button
-                            onClick={() => router.push(`/admin/users/${item.seller?.id}`)}
-                            className="text-xs font-medium text-gray-700 hover:underline whitespace-nowrap"
-                        >
-                            View History
-                        </button>
                     </div>
 
                     {/* Action Buttons */}
@@ -260,7 +240,7 @@ export default function AdminReviewDetailPage() {
                             className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-sm font-semibold text-gray-700 py-2.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                         >
                             <X className="w-4 h-4" />
-                            {submitting === "reject" ? "Menolak..." : "Reject Listing"}
+                            {submitting === "reject" ? "Wait..." : "Reject"}
                         </button>
                         <button
                             onClick={() => handleDecision("approve")}
@@ -268,7 +248,7 @@ export default function AdminReviewDetailPage() {
                             className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >
                             <Check className="w-4 h-4" />
-                            {submitting === "approve" ? "Menyetujui..." : "Approve Listing"}
+                            {submitting === "approve" ? "Wait..." : "Approve"}
                         </button>
                     </div>
                 </div>

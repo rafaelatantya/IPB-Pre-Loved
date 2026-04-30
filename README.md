@@ -14,7 +14,7 @@ Platform jual-beli barang bekas layak pakai khusus untuk Civitas Akademika IPB U
 ### 🐳 Docker Environment
 Proyek ini mendukung penuh Docker untuk kemudahan setup:
 - **Auto-install:** Dependencies di-install otomatis saat container jalan.
-- **Interactive Reset:** Saat container dimulai, Anda akan ditanya: `Do you want to RESET database and dummy data? (y/N)`. Anda punya waktu 10 detik untuk menjawab sebelum otomatis lanjut ke "No".
+- **Auto-Sync DB (Checksum):** Sistem menggunakan MD5 hashing untuk mendeteksi perubahan pada `drizzle/seed.sql`. Jika ada perubahan data dari anggota tim lain, Docker akan otomatis meriset database lokal Anda agar tetap sinkron tanpa perlu intervensi manual.
 - **Port:** Aplikasi berjalan di `http://localhost:8788`.
 
 ## 💻 Manual Setup (Tanpa Docker)
@@ -26,7 +26,7 @@ Jika Anda ingin menjalankan secara native:
 1.  Copy `.dev.vars.example` menjadi `.dev.vars` dan isi secret-nya.
 2.  Jalankan `docker-compose up --build`.
 3.  Akses di `http://localhost:8788`.
-    *   *Sistem akan otomatis mengelola database dan sinkronisasi data dummy untuk Anda.*
+    *   *Sistem akan otomatis mendeteksi perubahan pada seed.sql via MD5 Checksum dan mensinkronisasi data dummy untuk Anda.*
 
 ### B. Menjalankan Lokal (Native)
 1.  **Install Dependencies**: `npm install --legacy-peer-deps`

@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { X, Check, User } from "lucide-react";
+import { getProductById } from "@/modules/catalog/services";
+import { reviewProduct } from "@/modules/admin/actions";
 
 // Thumbnail klikable
 function Thumbnail({ src, alt, active, onClick }) {
@@ -28,66 +30,6 @@ function Thumbnail({ src, alt, active, onClick }) {
     );
 }
 
-// Dummy data terpusat
-const ALL_DUMMY_ITEMS = [
-    {
-        id: "1",
-        name: "Calculus Textbook 9th Ed",
-        price: 150000,
-        category: "Books",
-        condition: "Like New",
-        brand: "Pearson",
-        location: "Perpustakaan LSI",
-        description:
-            "Buku mulus, tidak ada coretan. Cocok buat mahasiswa TPB yang mau lulus Kalkulus dengan nilai A.",
-        images: [
-            "https://images.unsplash.com/photo-1543004629-141a44562e1e?auto=format&fit=crop&q=80&w=600",
-            null,
-            null,
-            null,
-        ],
-        submittedAt: "10 mins ago",
-        seller: { id: "u1", name: "Budi Santoso", studentId: "G1401...", joinedAt: "Aug 2022", itemsSold: 4 },
-    },
-    {
-        id: "2",
-        name: "Lab Coat (Size M)",
-        price: 75000,
-        category: "Clothing",
-        condition: "Good",
-        brand: "IPB Official",
-        location: "FMIPA",
-        description: "Jas lab jarang pakai, cuma dipake pas praktikum kimia dasar doang. Sudah dicuci bersih.",
-        images: [
-            "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=600",
-            null,
-            null,
-            null,
-        ],
-        submittedAt: "1 hr ago",
-        seller: { id: "u2", name: "Siti Aminah", studentId: "C2401...", joinedAt: "Jan 2023", itemsSold: 1 },
-    },
-    {
-        id: "3",
-        name: "Drafting Table",
-        price: 450000,
-        category: "Furniture",
-        condition: "Used",
-        brand: "Informa",
-        location: "Dramaga Campus",
-        description:
-            "Meja gambar teknik, sangat kokoh. Ada sedikit lecet di pojok tapi tidak mengganggu fungsi.",
-        images: [
-            "https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&q=80&w=600",
-            null,
-            null,
-            null,
-        ],
-        submittedAt: "3 hrs ago",
-        seller: { id: "u3", name: "Reza Rahadian", studentId: "F1401...", joinedAt: "Mar 2021", itemsSold: 12 },
-    },
-];
-
 function formatRupiah(num) {
     return "Rp " + Number(num).toLocaleString("id-ID");
 }
@@ -104,27 +46,47 @@ export default function AdminReviewDetailPage() {
     const [flagging, setFlagging] = useState(false);
 
     useEffect(() => {
-        if (!productId) { setLoading(false); return; }
-        // Ganti dengan fetch("/api/admin/products/" + productId) kalau API sudah siap
-        setTimeout(() => setLoading(false), 300);
+        async function fetchData() {
+            if (!productId) return;
+            try {
+                const res = await getProductById(productId);
+                if (res.success) {
+                    setProduct(res.data);
+                } else {
+                    alert(res.error || "Gagal memuat produk");
+                    router.push("/admin/queue");
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
     }, [productId]);
 
-    const item = product || ALL_DUMMY_ITEMS.find((i) => i.id === productId) || ALL_DUMMY_ITEMS[0];
-    const allImages = item.images?.length > 0 ? item.images : [null, null, null, null];
-    const mainImage = allImages[activeImg];
-
     async function handleDecision(action) {
+        let decision = action === "approve" ? "APPROVED" : "REJECTED";
+        let note = "";
+        
+        if (decision === "REJECTED") {
+            note = prompt("Alasan Penolakan:", "Foto kurang jelas / Deskripsi tidak sesuai");
+            if (!note) return;
+        }
+
         setSubmitting(action);
         try {
-            // TODO: uncomment ini kalau API sudah siap
-            // const res = await fetch(`/api/admin/products/${productId}/review`, {
-            //   method: "PATCH",
-            //   headers: { "Content-Type": "application/json" },
-            //   body: JSON.stringify({ action }),
-            // });
-            // if (!res.ok) throw new Error();
-            await new Promise((r) => setTimeout(r, 800)); // simulasi loading
-            router.push("/admin/queue");
+            const res = await reviewProduct({ 
+                productId, 
+                decision, 
+                note: note || "Lolos QC Admin" 
+            });
+
+            if (res.success) {
+                router.push("/admin/queue");
+            } else {
+                alert(res.error || "Gagal memproses review");
+            }
         } catch {
             alert("Terjadi kesalahan, coba lagi.");
         } finally {
@@ -135,7 +97,7 @@ export default function AdminReviewDetailPage() {
     async function handleFlagUser() {
         setFlagging(true);
         try {
-            // TODO: await fetch(`/api/admin/users/${item.seller?.id}/flag`, { method: "POST" });
+            // Simulasi flag user
             await new Promise((r) => setTimeout(r, 500));
             alert("User berhasil diflag.");
         } catch {
@@ -163,16 +125,22 @@ export default function AdminReviewDetailPage() {
         );
     }
 
+    if (!product) return null;
+
+    // Gabungkan media untuk galeri
+    const allImages = product.images?.length > 0 ? product.images.map(img => img.url) : [null, null, null, null];
+    const mainImage = allImages[activeImg];
+
     return (
         <div className="max-w-5xl mx-auto">
             {/* Header */}
             <div className="flex items-start justify-between mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        Review Item: #{item.id}
+                        Review Item: #{product.id}
                     </h1>
                     <p className="text-sm text-gray-400 mt-1">
-                        Submitted {item.submittedAt} by StudentID: {item.seller?.studentId}
+                        Submitted by: {product.seller?.name || "Unknown"}
                     </p>
                 </div>
                 <button
@@ -192,7 +160,7 @@ export default function AdminReviewDetailPage() {
                     {/* Main Image */}
                     <div className="w-full aspect-[4/3] bg-gray-100 border border-gray-200 rounded-xl overflow-hidden flex items-center justify-center mb-3">
                         {mainImage ? (
-                            <img src={mainImage} alt={item.name} className="w-full h-full object-cover" />
+                            <img src={mainImage} alt={product.title} className="w-full h-full object-cover" />
                         ) : (
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="0.8">
                                 <rect x="3" y="3" width="18" height="18" rx="1" />
@@ -221,39 +189,39 @@ export default function AdminReviewDetailPage() {
 
                     {/* Nama & Harga */}
                     <h2 className="text-xl font-bold text-gray-900 leading-snug mb-2">
-                        {item.name}
+                        {product.title}
                     </h2>
                     <p className="text-3xl font-bold text-gray-900 mb-5">
-                        {formatRupiah(item.price)}
+                        {formatRupiah(product.price)}
                     </p>
 
                     {/* Grid info 2 kolom */}
                     <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-5">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Category</p>
-                            <p className="text-sm text-gray-900">{item.category}</p>
+                            <p className="text-sm text-gray-900">{product.category?.name || "UMUM"}</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Condition</p>
                             <p className="text-sm text-gray-900 flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-900 inline-block" />
-                                {item.condition}
+                                {product.condition}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Brand</p>
-                            <p className="text-sm text-gray-900">{item.brand || "—"}</p>
+                            <p className="text-sm text-gray-900">{product.brand || "—"}</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Location</p>
-                            <p className="text-sm text-gray-900">{item.location || "—"}</p>
+                            <p className="text-sm text-gray-900">{product.location || "—"}</p>
                         </div>
                     </div>
 
                     {/* Deskripsi */}
                     <div className="border-t border-gray-100 pt-4 mb-5">
                         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Description</p>
-                        <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                        <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
                     </div>
 
                     {/* Seller Card */}
@@ -262,17 +230,11 @@ export default function AdminReviewDetailPage() {
                             <User className="w-4 h-4 text-gray-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">{item.seller?.name}</p>
+                            <p className="text-sm font-semibold text-gray-900">{product.seller?.name}</p>
                             <p className="text-xs text-gray-400">
-                                Joined {item.seller?.joinedAt} • {item.seller?.itemsSold} items sold
+                                Seller Account
                             </p>
                         </div>
-                        <button
-                            onClick={() => router.push(`/admin/users/${item.seller?.id}`)}
-                            className="text-xs font-medium text-gray-700 hover:underline whitespace-nowrap"
-                        >
-                            View History
-                        </button>
                     </div>
 
                     {/* Spacer */}

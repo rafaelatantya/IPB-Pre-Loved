@@ -9,7 +9,7 @@ import { productSchema } from "@/lib/validation";
 /**
  * Action: Ambil daftar produk (untuk penjual/admin)
  */
-export async function getProducts() {
+export async function getProducts({ page = 1, limit = 10 } = {}) {
   const auth = await getAuth();
   const session = await auth();
 
@@ -18,23 +18,33 @@ export async function getProducts() {
   try {
     const db = await getContextDb();
     const isAdmin = session.user.role === "ADMIN";
+    const offset = (page - 1) * limit;
 
     let result;
     if (isAdmin) {
       result = await db.query.products.findMany({
         with: { seller: true, category: true, images: true },
-        orderBy: [desc(products.createdAt)]
+        orderBy: [desc(products.createdAt)],
+        limit: limit,
+        offset: offset
       });
     } else {
       result = await db.query.products.findMany({
         where: eq(products.sellerId, session.user.id),
         with: { category: true, images: true },
-        orderBy: [desc(products.createdAt)]
+        orderBy: [desc(products.createdAt)],
+        limit: limit,
+        offset: offset
       });
     }
 
-    return { success: true, data: result };
+    return { 
+      success: true, 
+      data: result,
+      hasMore: result.length === limit
+    };
   } catch (error) {
+    console.error("Get Products Error:", error);
     return { success: false, error: "Gagal mengambil produk" };
   }
 }
@@ -66,7 +76,12 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
   });
 
   if (!validation.success) {
-    return { success: false, code: 400, error: validation.error.errors[0].message };
+    const fieldErrors = validation.error.flatten().fieldErrors;
+    // Map array error jadi string tunggal (ambil yang pertama) buat kemudahan di UI
+    const formattedErrors = Object.fromEntries(
+      Object.entries(fieldErrors).map(([key, value]) => [key, value[0]])
+    );
+    return { success: false, code: 400, error: "Validasi gagal", errors: formattedErrors };
   }
 
   try {
@@ -87,7 +102,9 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
         location: formData.location || "IPB Dramaga",
         status: initialStatus,
         videoUrl: safeVideo,
-        videoDuration: safeVideo ? videoDuration : 0
+        videoDuration: safeVideo ? videoDuration : 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }),
       ...safeImages.map((url, i) => db.insert(productImages).values({
         id: crypto.randomUUID(),
@@ -121,7 +138,13 @@ export async function updateProduct(id, formData) {
   }
 
   const validation = productSchema.safeParse(formData);
-  if (!validation.success) return { success: false, code: 400, error: validation.error.errors[0].message };
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten().fieldErrors;
+    const formattedErrors = Object.fromEntries(
+      Object.entries(fieldErrors).map(([key, value]) => [key, value[0]])
+    );
+    return { success: false, code: 400, error: "Validasi gagal", errors: formattedErrors };
+  }
 
   try {
     const db = await getContextDb();
@@ -138,11 +161,12 @@ export async function updateProduct(id, formData) {
     await db.update(products).set({
       title: formData.title,
       description: formData.description,
-      price: parseInt(formData.price),
+      price: Math.floor(Number(formData.price) || 0),
       categoryId: formData.categoryId,
       condition: formData.condition,
       location: formData.location || "IPB Dramaga",
       status: newStatus,
+      updatedAt: new Date(),
     }).where(eq(products.id, id));
 
     return { success: true, message: isAdmin ? "Updated" : "Updated, Pending QC" };
@@ -170,8 +194,16 @@ export async function markProductAsSold(id) {
     const db = await getContextDb();
     const product = await db.query.products.findFirst({ where: eq(products.id, id) });
 
-    if (!product || product.sellerId !== session.user.id) {
-        return { success: false, code: 403, error: "Akses ditolak" };
+    const isAdmin = userRole === "ADMIN";
+    const isOwner = product.sellerId === session.user.id;
+
+    if (!product || (!isOwner && !isAdmin)) {
+        return { success: false, code: 403, error: "Akses ditolak. Anda bukan pemilik barang ini." };
+    }
+
+    // 🛡️ EDGE CASE: Hanya produk APPROVED yang bisa jadi SOLD
+    if (product.status !== "APPROVED") {
+        return { success: false, error: "Hanya produk yang sudah disetujui Admin yang bisa ditandai Terjual." };
     }
 
     await db.update(products).set({ status: "SOLD" }).where(eq(products.id, id));

@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { LayoutGrid, ClipboardList, Archive, Users, FileText, LogOut } from "lucide-react";
 
 const topLinks = [
@@ -15,6 +14,7 @@ const topLinks = [
 
 const bottomLinks = [
     { name: "Documentation", href: "/admin/docs", icon: FileText },
+    { name: "Logout", href: "/logout", icon: LogOut },
 ];
 
 export default function AdminSidebar() {
@@ -56,8 +56,17 @@ export default function AdminSidebar() {
                 })}
             </nav>
 
-            {/* Bottom section - Documentation & Logout */}
+            {/* Bottom section - Generate Report + Documentation + Logout */}
             <div className="flex flex-col gap-1">
+                {/* Generate Report Button */}
+                <button
+                    onClick={() => router.push("/admin/report")}
+                    className="w-full bg-gray-900 text-white text-sm font-semibold py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors mb-2"
+                >
+                    Generate Report
+                </button>
+
+                {/* Documentation & Logout */}
                 {bottomLinks.map((link) => {
                     const Icon = link.icon;
                     return (
@@ -73,17 +82,6 @@ export default function AdminSidebar() {
                         </Link>
                     );
                 })}
-
-                {/* Logout Button (Fungsional) */}
-                <button
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors mt-1"
-                >
-                    <LogOut className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                        Logout
-                    </span>
-                </button>
             </div>
         </aside>
     );

@@ -25,7 +25,7 @@ export const productSchema = z.object({
   price: z.coerce.number()
     .min(500, "Harga minimal adalah Rp 500")
     .max(100000000, "Harga tidak masuk akal (maks 100jt)"),
-  categoryId: z.string().uuid("Silakan pilih kategori yang valid"),
+  categoryId: z.string().min(1, "Silakan pilih kategori yang valid"),
   condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"], {
     errorMap: () => ({ message: "Pilih kondisi barang yang sesuai" })
   }),

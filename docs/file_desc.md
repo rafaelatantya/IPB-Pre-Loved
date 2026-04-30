@@ -39,6 +39,8 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/modules/admin/components/QCActionButtons.jsx` | Komponen tombol interaksi kontrol QC (Approve/Reject) |
 | `src/modules/product/components/ImageUploader.jsx` | Komponen UI untuk unggah dan pratinjau gambar produk |
 | `src/modules/product/components/ProductForm.jsx` | Komponen form modular untuk input data produk |
+| `src/modules/product/components/ProductAddForm.jsx` | Komponen Client untuk form tambah produk (Server-side Category Fetch) |
+| `src/modules/product/components/SellerProductList.jsx` | Komponen Client untuk daftar produk penjual (Pagination + 405 Fix) |
 | `src/app/api/images/[...key]/route.js` | API Proxy untuk melayani file gambar dari R2 ke browser (Local & Prod) |
 | `src/app/api/upload/route.js` | API Route untuk upload file besar ke R2 dengan progress bar support |
 | `src/app/api/user/upgrade/route.js` | API Route khusus untuk upgrade role (Bypass Cloudflare 405 Root Error) |

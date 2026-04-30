@@ -114,6 +114,21 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      {/* ALERT STATUS PENDING (BARU) */}
+      {product?.status === "PENDING" && (
+        <div className="w-full bg-orange-50 border-b border-orange-100 px-6 md:px-10 py-4 flex items-center gap-4">
+          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+            <Clock className="w-5 h-5 text-orange-600" />
+          </div>
+          <div>
+            <h3 className="text-orange-900 font-bold text-xs uppercase tracking-widest">Produk Menunggu Persetujuan</h3>
+            <p className="text-orange-700 text-[10px] font-medium leading-relaxed mt-0.5">
+              Barang ini belum tampil di katalog publik. Tim Admin akan melakukan Quality Control (QC) dalam waktu 1x24 jam.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="w-full px-6 md:px-10 py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           

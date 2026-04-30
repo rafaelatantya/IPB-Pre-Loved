@@ -38,12 +38,12 @@ export const products = sqliteTable('products', {
   description: text('description').notNull(),
   price: integer('price').notNull(),
   condition: text('condition').notNull(), // NEW, LIKE_NEW, GOOD, FAIR
-  status: text('status').default('PENDING'), // PENDING, APPROVED, REJECTED
+  status: text('status').default('PENDING'), // PENDING, APPROVED, REJECTED, SOLD
   videoUrl: text('video_url'), 
   videoDuration: integer('video_duration'), // Dalam detik
   location: text('location').default('IPB Dramaga'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
 
 export const productsRelations = relations(products, ({ one, many }) => ({

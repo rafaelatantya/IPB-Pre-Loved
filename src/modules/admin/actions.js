@@ -1,10 +1,70 @@
 "use server";
 
 import { getContextDb } from "@/lib/db";
-import { users, products, qcReviews } from "@/db/schema";
-import { desc, eq, like, or } from "drizzle-orm";
+import { users, products, qcReviews, adminLogs, notifications, productImages, categories } from "@/db/schema";
+import { desc, eq, like, or, sql } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
 import { qcReviewSchema } from "@/lib/validation";
+
+/**
+ * Action: Ambil Antrean QC (Pending Products)
+ */
+export async function getPendingProducts() {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const db = await getContextDb();
+    const result = await db.query.products.findMany({
+      where: eq(products.status, "PENDING"),
+      with: {
+        seller: { columns: { name: true, email: true } },
+        category: true,
+        images: { limit: 1 }
+      },
+      orderBy: [desc(products.createdAt)]
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Fetch Pending Error:", error);
+    return { success: false, error: "Gagal mengambil antrean QC" };
+  }
+}
+
+/**
+ * Action: Ambil Seluruh Inventory (Pagination)
+ */
+export async function getAdminInventory({ page = 1, limit = 20, status = null }) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+
+  try {
+    const db = await getContextDb();
+    const offset = (page - 1) * limit;
+
+    const result = await db.query.products.findMany({
+      where: status ? eq(products.status, status) : undefined,
+      with: {
+        seller: { columns: { name: true, email: true } },
+        category: true,
+      },
+      orderBy: [desc(products.createdAt)],
+      limit,
+      offset
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    return { success: false, error: "Gagal mengambil inventory" };
+  }
+}
 
 /**
  * Action: Review Produk (Approve/Reject + Log QC)
@@ -20,7 +80,11 @@ export async function reviewProduct({ productId, decision, note }) {
   // Validasi Zod
   const validation = qcReviewSchema.safeParse({ productId, decision, note });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0].message };
+    const fieldErrors = validation.error.flatten().fieldErrors;
+    const formattedErrors = Object.fromEntries(
+      Object.entries(fieldErrors).map(([key, value]) => [key, value[0]])
+    );
+    return { success: false, code: 400, error: "Validasi gagal", errors: formattedErrors };
   }
 
   try {
