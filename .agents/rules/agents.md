@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # IPB Pre Loved - AI Agent Context Rules
 
 ## 1. PROJECT IDENTITY & BACKGROUND
@@ -16,6 +20,7 @@
 - **Storage**: Cloudflare R2 untuk upload gambar produk.
 - **Image Serving**: Melalui API Proxy internal `/api/images/[key]` (Edge Function) untuk menjamin aksesibilitas gambar di lingkungan lokal dan produksi tanpa domain publik R2.
 - **Deployment & Hosting:** Cloudflare Pages (ditembak via adapter `@cloudflare/next-on-pages`). Seluruh function akan di-build menjadi Edge workers. 
+- **Development Environment:** Bisa menggunakan Docker untuk konsistensi antar OS. Panduan lengkap ada di [docs/docker_guide.md](../../docs/docker_guide.md).
 - **Authentication:** NextAuth (Google OAuth) - **Strictly limited to @apps.ipb.ac.id domain**.
 - **ORM:** Drizzle ORM.
 
