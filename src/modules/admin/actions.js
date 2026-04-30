@@ -24,7 +24,7 @@ export async function getPendingProducts() {
       with: {
         seller: { columns: { name: true, email: true } },
         category: true,
-        images: { limit: 1 }
+        images: true
       },
       orderBy: [desc(products.createdAt)]
     });
