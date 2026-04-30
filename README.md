@@ -1,46 +1,33 @@
-# 🛍️ IPB Pre-Loved - Backend (Modular Monolith)
+# 🛍️ IPB Pre-Loved - Platform Jual Beli Barang Bekas Mahasiswa IPB
 
-A modern, secure, and high-performance marketplace for IPB students. Built with Next.js, Cloudflare D1, and R2.
+Platform marketplace terpusat dan aman khusus untuk Civitas Akademika IPB University guna memudahkan transaksi barang bekas layak pakai.
 
 ---
 
-## 🚀 Quick Start (Run from Scratch)
+## 🐳 Quick Start (Cara Termudah - REKOMENDASI)
 
-Ikuti langkah-langkah berikut untuk menjalankan project ini di komputer lokal Anda:
+Gunakan Docker untuk setup instan tanpa perlu install Node.js, Wrangler, atau database secara manual. Cocok untuk pengguna Windows/Mac/Linux.
 
-### 1. Clone & Install
-```bash
-git clone <repository-url>
-cd IPB-Pre-Loved
-npm install
-```
+1.  **Clone Repo:** `git clone <repository-url> && cd IPB-Pre-Loved`
+2.  **Setup Env:** Rename `.dev.vars.example` menjadi `.dev.vars` dan isi variabelnya.
+3.  **Run:**
+    ```bash
+    docker-compose up --build
+    ```
+4.  **Akses:** Buka `http://localhost:8788`. Database & Data Dummy otomatis terisi!
 
-### 2. Environment Setup
-Buat file `.dev.vars` dari template yang tersedia:
-```bash
-cp .dev.vars.example .dev.vars
-```
-Buka file `.dev.vars` dan isi variabel berikut:
-- `AUTH_SECRET`: Generate pake `npx auth secret`.
-- `AUTH_GOOGLE_ID` & `AUTH_GOOGLE_SECRET`: Ambil dari Google Cloud Console.
-- `ADMIN_EMAILS`: Daftar email admin (dipisahkan koma).
+---
 
-### 3. Database Migration (Local)
-Inisialisasi database SQLite lokal Anda:
-```bash
-# Jalankan migrasi ke database D1 lokal
-npx wrangler d1 migrations apply DB --local
-```
+## 💻 Manual Setup (Tanpa Docker)
 
-### 4. Run Development Server
-```bash
-# Menggunakan wrangler dev (Direkomendasikan untuk testing R2/D1)
-npx wrangler dev
+Jika Anda ingin menjalankan secara native:
 
-# ATAU menggunakan standard next dev
-npm run dev
-```
-Akses di: `http://localhost:3000`
+1.  **Install:** `npm install --legacy-peer-deps`
+2.  **Env:** `cp .dev.vars.example .dev.vars`
+3.  **DB:** `npm run db:push:local`
+4.  **Run:** `npm run pages:dev`
+
+Akses di: `http://localhost:8788`
 
 ---
 
@@ -57,10 +44,11 @@ Akses di: `http://localhost:3000`
 
 ## 📖 Dokumentasi Lengkap
 Silahkan cek folder `docs/` untuk detail lebih mendalam:
+- [Docker Guide](/docs/docker_guide.md)
 - [System Boundaries (RBAC)](/docs/system_boundaries.md)
 - [Backend & Integration Guide](/docs/backend_docs.md)
 - [File Dictionary](/docs/file_desc.md)
-- [AI Agents Mandate](/agents.md)
+- [AI Agents Rules](/.agents/rules/agents.md)
 
 ---
 
