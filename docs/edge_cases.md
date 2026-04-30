@@ -25,5 +25,13 @@ Dokumen ini mencatat masalah teknis non-trivial yang muncul akibat batasan infra
 - **Root Cause**: Cloudflare D1 (SQLite) hanya mendukung satu operasi tulis pada satu waktu. Upload paralel yang terlalu cepat mengunci database.
 - **Solution**: Gunakan loop **Sequential** (bukan `Promise.all`) untuk operasi yang menulis ke database secara bertubi-tubi di lingkungan lokal.
 
+## 5. NextAuth PKCE InvalidCheck (Docker/Windows)
+- **Symptom**: Login Google gagal dengan error `pkceCodeVerifier could not be parsed` di terminal Docker.
+- **Root Cause**: Hostname mismatch antara browser (localhost) dan container, menyebabkan browser menolak mengirim balik cookie keamanan.
+- **Solution**: 
+    1. Set `AUTH_TRUST_HOST=true` di environment.
+    2. Override `cookies.pkceCodeVerifier` di `src/lib/auth.js` dengan `secure: false` dan `sameSite: "lax"`.
+    3. Selalu akses via `http://localhost:8788` (bukan IP).
+
 ---
 *Catatan: Dokumen ini wajib dibaca Agent AI sebelum melakukan perubahan besar pada alur Auth atau Media.*

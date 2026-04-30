@@ -17,7 +17,7 @@ docker-compose up --build
 ### Apa yang terjadi otomatis?
 1.  **Build Environment:** Docker menyiapkan OS Linux dengan Node.js 20.
 2.  **Auto-Migration:** Menjalankan `npm run db:push:local` untuk memastikan tabel database tersedia.
-3.  **Auto-Seeding:** Menjalankan data dummy dari `drizzle/seed.sql` agar katalog tidak kosong.
+3.  **Smart Auto-Sync (Checksum):** Sistem mendeteksi jika ada perubahan pada data dummy (`seed.sql`) di repo. Jika lu `git pull` data baru, Docker bakal otomatis nge-reset database lu biar sinkron sama tim lain.
 4.  **Dev Server:** Menjalankan server Wrangler di `http://localhost:8788`.
 
 ## Perintah Penting Lainnya

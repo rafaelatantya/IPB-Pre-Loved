@@ -20,18 +20,19 @@ Proyek ini mendukung penuh Docker untuk kemudahan setup:
 ## 💻 Manual Setup (Tanpa Docker)
 Jika Anda ingin menjalankan secara native:
 
-1.  **Install:** `npm install --legacy-peer-deps`
-2.  **Environment:** `cp .dev.vars.example .dev.vars`
-3.  **Database:** `npm run db:push:local`
-4.  **Execution:** Pilih salah satu opsi di bawah:
+## 🚀 Cara Menjalankan (Development)
 
-### 🚀 Opsi Penggunaan Server:
+### A. Menggunakan Docker (Rekomendasi - Paling Stabil)
+1.  Copy `.dev.vars.example` menjadi `.dev.vars` dan isi secret-nya.
+2.  Jalankan `docker-compose up --build`.
+3.  Akses di `http://localhost:8788`.
+    *   *Sistem akan otomatis mengelola database dan sinkronisasi data dummy untuk Anda.*
 
-**Opsi A: Full Emulation (Senjata Pamungkas)**
-> Gunakan ini untuk pengecekan akhir sebelum push atau jika butuh simulasi Edge yang 100% akurat.
-```bash
-npm run pages:dev
-```
+### B. Menjalankan Lokal (Native)
+1.  **Install Dependencies**: `npm install --legacy-peer-deps`
+2.  **Environment**: Setup `.dev.vars`.
+3.  **Database**: `npx wrangler d1 migrations apply DB --local`
+4.  **Run Dev**: `npm run pages:dev`
 
 **Opsi B: Fast Development (Recommended for Daily Coding)**
 > Gunakan ini biar ngoding UI/Logic dapet HMR instan tapi tetep konek ke D1/R2.

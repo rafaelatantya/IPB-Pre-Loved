@@ -22,6 +22,12 @@ Dokumen ini berisi standar teknis, struktur database, dan panduan integrasi bagi
 ## 🚀 Filosofi Arsitektur
 Kita menggunakan **Modular Monolith** dengan Next.js App Router. Setiap fitur utama (Auth, Product, Catalog, Admin, dll) memiliki folder modulnya sendiri di `src/modules/`.
 
+### 3. Edge-Safe Authentication & Role Upgrade
+Karena batasan runtime Cloudflare pada root path (`/`), sistem menggunakan arsitektur berikut untuk stabilitas:
+- **Dedicated Upgrade API**: Proses upgrade Buyer ke Seller dilakukan via `POST /api/user/upgrade` untuk menghindari error 405 pada root path.
+- **JWT Sinkronisasi**: Menggunakan fail-safe check di `src/lib/auth.js` yang memaksa re-fetch ke D1 jika user berstatus `ONBOARDING`.
+- **Trust Host Policy**: Mengaktifkan `AUTH_TRUST_HOST` dan custom cookie policy untuk mendukung development di dalam Docker/Windows.
+
 ### 1. Keamanan & Role (Guard Logic)
 Sistem memiliki 4 role utama:
 - `GUEST`: Belum login. Cuma bisa liat Landing Page (Beranda). Akses ke Katalog & Detail Produk dilarang (Redirect ke Login).
