@@ -10,12 +10,18 @@ if [ ! -d "node_modules" ]; then
   npm install --legacy-peer-deps
 fi
 
-# 2. INTERACTIVE RESET OPTION
-echo ""
-echo "❓ Do you want to RESET database and dummy data? (y/N)"
-echo "   (Auto-skipping in 10 seconds...)"
-read -t 10 -n 1 -p "   Your choice: " user_choice || user_choice="n"
-echo ""
+# 2. RESET OPTION (Environment Variable or Interactive)
+if [ "$DB_RESET" = "true" ]; then
+  user_choice="y"
+  echo "♻️  DB_RESET=true detected, proceeding with reset..."
+else
+  echo ""
+  echo "❓ Do you want to RESET database and dummy data? (y/N)"
+  echo "   (Type 'y' and press Enter to reset, or just press Enter to skip)"
+  echo "   (Auto-skipping in 15 seconds...)"
+  read -t 15 -p "   Your choice: " user_choice || user_choice="n"
+  echo ""
+fi
 
 if [[ $user_choice =~ ^[Yy]$ ]]; then
   echo "🗑️  Resetting database and seeding fresh data..."

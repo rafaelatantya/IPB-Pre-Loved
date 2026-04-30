@@ -11,6 +11,7 @@ services:
     # Wrangler akan baca .dev.vars otomatis di dalam container
     environment:
       - NODE_ENV=development
+      # - DB_RESET=true  # Hapus tanda '#' di awal untuk paksa RESET database saat startup
     stdin_open: true
     tty: true
     restart: unless-stopped
