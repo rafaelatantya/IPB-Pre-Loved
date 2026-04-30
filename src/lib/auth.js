@@ -107,9 +107,22 @@ export function getAuthConfig(env) {
         return session;
       }
     },
-    debug: true, // NYALAKAN INI UNTUK LIHAT ERROR DI TERMINAL
+    debug: true,
     trustHost: true,
     secret: env.AUTH_SECRET || process.env.AUTH_SECRET,
+    
+    // KUNCI PERBAIKAN: Paksa kebijakan cookie agar ramah Docker/Local
+    cookies: {
+      pkceCodeVerifier: {
+        name: "authjs.pkce.code_verifier",
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure: false, // Wajib false untuk http://localhost
+        },
+      },
+    },
   };
 }
 
