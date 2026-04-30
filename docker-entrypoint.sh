@@ -1,4 +1,5 @@
 #!/bin/sh
+# Version: 1.0.1
 set -e
 
 echo "🚀 Starting IPB Pre-Loved Development Environment..."
