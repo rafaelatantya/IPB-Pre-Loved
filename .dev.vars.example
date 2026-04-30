@@ -1,6 +1,8 @@
 # [NEXTAUTH]
 # Cara generate: ketik di terminal: npx auth secret
 AUTH_SECRET="random_string_acak_buat_enkripsi_session"
+AUTH_TRUST_HOST=true
+AUTH_URL="http://localhost:8788"
 
 # [GOOGLE OAUTH]
 # Ambil dari Google Cloud Console

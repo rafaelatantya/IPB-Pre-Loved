@@ -29,6 +29,10 @@ docker-compose up --build
 ## Troubleshooting
 -   **Port Conflict:** Jika muncul error `Address already in use`, pastikan tidak ada proses `npm run pages:dev` yang sedang berjalan di luar Docker.
 -   **Database Error (No column found):** Ini tandanya migrasi lu ketinggalan. Solusinya: Jalankan `npm run db:generate` lalu `npm run db:wipe`.
+-   **Login Gagal (PKCE / Cookie Error):** Jika muncul error `pkceCodeVerifier could not be parsed`, pastikan:
+    1.  Gunakan browser di `http://localhost:8788` (Jangan pake IP).
+    2.  Variabel `AUTH_TRUST_HOST=true` sudah ada di `docker-compose.yml` atau `.dev.vars`.
+    3.  Variabel `AUTH_URL` sesuai dengan alamat yang diakses di browser.
 
 ---
 *Kembali ke: [Agents Rules](../.agents/rules/agents.md) | [File Dictionary](./file_desc.md)*
