@@ -10,25 +10,34 @@ if [ ! -d "node_modules" ]; then
   npm install --legacy-peer-deps
 fi
 
-# 2. RESET OPTION (Environment Variable or Interactive)
-if [ "$DB_RESET" = "true" ]; then
-  user_choice="y"
-  echo "♻️  DB_RESET=true detected, proceeding with reset..."
-else
-  echo ""
-  echo "❓ Do you want to RESET database and dummy data? (y/N)"
-  echo "   (Type 'y' and press Enter to reset, or just press Enter to skip)"
-  echo "   (Auto-skipping in 15 seconds...)"
-  read -t 15 -p "   Your choice: " user_choice || user_choice="n"
-  echo ""
+# 2. AUTOMATIC DATABASE SYNC (The Future-Proof Way)
+# Kita nge-cek apakah seed.sql berubah. Kalau berubah, auto-reset biar data temen lu sinkron.
+SEED_FILE="drizzle/seed.sql"
+HASH_FILE="local-db-info/seed.hash"
+
+# Gunakan 'md5sum' atau 'md5' (tergantung sistem, di slim-node biasanya md5sum)
+CURRENT_HASH=$(md5sum $SEED_FILE | awk '{ print $1 }')
+LAST_HASH=""
+
+if [ -f "$HASH_FILE" ]; then
+  LAST_HASH=$(cat $HASH_FILE)
 fi
 
-if [[ $user_choice =~ ^[Yy]$ ]]; then
-  echo "🗑️  Resetting database and seeding fresh data..."
+if [ "$DB_RESET" = "true" ] || [ -f "RESET_DB" ] || [ "$CURRENT_HASH" != "$LAST_HASH" ]; then
+  if [ "$CURRENT_HASH" != "$LAST_HASH" ] && [ -n "$LAST_HASH" ]; then
+    echo "📢 Seed data change detected! Automatically syncing your database..."
+  fi
+  
+  echo "🗑️  Resetting/Syncing database and seeding fresh data..."
   npm run db:wipe
+  
+  # Simpan hash baru
+  echo "$CURRENT_HASH" > $HASH_FILE
+  
+  # Bersihkan file trigger kalau ada
+  if [ -f "RESET_DB" ]; then rm RESET_DB; fi
 else
-  echo "⏭️  Skipping reset, using existing data."
-  # Tetep jalankan push biar schema sync
+  echo "✅ Database is up-to-date with seed.sql. Checking for migrations..."
   npm run db:push:local || echo "⚠️ Migration failed, but continuing..."
 fi
 
