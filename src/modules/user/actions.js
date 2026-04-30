@@ -14,15 +14,13 @@ export async function getUserProfile() {
   const auth = await getAuth();
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.email) {
     return { success: false, error: "Unauthorized" };
   }
 
   try {
     const db = await getContextDb();
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, session.user.id)
-    });
+    const user = await db.select().from(users).where(eq(users.email, session.user.email)).get();
 
     return { success: true, data: user };
   } catch (error) {
@@ -37,20 +35,20 @@ export async function updateSellerProfile({ whatsappNumber }) {
   const auth = await getAuth();
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.email) {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Validasi format nomor WA (pake schema onboarding yg udah ada)
-  if (!whatsappNumber || whatsappNumber.length < 10) {
-    return { success: false, error: "Nomor WhatsApp tidak valid" };
+  // Validasi format nomor WA
+  if (!whatsappNumber || whatsappNumber.length < 10 || whatsappNumber.length > 15) {
+    return { success: false, error: "Nomor WhatsApp tidak valid (10-15 karakter)" };
   }
 
   try {
     const db = await getContextDb();
     await db.update(users)
       .set({ whatsappNumber })
-      .where(eq(users.id, session.user.id));
+      .where(eq(users.email, session.user.email));
     
     revalidatePath("/seller/settings");
     return { success: true, message: "Profil berhasil diperbarui!" };
@@ -62,34 +60,50 @@ export async function updateSellerProfile({ whatsappNumber }) {
 /**
  * Action: Upgrade Buyer menjadi Seller
  */
-export async function upgradeToSeller() {
+export async function upgradeToSeller(whatsappNumber = null) {
   const auth = await getAuth();
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.email) {
     return { success: false, error: "Unauthorized" };
   }
+
+  const userEmail = session.user.email;
 
   try {
     const db = await getContextDb();
     
-    // Cek dulu apakah user punya nomor WA
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, session.user.id)
-    });
+    // Ambil data user saat ini
+    const user = await db.select().from(users).where(eq(users.email, userEmail)).get();
+    
+    if (!user) {
+      return { success: false, error: "Data user tidak ditemukan di database." };
+    }
 
-    if (!user.whatsappNumber) {
-      return { success: false, error: "Lengkapi nomor WhatsApp di profil dulu!" };
+    // Jika nomor WA dikirim, validasi
+    if (whatsappNumber) {
+        if (whatsappNumber.length < 10 || whatsappNumber.length > 15) {
+            return { success: false, error: "Nomor WhatsApp tidak valid (10-15 karakter)" };
+        }
+    } else {
+        // Jika tidak dikirim, cek apakah sudah ada
+        if (!user.whatsappNumber) {
+            return { success: false, code: "NEED_WHATSAPP", error: "Nomor WhatsApp diperlukan untuk menjadi Penjual" };
+        }
     }
 
     // Update Role menjadi SELLER
-    await db.update(users)
-      .set({ role: "SELLER" })
-      .where(eq(users.id, session.user.id));
+    const updateData = { role: "SELLER" };
+    if (whatsappNumber) updateData.whatsappNumber = whatsappNumber;
 
-    revalidatePath("/"); // Update landing page
+    await db.update(users)
+      .set(updateData)
+      .where(eq(users.email, userEmail));
+
+    // revalidatePath("/"); // DIMATIKAN SEMENTARA: Sering bikin crash di Cloudflare Pages Dev (Internal DNS Error)
     return { success: true, message: "Selamat! Anda sekarang adalah SELLER." };
   } catch (error) {
-    return { success: false, error: "Gagal upgrade role: " + error.message };
+    console.error("[UPGRADE ERROR]:", error);
+    return { success: false, error: "Terjadi kesalahan pada server: " + error.message };
   }
 }

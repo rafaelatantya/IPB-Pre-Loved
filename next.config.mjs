@@ -3,13 +3,18 @@
 
 const nextConfig = {
   // Cloudflare Pages butuh runtime edge untuk Server Actions agar bisa akses D1/R2
-  // Kita set secara manual di setiap file atau via config ini (opsional)
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["localhost:8788"],
+    },
+  },
 };
 
 // Hanya panggil setupDevPlatform saat development
-// if (process.env.NODE_ENV === 'development') {
-//   await setupDevPlatform();
-// }
+if (process.env.NODE_ENV === 'development') {
+  const { setupDevPlatform } = await import('@cloudflare/next-on-pages/next-dev');
+  await setupDevPlatform();
+}
 
 export default nextConfig;
 

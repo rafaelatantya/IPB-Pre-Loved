@@ -6,7 +6,7 @@ import { Heart, MapPin, Tag } from "lucide-react";
 
 const ProductCard = ({ product }) => {
   // Logic untuk handle data asli vs dummy
-  const imageUrl = product.productImages?.[0]?.url || product.image || "/placeholder-product.png";
+  const imageUrl = product.images?.[0]?.url || product.image || "/placeholder-product.png";
   const categoryName = product.category?.name || product.category || "UMUM";
 
   return (

@@ -15,7 +15,9 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `.agents/rules/agents.md` | Aturan konteks/batas suci mandat untuk semua AI di lingkungan project ini |
 | `Dockerfile` | Blueprint environment Linux untuk standardisasi development antar OS |
 | `docker-compose.yml` | Konfigurasi orkestrasi container Docker (Binding port, volume, & env) |
-| `docker-entrypoint.sh` | Script automasi startup container (Migrasi DB, Seeding, & Build Project) |
+| `scripts/docker-entrypoint.sh` | Script automasi startup container (Migrasi DB, Seeding, & Build Project) |
+| `drizzle/seed.sql` | Script SQL untuk inisialisasi data dummy (Mega Seed V4) |
+| `scripts/seed-media.sh` | Script automasi download aset media ke R2 lokal |
 | `.gitattributes` | Pengaturan Git untuk memaksa LF line endings agar script tidak error di Windows |
 | `docs/docker_guide.md` | Panduan lengkap penggunaan Docker untuk tim pengembang |
 | `src/modules/admin/actions.js` | Server Actions khusus manajemen user dan inisialisasi DB |
@@ -39,6 +41,7 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/modules/product/components/ProductForm.jsx` | Komponen form modular untuk input data produk |
 | `src/app/api/images/[...key]/route.js` | API Proxy untuk melayani file gambar dari R2 ke browser (Local & Prod) |
 | `src/app/api/upload/route.js` | API Route untuk upload file besar ke R2 dengan progress bar support |
+| `src/app/api/user/upgrade/route.js` | API Route khusus untuk upgrade role (Bypass Cloudflare 405 Root Error) |
 | `src/lib/video.js` | Utility frontend untuk kompresi video 1080p 30fps H.264 (FFmpeg) |
 | `src/lib/image.js` | Utility frontend untuk kompresi gambar ke 12MP WebP |
 | `src/modules/auth/actions.js` | Server Actions untuk manajemen pendaftaran dan proses onboarding role |

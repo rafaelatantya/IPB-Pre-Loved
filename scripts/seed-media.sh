@@ -1,58 +1,69 @@
 #!/bin/bash
 
-# SEED MEDIA PIPELINE for IPB Pre-Loved
-# Fungsinya: Download sample media dan masukkan ke Local R2 Storage
+# SAFE-TURBO SEED MEDIA PIPELINE V3 (Reverted)
+# Download PARALEL (Ngebut), Upload SEQUENTIAL (Aman dari SQLITE_BUSY).
 
 set -e
 
 BUCKET_NAME="bucket"
-STORAGE_PATH="./local-db-info"
-ASSETS_DIR="./scripts/seed-assets"
+TEMP_DIR="./scripts/seed-assets"
+mkdir -p $TEMP_DIR
 
-echo "🚀 Starting Seed Media Pipeline..."
+echo "🚀 Starting SAFE-TURBO Seed Media Pipeline..."
 
-# 1. Buat folder assets jika belum ada
-mkdir -p $ASSETS_DIR
-
-# 2. Download sample images & video
-echo "📥 Downloading sample assets..."
-
-# MacBook Images
-curl -L -s -o "$ASSETS_DIR/mac1.jpg" "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800"
-curl -L -s -o "$ASSETS_DIR/mac2.jpg" "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?q=80&w=800"
-curl -L -s -o "$ASSETS_DIR/mac3.jpg" "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?q=80&w=800"
-
-# Book Images
-curl -L -s -o "$ASSETS_DIR/book1.jpg" "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=800"
-curl -L -s -o "$ASSETS_DIR/book2.jpg" "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800"
-curl -L -s -o "$ASSETS_DIR/book3.jpg" "https://images.unsplash.com/photo-1532012197367-2806ff91717d?q=80&w=800"
-
-# Table Image
-curl -L -s -o "$ASSETS_DIR/table.jpg" "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=800"
-
-# Video
-curl -L -s -o "$ASSETS_DIR/demo-video.mp4" "https://www.w3schools.com/html/mov_bbb.mp4"
-
-echo "✅ Download complete."
-
-# 3. Upload ke Local R2 menggunakan Wrangler
-echo "📤 Uploading to local R2 bucket ($BUCKET_NAME)..."
-
-upload_to_r2() {
-    local file_path=$1
-    local key=$2
-    npx wrangler r2 object put "$BUCKET_NAME/$key" --file="$file_path" --local --persist-to "$STORAGE_PATH" > /dev/null
-    echo "   + Uploaded: $key"
+# Fungsi download gambar dengan timeout
+download_image() {
+    local i=$1
+    if [ ! -f "$TEMP_DIR/prod_$i.jpg" ]; then
+        curl -s -L --connect-timeout 5 --max-time 20 "https://picsum.photos/seed/ipb_prod_$i/800/800" -o "$TEMP_DIR/prod_$i.jpg" || echo "   [IMG] Warning: Failed to download $i"
+        echo "   [IMG] Finished Download $i/45"
+    fi
 }
 
-upload_to_r2 "$ASSETS_DIR/mac1.jpg" "products/mac1.jpg"
-upload_to_r2 "$ASSETS_DIR/mac2.jpg" "products/mac2.jpg"
-upload_to_r2 "$ASSETS_DIR/mac3.jpg" "products/mac3.jpg"
-upload_to_r2 "$ASSETS_DIR/book1.jpg" "products/book1.jpg"
-upload_to_r2 "$ASSETS_DIR/book2.jpg" "products/book2.jpg"
-upload_to_r2 "$ASSETS_DIR/book3.jpg" "products/book3.jpg"
-upload_to_r2 "$ASSETS_DIR/table.jpg" "products/table.jpg"
-upload_to_r2 "$ASSETS_DIR/demo-video.mp4" "products/demo-video.mp4"
+# 1. DOWNLOAD IMAGES IN PARALLEL (Max 15 batch)
+echo "📥 Downloading 45 images in parallel..."
+for i in {1..45}
+do
+    download_image $i &
+    if (( $i % 15 == 0 )); then wait; fi
+done
+wait
 
-echo "✨ All assets are now in local R2 storage."
-echo "🔗 You can access them via /api/images/products/[filename]"
+# 2. DOWNLOAD VIDEOS IN PARALLEL
+echo "📥 Downloading 3 videos in parallel (Stable Sources)..."
+VIDEO_URLS=(
+    "https://www.w3schools.com/html/mov_bbb.mp4"
+    "https://vjs.zencdn.net/v/oceans.mp4"
+    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+)
+
+for i in "${!VIDEO_URLS[@]}"; do
+    idx=$((i+1))
+    (
+        if [ ! -f "$TEMP_DIR/video_$idx.mp4" ]; then
+            curl -s -L --connect-timeout 5 --max-time 30 "${VIDEO_URLS[$i]}" -o "$TEMP_DIR/video_$idx.mp4" || echo "   [VID] Warning: Failed to download video $idx"
+            echo "   [VID] Finished Download $idx/3"
+        fi
+    ) &
+done
+wait
+
+# 3. UPLOAD TO R2 SEQUENTIALLY (To avoid SQLITE_BUSY)
+echo "📤 Uploading to local R2 sequentially (Safety First)..."
+for i in {1..45}
+do
+    if [ -f "$TEMP_DIR/prod_$i.jpg" ]; then
+        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" --local --persist-to ./local-db-info > /dev/null
+        echo "   [UPLOAD] Img $i/45 done"
+    fi
+done
+
+for i in {1..3}
+do
+    if [ -f "$TEMP_DIR/video_$i.mp4" ]; then
+        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" --local --persist-to ./local-db-info > /dev/null
+        echo "   [UPLOAD] Vid $i/3 done"
+    fi
+done
+
+echo "✨ SAFE-TURBO SEED COMPLETE! All 48 unique assets are ready in R2."

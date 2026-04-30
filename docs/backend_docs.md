@@ -2,6 +2,23 @@
 
 Dokumen ini berisi standar teknis, struktur database, dan panduan integrasi bagi tim frontend untuk proyek **IPB Pre-Loved**.
 
+## 🏰 System Boundaries & Access Control
+
+### 👮 1. Matriks Akses (Role-Based)
+
+| Fitur | Guest | Buyer | Seller | Admin |
+| --- | :---: | :---: | :---: | :---: |
+| Lihat Katalog Publik | ✅ | ✅ | ✅ | ✅ |
+| Wishlist (Add/Remove) | ❌ | ✅ | ✅ | ✅ |
+| Jual Barang (Create Listing) | ❌ | ❌ | ✅ | ✅ |
+| Akses Dashboard Seller | ❌ | ❌ | ✅ | ✅ |
+| Moderasi QC (Approve/Reject) | ❌ | ❌ | ❌ | ✅ |
+
+### 📸 2. Aturan Media (Enforced)
+- **Foto**: Max 5MB (WebP). Min 3 foto (atau 1 video + 1 foto).
+- **Video**: Max 50MB (MP4 H.264). Durasi min 5 detik.
+- **Enforcement**: Kompresi wajib di **Client-side** (Frontend) untuk menjaga performa Worker.
+
 ## 🚀 Filosofi Arsitektur
 Kita menggunakan **Modular Monolith** dengan Next.js App Router. Setiap fitur utama (Auth, Product, Catalog, Admin, dll) memiliki folder modulnya sendiri di `src/modules/`.
 

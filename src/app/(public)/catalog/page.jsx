@@ -21,11 +21,13 @@ function CatalogContent() {
     async function loadProducts() {
       setLoading(true);
       try {
-        const data = await getApprovedProducts({
-          q: searchQuery,
+        const res = await getApprovedProducts({
+          search: searchQuery,
           category: selectedCategory === "SEMUA KATEGORI" ? "" : selectedCategory,
         });
-        setProducts(data);
+        if (res.success) {
+          setProducts(res.data || []);
+        }
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {

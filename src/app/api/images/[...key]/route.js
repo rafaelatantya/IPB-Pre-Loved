@@ -9,10 +9,10 @@ export const runtime = "edge";
 export async function GET(request, { params }) {
   try {
     const env = await getEnv();
-    const bucket = env.bucket;
+    const bucket = env.bucket || env.BUCKET;
 
     if (!bucket) {
-      return new Response("R2 Bucket not found", { status: 500 });
+      return new Response("R2 Bucket binding not found", { status: 500 });
     }
 
     // Ambil path lengkap dari params (misal: ['products', 'id-name.jpg'])
@@ -34,6 +34,21 @@ export async function GET(request, { params }) {
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
     headers.set("Cache-Control", "public, max-age=31536000");
+    headers.set("Accept-Ranges", "bytes"); // Tambahkan ini buat streaming video
+
+    // Fallback Content-Type jika di metadata R2 kosong
+    if (!headers.has("content-type")) {
+      const extension = key.split('.').pop().toLowerCase();
+      const mimeTypes = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'mp4': 'video/mp4'
+      };
+      headers.set("Content-Type", mimeTypes[extension] || "application/octet-stream");
+    }
 
     return new Response(object.body, {
       headers,

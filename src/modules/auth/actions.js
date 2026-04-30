@@ -14,7 +14,8 @@ export async function completeOnboarding({ role, whatsappNumber }) {
   const auth = await getAuth();
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.email) {
+    console.error("ONBOARDING ERROR: No session or email found");
     return { success: false, error: "Unauthorized" };
   }
 
@@ -24,30 +25,26 @@ export async function completeOnboarding({ role, whatsappNumber }) {
     return { success: false, error: validation.error.errors[0].message };
   }
 
-  const userId = session.user.id;
+  const userEmail = session.user.email;
 
   try {
     const db = await getContextDb();
+    console.log(`ONBOARDING ATTEMPT: ${userEmail} -> ${role}`);
 
-    // Pastikan user masih berstatus ONBOARDING atau amankan logicnya
-    const existingUser = await db.select().from(users).where(eq(users.id, userId)).get();
-    
-    if (!existingUser) {
-      return { success: false, error: "User tidak ditemukan" };
-    }
-
-    // Update user
-    await db.update(users)
+    // Update user menggunakan email sebagai identifier yang paling stabil
+    const result = await db.update(users)
       .set({
         role: role,
-        whatsappNumber: whatsappNumber,
+        whatsappNumber: whatsappNumber || "",
       })
-      .where(eq(users.id, userId));
+      .where(eq(users.email, userEmail));
+    
+    console.log("ONBOARDING SUCCESS: Database updated");
 
-    revalidatePath("/");
+    // revalidatePath("/"); // DIMATIKAN SEMENTARA: Sering bikin crash di Cloudflare Pages Dev (Internal DNS Error)
     return { success: true };
   } catch (error) {
-    console.error("Error in completeOnboarding:", error);
+    console.error("ONBOARDING CRITICAL ERROR:", error);
     return { success: false, error: "Gagal menyimpan data onboarding" };
   }
 }

@@ -4,25 +4,31 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
+import { getProducts } from "@/modules/product/actions";
+
 // Badge QC Status
 function QCBadge({ status }) {
     const styles = {
-        Approved: {
+        APPROVED: {
             dot: "bg-green-600",
             badge: "bg-green-50 text-green-800 border-green-200",
         },
-        Pending: {
+        PENDING: {
             dot: "bg-gray-400",
             badge: "bg-gray-100 text-gray-600 border-gray-200",
         },
-        Rejected: {
+        REJECTED: {
             dot: "bg-red-500",
             badge: "bg-red-50 text-red-700 border-red-200",
         },
+        SOLD: {
+            dot: "bg-blue-500",
+            badge: "bg-blue-50 text-blue-700 border-blue-200",
+        },
     };
-    const s = styles[status] || styles["Pending"];
+    const s = styles[status] || styles["PENDING"];
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${s.badge}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${s.badge}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
             {status}
         </span>
@@ -62,73 +68,29 @@ function formatRupiah(num) {
     return "Rp " + Number(num).toLocaleString("id-ID");
 }
 
-const DUMMY_DATA = [
-    {
-        id: "PRD-001",
-        name: "Buku Kalkulus Edisi 9",
-        category: "Buku Kuliah",
-        price: 150000,
-        createdAt: new Date().toISOString(),
-        qcStatus: "Approved",
-        imageUrl: "" // Kosong gpp, nanti kena fallback placeholder
-    },
-    {
-        id: "PRD-002",
-        name: "Jas Almamater IPB",
-        category: "Pakaian",
-        price: 200000,
-        createdAt: new Date().toISOString(),
-        qcStatus: "Rejected",
-        imageUrl: ""
-    },
-    {
-        id: "PRD-003",
-        name: "Ipong",
-        category: "Elektronik",
-        price: 1200000,
-        createdAt: new Date().toISOString(),
-        qcStatus: "Pending",
-        imageUrl: ""
-    }
-];
-
-
-const PAGE_SIZE = 10;
-
 export default function DaftarProdukPage() {
-    const [products, setProducts] = useState(DUMMY_DATA);
-    const [loading, setLoading] = useState(false);
-    const [loadingMore, setLoadingMore] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(false);
 
-    // Fetch pertama kali - DIMATIKAN untuk Testing Dumi
-    // useEffect(() => {
-    //     fetchProducts(1, true);
-    // }, []);
-
-    async function fetchProducts(pageNum, isFirst = false) {
-        try {
-            if (isFirst) setLoading(true);
-            else setLoadingMore(true);
-
-            const res = await fetch(`/api/products?page=${pageNum}&limit=${PAGE_SIZE}`);
-            if (!res.ok) throw new Error("Gagal memuat produk");
-
-            const data = await res.json();
-
-            // API harus return: { products: [...], hasMore: true/false }
-            setProducts((prev) => isFirst ? data.products : [...prev, ...data.products]);
-            setHasMore(data.hasMore);
-            setPage(pageNum);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-            setLoadingMore(false);
+    useEffect(() => {
+        async function fetchProducts() {
+            setLoading(true);
+            try {
+                const res = await getProducts();
+                if (res.success) {
+                    setProducts(res.data);
+                } else {
+                    throw new Error(res.error || "Gagal memuat produk");
+                }
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
         }
-    }
+        fetchProducts();
+    }, []);
 
     function handleLoadMore() {
         fetchProducts(page + 1);
@@ -222,36 +184,43 @@ export default function DaftarProdukPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {products.map((product) => (
-                                <tr key={product.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                    <td className="px-4 py-4">
-                                        {/* ✅ Gambar dari DB — otomatis fallback kalau error */}
-                                        <ProductImage src={product.imageUrl} alt={product.name} />
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <p className="font-medium text-gray-900">{product.name}</p>
-                                        <p className="text-xs text-gray-400 mt-0.5">ID: {product.id}</p>
-                                    </td>
-                                    <td className="px-4 py-4 text-gray-500">{product.category}</td>
-                                    <td className="px-4 py-4 font-medium text-gray-900">{formatRupiah(product.price)}</td>
-                                    <td className="px-4 py-4 text-gray-400">
-                                        {new Date(product.createdAt).toLocaleDateString("id-ID", {
-                                            day: "numeric", month: "short", year: "numeric",
-                                        })}
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <QCBadge status={product.qcStatus} />
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <Link
-                                            href={`/product/edit/${product.id}`}
-                                            className="text-xs border border-gray-200 rounded-md px-3 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-                                        >
-                                            Edit
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
+                                {products.map((product) => (
+                                    <tr key={product.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-4">
+                                            {/* ✅ Ambil gambar pertama dari relasi images */}
+                                            <ProductImage 
+                                                src={product.images?.[0]?.url} 
+                                                alt={product.title} 
+                                            />
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <p className="font-bold text-gray-900 uppercase italic tracking-tight">{product.title}</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: {product.id}</p>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                {product.category?.name || "UMUM"}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4 font-bold text-blue-600">{formatRupiah(product.price)}</td>
+                                        <td className="px-4 py-4 text-gray-400 text-xs font-medium">
+                                            {new Date(product.createdAt).toLocaleDateString("id-ID", {
+                                                day: "numeric", month: "short", year: "numeric",
+                                            })}
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <QCBadge status={product.status} />
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <Link
+                                                href={`/product/${product.id}`}
+                                                className="text-[10px] font-bold uppercase tracking-widest border border-gray-200 rounded-lg px-3 py-1.5 text-gray-500 hover:bg-gray-900 hover:text-white transition-all"
+                                            >
+                                                Lihat
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
                         </tbody>
                     </table>
 

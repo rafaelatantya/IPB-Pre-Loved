@@ -1,59 +1,71 @@
-# 🛍️ IPB Pre-Loved - Platform Jual Beli Barang Bekas Mahasiswa IPB
+# 🛍️ IPB Pre-Loved (Kelompok 5 R3)
 
-Platform marketplace terpusat dan aman khusus untuk Civitas Akademika IPB University guna memudahkan transaksi barang bekas layak pakai.
+Platform jual-beli barang bekas layak pakai khusus untuk Civitas Akademika IPB University.
 
----
+## 🛠️ Tech Stack
+- **Framework:** Next.js 15 (App Router)
+- **Runtime:** Cloudflare Pages (Edge)
+- **Database:** Cloudflare D1 (SQLite)
+- **ORM:** Drizzle ORM
+- **Storage:** Cloudflare R2
+- **Auth:** NextAuth (Google SSO - @apps.ipb.ac.id)
+- **Styling:** Tailwind CSS & Shadcn UI
 
-## 🐳 Quick Start (Cara Termudah - REKOMENDASI)
-
-Gunakan Docker untuk setup instan tanpa perlu install Node.js, Wrangler, atau database secara manual. Cocok untuk pengguna Windows/Mac/Linux.
-
-1.  **Clone Repo:** `git clone <repository-url> && cd IPB-Pre-Loved`
-2.  **Setup Env:** Rename `.dev.vars.example` menjadi `.dev.vars` dan isi variabelnya.
-3.  **Run:**
-    ```bash
-    docker-compose up --build
-    ```
-4.  **Akses:** Buka `http://localhost:8788`. Database & Data Dummy otomatis terisi!
-
----
+### 🐳 Docker Environment
+Proyek ini mendukung penuh Docker untuk kemudahan setup:
+- **Auto-install:** Dependencies di-install otomatis saat container jalan.
+- **Interactive Reset:** Saat container dimulai, Anda akan ditanya: `Do you want to RESET database and dummy data? (y/N)`. Anda punya waktu 10 detik untuk menjawab sebelum otomatis lanjut ke "No".
+- **Port:** Aplikasi berjalan di `http://localhost:8788`.
 
 ## 💻 Manual Setup (Tanpa Docker)
-
 Jika Anda ingin menjalankan secara native:
 
 1.  **Install:** `npm install --legacy-peer-deps`
-2.  **Env:** `cp .dev.vars.example .dev.vars`
-3.  **DB:** `npm run db:push:local`
-4.  **Run:** `npm run pages:dev`
+2.  **Environment:** `cp .dev.vars.example .dev.vars`
+3.  **Database:** `npm run db:push:local`
+4.  **Execution:** Pilih salah satu opsi di bawah:
 
-Akses di: `http://localhost:8788`
+### 🚀 Opsi Penggunaan Server:
+
+**Opsi A: Full Emulation (Senjata Pamungkas)**
+> Gunakan ini untuk pengecekan akhir sebelum push atau jika butuh simulasi Edge yang 100% akurat.
+```bash
+npm run pages:dev
+```
+
+**Opsi B: Fast Development (Recommended for Daily Coding)**
+> Gunakan ini biar ngoding UI/Logic dapet HMR instan tapi tetep konek ke D1/R2.
+> Buka 2 terminal:
+> - **Terminal 1:** `npm run dev:turbo`
+> - **Terminal 2:** `npm run dev:proxy`
+> - **Akses di:** `http://localhost:8788`
+
+## 🛡️ Security & Boundaries
+1.  **Auth:** Wajib login menggunakan email `@apps.ipb.ac.id`.
+2.  **Media:** Video otomatis dikompres ke **720p 2500kbps** (H.264) untuk efisiensi bandwidth.
+3.  **Workflow:** Setiap edit barang oleh Non-Admin akan meriset status barang menjadi `PENDING` untuk di-review ulang oleh Admin.
+
+## 📊 Sample Data Overview (GIGA SEED V5)
+Setelah menjalankan `npm run db:wipe`, database Anda akan terisi dengan 15+ produk dummy untuk keperluan testing:
+
+| Kategori | Jumlah Produk | Contoh Barang |
+| :--- | :--- | :--- |
+| **Elektronik** | 4 | MacBook Air M1, Monitor LG, Headset Logitech |
+| **Buku & Modul** | 3 | Buku Python, Modul Kalkulus I & II |
+| **Kebutuhan Kost** | 4 | Meja Lipat, Kipas Angin, Rak Sepatu, Termos |
+| **Peralatan Praktikum** | 2 | Kalkulator Casio FX-991EX, Jas Lab |
+| **Fashion & Formal** | 2 | Sepatu Pantofel, Batik IPB Official |
+
+### 📸 Media Consistency Mapping
+Semua produk dijamin memiliki kombinasi media yang konsisten sesuai aturan bisnis:
+
+| Product ID | Pattern | Media Assets |
+| :--- | :--- | :--- |
+| **p-1 (MacBook)** | 3 Img + 1 Vid | `prod_1-3.jpg`, `video_1.mp4` |
+| **p-3 (Meja)** | 3 Img + 1 Vid | `prod_7-9.jpg`, `video_2.mp4` |
+| **p-7 (Sepatu)** | 3 Img + 1 Vid | `prod_19-21.jpg`, `video_3.mp4` |
+| **p-2, p-4 s/d p-6** | 3 Images | `prod_X.jpg` (Unique per product) |
+| **p-8 s/d p-15** | 3 Images | `prod_X.jpg` (Unique per product) |
 
 ---
-
-## 🛠️ Tech Stack
-- **Framework**: Next.js (App Router)
-- **Runtime**: Cloudflare Pages (Edge Runtime)
-- **Database**: Cloudflare D1 (SQLite)
-- **ORM**: Drizzle ORM
-- **Storage**: Cloudflare R2
-- **Validation**: Zod
-- **Auth**: NextAuth.js (Auth.js v5)
-
----
-
-## 📖 Dokumentasi Lengkap
-Silahkan cek folder `docs/` untuk detail lebih mendalam:
-- [Docker Guide](/docs/docker_guide.md)
-- [System Boundaries (RBAC)](/docs/system_boundaries.md)
-- [Backend & Integration Guide](/docs/backend_docs.md)
-- [File Dictionary](/docs/file_desc.md)
-- [AI Agents Rules](/.agents/rules/agents.md)
-
----
-
-## 🛡️ Security Rules
-1. Hanya email `@apps.ipb.ac.id` yang diizinkan masuk.
-2. Penjual wajib upload 3 foto atau 1 foto + 1 video (min 5 detik).
-3. Semua upload video otomatis dikompresi ke 720p di sisi client.
-4. Admin memiliki otoritas penuh untuk memoderasi produk dan user.
+*Note: Selalu ikuti [Hierarchy of Truth](.agents/rules/agents.md) sebelum melakukan perubahan besar.*

@@ -37,43 +37,49 @@ export default function OnboardingPage() {
     }
   }, [session, status, router]);
 
-  const handleSelectRole = (selectedRole) => {
-    setFormData({ ...formData, role: selectedRole });
-    setStep(2);
+  const handleSelectRole = async (selectedRole) => {
+    if (selectedRole === "BUYER") {
+      // Langsung submit untuk Pembeli
+      await performSubmit({ role: "BUYER", whatsappNumber: "" });
+    } else {
+      setFormData({ ...formData, role: selectedRole });
+      setStep(2);
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const performSubmit = async (data) => {
     setLoading(true);
     setError("");
 
     try {
-      const result = await completeOnboarding(formData);
+      const result = await completeOnboarding(data);
       
       if (result.success) {
-        // Update session client-side agar role berubah tanpa relogin
-        await update({
-          ...session,
-          user: {
-            ...session?.user,
-            role: formData.role
-          }
-        });
+        // Update session client-side agar role berubah
+        await update();
+        
+        // Kasih nafas 1 detik biar cookie ke-update beneran di browser
+        await new Promise(r => setTimeout(r, 1000));
         
         // Redirect ke dashboard masing-masing
-        if (formData.role === "SELLER") {
-          router.push("/dashboard"); // Dashboard Seller
+        if (data.role === "SELLER") {
+          window.location.href = "/dashboard"; // Pake window.location buat force refresh
         } else {
-          router.push("/catalog"); // Katalog Buyer
+          window.location.href = "/catalog";
         }
       } else {
         setError(result.error || "Gagal menyimpan data.");
+        setLoading(false);
       }
     } catch (err) {
       setError("Terjadi kesalahan sistem.");
-    } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await performSubmit(formData);
   };
 
   if (status === "loading") {

@@ -33,7 +33,13 @@ local-db-info/
 # drizzle/migrations folder HARUS di-commit, tapi kalau ada 
 # file config sensitif di sana, ignore spesifik aja.
 
-# 🪵 Logs
+# OS files
+desktop.ini
+.DS_Store
+Thumbs.db
+
+# Logs
+build_output.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -46,6 +52,12 @@ yarn-error.log*
 Thumbs.db
 *.swp
 
-# 🎨 UI/UX Assets (Opsional: Kalau ada file figma mentah atau assets jumbo)
+# 🎨 UI/UX Assets & Media
+scripts/seed-assets/
 *.zip
 *.rar
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm

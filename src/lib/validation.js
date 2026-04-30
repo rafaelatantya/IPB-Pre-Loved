@@ -3,7 +3,15 @@ import { z } from "zod";
 // Schema untuk Onboarding User
 export const onboardingSchema = z.object({
   role: z.enum(["BUYER", "SELLER"]),
-  whatsappNumber: z.string().min(10, "Nomor WhatsApp minimal 10 karakter").max(15, "Nomor WhatsApp maksimal 15 karakter"),
+  whatsappNumber: z.string().optional().or(z.literal("")),
+}).refine((data) => {
+  if (data.role === "SELLER") {
+    return data.whatsappNumber && data.whatsappNumber.length >= 10 && data.whatsappNumber.length <= 15;
+  }
+  return true;
+}, {
+  message: "Nomor WhatsApp wajib diisi (10-15 karakter) untuk Penjual",
+  path: ["whatsappNumber"],
 });
 
 // Schema untuk Create/Update Produk

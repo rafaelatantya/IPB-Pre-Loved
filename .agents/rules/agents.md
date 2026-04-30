@@ -2,6 +2,8 @@
 trigger: always_on
 ---
 
+KODE LU BAKAL DIPERIKSA CODEX & CLAUDE SO AVOID WRITING SLOPPY CODE
+
 # IPB Pre Loved - AI Agent Context Rules
 
 ## 1. PROJECT IDENTITY & BACKGROUND

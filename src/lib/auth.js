@@ -59,7 +59,7 @@ export function getAuthConfig(env) {
         }
         return true;
       },
-      async jwt({ token, user }) {
+      async jwt({ token, user, trigger }) {
         const userEmail = (user?.email || token?.email)?.toLowerCase();
         
         // Cek Role Admin dari Env List (Prioritas Utama untuk Testing)
@@ -67,36 +67,35 @@ export function getAuthConfig(env) {
           token.role = "ADMIN";
         }
 
-        if (user) {
+        // KUNCI PERBAIKAN: 
+        // Kita sinkronisasi dengan database jika:
+        // 1. Baru login (user ada)
+        // 2. Ada trigger "update" dari client
+        // 3. (FAIL-SAFE) Role saat ini masih ONBOARDING (cek ulang siapa tau udah kelar)
+        if (user || trigger === "update" || token.role === "ONBOARDING") {
           try {
             const { getDb } = await import("@/lib/db");
             const { users } = await import("@/db/schema");
             const { eq } = await import("drizzle-orm");
 
             const db = getDb(env);
-            const dbUser = await db.select().from(users).where(eq(users.email, user.email)).get();
+            const dbUser = await db.select().from(users).where(eq(users.email, userEmail)).get();
             
-            // EDGE CASE: Kick Blocked User
-            if (dbUser?.isBlocked) {
-              console.warn(`SESSION KICK: User [${userEmail}] is BLOCKED`);
-              return null; // NextAuth treats returning null as clearing the session/token
-            }
-
-            // PRIORITAS: Selalu gunakan ID dari Database (Single Source of Truth)
-            // agar sinkron dengan tabel products, wishlists, dll.
             if (dbUser) {
+              if (dbUser.isBlocked) return null;
               token.id = dbUser.id;
-              if (!token.role) token.role = dbUser.role;
-            } else {
-              // Fallback jika user benar-benar baru (sedang proses sign-in)
+              token.role = dbUser.role;
+              console.log(`[AUTH] JWT Sync: ${userEmail} role is now ${dbUser.role}`);
+            } else if (user) {
               token.id = user.id;
               token.role = "ONBOARDING";
             }
           } catch (e) {
-            console.error("JWT Callback Error:", e);
-            if (!token.role) token.role = "ONBOARDING";
+            console.error("[AUTH] JWT Sync Error:", e);
           }
         }
+
+        if (!token.role) token.role = "ONBOARDING";
         return token;
       },
 

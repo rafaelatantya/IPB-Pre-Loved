@@ -2,7 +2,7 @@
 
 export const runtime = "edge";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   Heart, 
@@ -14,51 +14,80 @@ import {
   Clock, 
   Share2,
   CheckCircle2,
-  Info
+  Info,
+  PlayCircle
 } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";
 
-// Mock Data untuk Detail
-const PRODUCT_DETAIL = {
-  id: "1",
-  title: "Jas Laboratorium Ukuran L - Kondisi Sangat Baik",
-  price: 80000,
-  category: "PRAKTIKUM",
-  condition: "BAIK",
-  location: "DRAMAGA, BOGOR",
-  timePosted: "2 HARI LALU",
-  seller: {
-    name: "Andi Mahasiswa",
-    joined: "SEPTEMBER 2023",
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200",
-    rating: 4.8,
-    totalSales: 12
-  },
-  description: "Jas laboratorium warna putih, ukuran L. Baru dipakai 1 semester untuk praktikum Kimia Dasar. Kondisi masih sangat putih, tidak ada noda kimia yang membekas, kancing lengkap. \n\nCocok untuk mahasiswa baru yang mencari perlengkapan praktikum dengan harga terjangkau. Bahan kain tebal dan nyaman dipakai lama di lab.",
-  images: [
-    "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=800",
-    "https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=800",
-    "https://images.unsplash.com/photo-1581093450021-4a7360e9a6b5?q=80&w=800"
-  ],
-  specs: [
-    { label: "UKURAN", value: "L (LARGE)" },
-    { label: "BAHAN", value: "KATUN DRILL" },
-    { label: "WARNA", value: "PUTIH BERSIH" }
-  ]
-};
-
-const RECOMMENDED = [
-  { id: "4", title: "Buku Kalkulus Edisi 9", price: 150000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop", location: "BABAKAN" },
-  { id: "8", title: "Modul Praktikum Fisika", price: 25000, condition: "BAIK", category: "BUKU", image: "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?q=80&w=400&auto=format&fit=crop", location: "DRAMAGA" },
-];
-
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [activeImage, setActiveImage] = useState(0);
+  const [product, setProduct] = useState(null);
+  const [recommended, setRecommended] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+
+  // Satukan media: Video di urutan pertama (jika ada), lalu foto-foto
+  const mediaList = [];
+  if (product?.videoUrl) {
+    mediaList.push({ type: "video", url: product.videoUrl, thumbnail: product.images?.[0]?.url });
+  }
+  if (product?.images) {
+    product.images.forEach(img => mediaList.push({ type: "image", ...img }));
+  }
+
+  useEffect(() => {
+    async function fetchProduct() {
+      if (!params.id) return;
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/products/${params.id}`);
+        const res = await response.json();
+        if (res.success) {
+          setProduct(res.data);
+          setRecommended(res.recommended || []);
+        } else {
+          setError(res.error || "Gagal memuat produk");
+        }
+      } catch (err) {
+        setError("Terjadi kesalahan jaringan");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-gray-500 uppercase tracking-widest text-xs font-bold italic">Memuat detail produk...</p>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 uppercase italic mb-4">WADUH! {error || "Produk Tidak Ditemukan"}</h2>
+        <button onClick={() => router.push("/catalog")} className="px-6 py-3 bg-blue-600 text-white font-bold uppercase tracking-widest rounded-xl">
+          KEMBALI KE KATALOG
+        </button>
+      </div>
+    );
+  }
+
+  const handleWhatsApp = () => {
+    const phone = product.seller?.whatsappNumber?.replace(/\D/g, "") || "628123456789";
+    const text = encodeURIComponent(`Halo ${product.seller?.name}, saya tertarik dengan produk "${product.title}" seharga Rp ${product.price?.toLocaleString("id-ID")} yang Anda jual di IPB Preloved. Apakah masih tersedia?`);
+    window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+  };
+
+  const currentMedia = mediaList[activeIndex];
 
   return (
     <div className="w-full min-h-screen bg-white font-sans">
@@ -90,27 +119,45 @@ export default function ProductDetailPage() {
           
           {/* LEFT: IMAGE GALLERY (7 Columns) */}
           <div className="lg:col-span-7 flex flex-col gap-4">
-            <div className="aspect-square bg-[#F8FAFC] overflow-hidden border border-[#E2E8F0] rounded-3xl relative">
-              <img 
-                src={PRODUCT_DETAIL.images[activeImage]} 
-                alt="Product Preview" 
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-square bg-[#F8FAFC] overflow-hidden border border-[#E2E8F0] rounded-3xl relative group">
+              {currentMedia?.type === "video" ? (
+                <video 
+                  src={currentMedia.url} 
+                  controls 
+                  className="w-full h-full object-contain bg-black"
+                />
+              ) : (
+                <img 
+                  src={currentMedia?.url || "/placeholder-product.png"} 
+                  alt={product.title} 
+                  className="w-full h-full object-cover"
+                />
+              )}
+
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                {PRODUCT_DETAIL.images.map((_, idx) => (
-                  <div key={idx} className={`h-1.5 rounded-full transition-all ${activeImage === idx ? "w-8 bg-[#2563EB]" : "w-2 bg-gray-300"}`}></div>
+                {mediaList.map((_, idx) => (
+                  <div key={idx} className={`h-1.5 rounded-full transition-all ${activeIndex === idx ? "w-8 bg-[#2563EB]" : "w-2 bg-gray-300"}`}></div>
                 ))}
               </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-4">
-              {PRODUCT_DETAIL.images.map((img, idx) => (
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {mediaList.map((media, idx) => (
                 <button 
                   key={idx}
-                  onClick={() => setActiveImage(idx)}
-                  className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all ${activeImage === idx ? "border-[#2563EB]" : "border-transparent opacity-60 hover:opacity-100"}`}
+                  onClick={() => setActiveIndex(idx)}
+                  className={`relative shrink-0 w-24 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${activeIndex === idx ? "border-[#2563EB]" : "border-transparent opacity-60 hover:opacity-100"}`}
                 >
-                  <img src={img} className="w-full h-full object-cover" alt={`Thumb ${idx}`} />
+                  {media.type === "video" && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                      <PlayCircle className="w-8 h-8 text-white" />
+                    </div>
+                  )}
+                  <img 
+                    src={media.type === "video" ? media.thumbnail : media.url} 
+                    className="w-full h-full object-cover" 
+                    alt={`Thumb ${idx}`} 
+                  />
                 </button>
               ))}
             </div>
@@ -121,31 +168,31 @@ export default function ProductDetailPage() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 bg-blue-50 text-[#2563EB] text-[10px] font-bold rounded-full uppercase tracking-widest border border-blue-100">
-                  {PRODUCT_DETAIL.category}
+                  {product.category?.name || "UMUM"}
                 </span>
                 <span className="px-3 py-1 bg-green-50 text-[#16A34A] text-[10px] font-bold rounded-full uppercase tracking-widest border border-green-100">
-                  {PRODUCT_DETAIL.condition}
+                  {product.condition}
                 </span>
               </div>
               
-              <h1 className="text-[#0F172A] text-3xl md:text-4xl font-bold leading-tight tracking-tight">
-                {PRODUCT_DETAIL.title}
+              <h1 className="text-[#0F172A] text-3xl md:text-4xl font-bold leading-tight tracking-tight uppercase italic">
+                {product.title}
               </h1>
               
               <div className="flex items-baseline gap-2">
-                <span className="text-[#2563EB] text-4xl font-extrabold">
-                  Rp {PRODUCT_DETAIL.price.toLocaleString("id-ID")}
+                <span className="text-[#2563EB] text-4xl font-extrabold tracking-tighter">
+                  Rp {product.price?.toLocaleString("id-ID")}
                 </span>
               </div>
 
-              <div className="flex items-center gap-6 py-4 border-y border-gray-100 text-[#64748B] text-xs font-semibold uppercase tracking-widest">
+              <div className="flex flex-wrap items-center gap-6 py-4 border-y border-gray-100 text-[#64748B] text-[10px] font-bold uppercase tracking-widest">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#2563EB]" />
-                  {PRODUCT_DETAIL.location}
+                  {product.location}
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  {PRODUCT_DETAIL.timePosted}
+                  {product.createdAt ? new Date(product.createdAt).toLocaleDateString("id-ID") : "Baru Diposting"}
                 </div>
               </div>
             </div>
@@ -154,32 +201,26 @@ export default function ProductDetailPage() {
             <div className="p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-3xl flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                    <img src={PRODUCT_DETAIL.seller.avatar} alt="Seller" />
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                    {product.seller?.name?.charAt(0) || "U"}
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1">
-                      <span className="text-black font-bold uppercase text-sm tracking-wide">{PRODUCT_DETAIL.seller.name}</span>
-                      {PRODUCT_DETAIL.seller.verified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50" />}
+                      <span className="text-black font-bold uppercase text-sm tracking-wide">{product.seller?.name || "Penjual IPB"}</span>
+                      <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50" />
                     </div>
-                    <span className="text-[#64748B] text-[10px] font-bold uppercase tracking-widest">BERGABUNG {PRODUCT_DETAIL.seller.joined}</span>
+                    <span className="text-[#64748B] text-[10px] font-bold uppercase tracking-widest">
+                      {product.seller?.userType || "STUDENT"} IPB
+                    </span>
                   </div>
                 </div>
-                <button className="text-[#2563EB] text-xs font-bold underline uppercase tracking-widest">PROFIL</button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-white rounded-2xl border border-gray-100 flex flex-col items-center gap-1">
-                  <span className="text-black font-bold text-sm">{PRODUCT_DETAIL.seller.rating}</span>
-                  <span className="text-[#94A3B8] text-[9px] font-bold uppercase tracking-tighter">RATING</span>
-                </div>
-                <div className="p-3 bg-white rounded-2xl border border-gray-100 flex flex-col items-center gap-1">
-                  <span className="text-black font-bold text-sm">{PRODUCT_DETAIL.seller.totalSales}</span>
-                  <span className="text-[#94A3B8] text-[9px] font-bold uppercase tracking-tighter">TERJUAL</span>
-                </div>
+                <button className="text-[#2563EB] text-xs font-bold underline uppercase tracking-widest">LIHAT PROFIL</button>
               </div>
 
-              <button className="w-full h-14 bg-[#16A34A] text-white font-bold uppercase tracking-[2px] rounded-2xl flex justify-center items-center gap-3 hover:bg-[#15803d] transition-all shadow-md group">
+              <button 
+                onClick={handleWhatsApp}
+                className="w-full h-14 bg-[#16A34A] text-white font-bold uppercase tracking-[2px] rounded-2xl flex justify-center items-center gap-3 hover:bg-[#15803d] transition-all shadow-md group active:scale-95"
+              >
                 <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 HUBUNGI VIA WHATSAPP
               </button>
@@ -188,15 +229,17 @@ export default function ProductDetailPage() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 text-black font-bold text-xs uppercase tracking-widest border-b border-gray-100 pb-2">
                 <Info className="w-4 h-4" />
-                Spesifikasi
+                Info Tambahan
               </div>
               <div className="grid grid-cols-2 gap-y-4">
-                {PRODUCT_DETAIL.specs.map((spec, idx) => (
-                  <div key={idx} className="flex flex-col gap-1">
-                    <span className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tight">{spec.label}</span>
-                    <span className="text-black text-sm font-semibold">{spec.value}</span>
-                  </div>
-                ))}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tight">Kondisi</span>
+                  <span className="text-black text-sm font-semibold">{product.condition}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tight">Lokasi COD</span>
+                  <span className="text-black text-sm font-semibold">{product.location}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -207,7 +250,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-4">
             <h2 className="text-black text-xl font-bold uppercase tracking-widest border-b-2 border-black pb-4 inline-block self-start">DESKRIPSI PRODUK</h2>
             <p className="text-[#475569] text-lg leading-relaxed whitespace-pre-line">
-              {PRODUCT_DETAIL.description}
+              {product.description}
             </p>
           </div>
 
@@ -216,7 +259,7 @@ export default function ProductDetailPage() {
             <div className="flex flex-col gap-2">
               <h3 className="text-[#2563EB] text-lg font-bold uppercase tracking-wide">Transaksi Aman Khusus IPB</h3>
               <p className="text-[#64748B] text-sm leading-relaxed">
-                Pastikan transaksi dilakukan dengan sistem Cash on Delivery (COD) di lingkungan kampus IPB. Selalu periksa kondisi barang secara langsung sebelum melakukan pembayaran.
+                Pastikan transaksi dilakukan dengan sistem Cash on Delivery (COD) di lingkungan kampus IPB. Selalu periksa kondisi barang secara langsung sebelum melakukan pembayaran. Gunakan akun IPB Apps Anda untuk keamanan bersama.
               </p>
             </div>
           </div>
@@ -232,9 +275,13 @@ export default function ProductDetailPage() {
             <Link href="/catalog" className="text-black text-sm font-semibold underline uppercase tracking-widest">LIHAT LAINNYA</Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {RECOMMENDED.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
+            {recommended.length > 0 ? (
+              recommended.map((prod) => (
+                <ProductCard key={prod.id} product={prod} />
+              ))
+            ) : (
+              <p className="col-span-full text-center text-gray-400 py-10 italic">Tidak ada rekomendasi saat ini.</p>
+            )}
           </div>
         </div>
 

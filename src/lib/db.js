@@ -10,11 +10,18 @@ export const getDb = (env) => {
  * Helper to get DB environment safely
  */
 export const getEnv = async () => {
+    // 1. Coba ambil dari request context (Wrangler/Production)
     const context = getRequestContext();
-    if (!context || !context.env) {
-      throw new Error("Cloudflare Environment not found. Are you running with 'wrangler pages dev'?");
+    if (context && context.env) {
+      return context.env;
     }
-    return context.env;
+
+    // 2. Fallback ke process.env (Next.js Dev Server dengan setupDevPlatform)
+    if (process.env) {
+      return process.env;
+    }
+
+    throw new Error("Cloudflare Environment not found.");
 };
 
 /**

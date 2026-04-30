@@ -6,25 +6,35 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Search, MapPin, Grid, MessageCircle, Heart, Tag, ShieldCheck } from "lucide-react";
 import ProductCard from "@/modules/catalog/components/ProductCard";
-import { getApprovedProducts } from "@/modules/catalog/services";
+import { getFeaturedProducts } from "@/modules/catalog/services"; // Tetap simpan jika ada dep lain
 import { upgradeToSeller } from "@/modules/user/actions";
+export const dynamic = "force-dynamic";
 
 export default function LandingPage() {
   const router = useRouter();
   const { data: session, status, update } = useSession();
-  const [searchQuery, setSearchQuery] = useState("");
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isUpgrading, setIsUpgrading] = useState(false);
 
   useEffect(() => {
     async function loadFeatured() {
       if (status === "authenticated") {
+        setLoading(true);
         try {
-          const data = await getApprovedProducts({ limit: 4 });
-          setFeaturedProducts(data);
+          const response = await fetch("/api/products/featured");
+          const res = await response.json();
+          if (res.success) {
+            setFeaturedProducts(res.data || []);
+          }
         } catch (error) {
           console.error("Failed to load featured products:", error);
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     }
     loadFeatured();
@@ -48,15 +58,46 @@ export default function LandingPage() {
 
     if (userRole === "BUYER") {
       setIsUpgrading(true);
-      const res = await upgradeToSeller();
-      if (res.success) {
-        await update(); // Refresh session client-side
-        router.push("/dashboard");
-      } else {
-        alert(res.error || "Gagal upgrade ke Seller");
+      try {
+        // Step 1: Cek apakah butuh No WA (Request pertama ke API)
+        let response = await fetch("/api/user/upgrade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ whatsappNumber: null })
+        });
+        let res = await response.json();
+        
+        // Step 2: Jika butuh No WA, minta ke user
+        if (!res.success && res.code === "NEED_WHATSAPP") {
+          const wa = window.prompt("Masukkan nomor WhatsApp aktif Anda untuk mulai berjualan (Contoh: 08123456789):");
+          if (wa) {
+            response = await fetch("/api/user/upgrade", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ whatsappNumber: wa })
+            });
+            res = await response.json();
+          } else {
+            return; // User membatalkan prompt
+          }
+        }
+
+        // Step 3: Handle Hasil Akhir
+        if (res.success) {
+          await update(); // Refresh session client-side
+          alert("Selamat! Anda sekarang resmi menjadi Penjual.");
+          window.location.href = "/dashboard";
+        } else {
+          alert(res.error || "Gagal upgrade ke Seller");
+        }
+      } catch (err) {
+        console.error("Upgrade client error:", err);
+        alert("Terjadi kesalahan sistem: " + (err.message || "Gagal menghubungi server"));
+      } finally {
+        setIsUpgrading(false);
       }
-      setIsUpgrading(false);
-    } else if (userRole === "ADMIN") {
+    }
+ else if (userRole === "ADMIN") {
       router.push("/admin/dashboard");
     } else {
       // Jika sudah SELLER
@@ -141,12 +182,14 @@ export default function LandingPage() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {status === "authenticated" ? (
-                  featuredProducts.length > 0 ? (
+                  loading ? (
+                    <p className="col-span-full text-center text-gray-500 py-10 uppercase tracking-widest text-xs font-bold animate-pulse">Memuat produk...</p>
+                  ) : featuredProducts.length > 0 ? (
                     featuredProducts.map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))
                   ) : (
-                    <p className="col-span-full text-center text-gray-500 py-10 uppercase tracking-widest text-xs font-bold">Memuat produk...</p>
+                    <p className="col-span-full text-center text-gray-400 py-10 italic">Tidak ada produk pilihan saat ini.</p>
                   )
                 ) : (
                   loginPrompt
