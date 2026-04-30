@@ -1,0 +1,7 @@
+.vercel
+.next
+node_modules
+.wrangler
+.git
+build_output.log
+local-db-info
