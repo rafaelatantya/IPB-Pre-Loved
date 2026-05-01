@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";
+import { openWhatsAppChat } from "@/lib/whatsapp";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -82,9 +83,12 @@ export default function ProductDetailPage() {
   }
 
   const handleWhatsApp = () => {
-    const phone = product.seller?.whatsappNumber?.replace(/\D/g, "") || "628123456789";
-    const text = encodeURIComponent(`Halo ${product.seller?.name}, saya tertarik dengan produk "${product.title}" seharga Rp ${product.price?.toLocaleString("id-ID")} yang Anda jual di IPB Preloved. Apakah masih tersedia?`);
-    window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+    openWhatsAppChat(
+      product.seller?.name,
+      product.seller?.whatsappNumber,
+      product.title,
+      product.price
+    );
   };
 
   const currentMedia = mediaList[activeIndex];

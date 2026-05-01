@@ -15,7 +15,7 @@ Ini adalah inti dari *IPB Pre-Loved* bagian publik.
 - [x] **Bikin Halaman Katalog Utama** (`src/app/(public)/catalog/page.jsx`).
 - [x] **Logika Pencarian & Filter Katalog**: Hook `SearchBar` dan `FilterSidebar` menggunakan `useSearchParams` bawaan NextJS biar kalau user ngetik atau nge-klik filter, URL-nya berubah dan barangnya ikut ke-*filter*.
 - [x] **Halaman Detail Produk Dinamis** (`src/app/(public)/product/[id]/page.jsx`): Tampilan saat barang diklik. Wajib ada gambar produk, info penjual, deskripsi, harga, dan tombol "Hubungi Penjual".
-- [ ] **Fungsi Tombol WhatsApp** (`src/lib/whatsapp.js`): Bikin *helper function* buat ngirim pesan rapi ke WA penjual (contoh: *"Halo kak, saya tertarik beli barang X..."*). Pasang ini di tombol "Hubungi Penjual" yang ada di Halaman Detail Produk.
+- [x] **Fungsi Tombol WhatsApp** (`src/lib/whatsapp.js`): Bikin *helper function* buat ngirim pesan rapi ke WA penjual (contoh: *"Halo kak, saya tertarik beli barang X..."*). Pasang ini di tombol "Hubungi Penjual" yang ada di Halaman Detail Produk.
 
 ---
 
