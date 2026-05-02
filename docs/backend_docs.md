@@ -63,6 +63,10 @@ Berikut daftar fungsi modular yang siap digunakan oleh Frontend:
 | **Admin** | `getAdminUsers(search)` | Ambil seluruh database user (Searchable). |
 | **Admin** | `deleteUser(id)` | Hard delete user + Cascade delete semua produknya. |
 | **User** | `updateSellerProfile(...)` | Update nomor WhatsApp di Settings. |
+| **Notification** | `getNotifications()` | Ambil daftar notifikasi user (Real-time logs). |
+| **Notification** | `markAsRead(id)` | Tandai notifikasi sebagai sudah dibaca. |
+| **Product** | `trackWhatsAppClick(id)`| Increment counter leads (Engagement analytics). |
+| **Admin** | `getAdminDashboardStats()` | Ambil agregasi stats (User, Products, Sold, Leads). |
 
 ## 🛠️ Aturan Pengembangan (PENTING)
 
@@ -93,3 +97,21 @@ import { getApprovedProducts, getProductById, getFeaturedProducts } from "@/modu
 - **Cek Role**: Gunakan `const isAdmin = session?.user?.role === "ADMIN"`.
 - **Proteksi Halaman**: Gunakan middleware atau server-side checks untuk mengalihkan user non-onboarding menjauh dari `/onboarding`.
 - **User Blocking**: Jika flag `isBlocked` di database diatur ke `true`, middleware wajib menghentikan akses user tersebut (Session Invalidated).
+
+## 📊 8. Feature Logic & Edge Cases
+
+### A. Sistem Notifikasi (Eternal Logs)
+Notifikasi di IPB Pre-Loved dirancang sebagai **log abadi**. Data tidak akan dihapus otomatis agar pengguna memiliki riwayat interaksi yang jelas dengan Admin (QC Status, Ban Info, dll).
+- **Trigger Otomatis**: QC Approved/Rejected, User Blocked/Unblocked, User Role Changed, Product Sold.
+- **Timestamp**: Menggunakan format `integer` (milidetik) untuk menghindari bug 1970 di SQLite.
+
+### B. Multi-Image & R2 Garbage Collection
+Sistem secara proaktif menjaga kebersihan storage Cloudflare R2:
+- **Delete Product**: Otomatis menghapus semua file gambar & video terkait di R2.
+- **Update Product**: Melakukan *Diffing Logic*. Hanya foto yang benar-benar dihapus dari list yang akan dicleanup dari R2. Foto yang masih ada cuma diupdate urutannya.
+- **Atomic Batch**: Menggunakan `db.batch` untuk memastikan integritas antara Database dan Storage.
+
+### C. Status "SOLD" (Laku Terjual)
+- Produk berstatus `SOLD` otomatis **disembunyikan** dari Katalog Publik, Produk Unggulan, dan Rekomendasi.
+- Tetap muncul di Dashboard Penjual sebagai riwayat transaksi.
+- Memberikan notifikasi "SUCCESS" otomatis ke penjual saat diaktifkan.

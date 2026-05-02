@@ -33,5 +33,18 @@ Dokumen ini mencatat masalah teknis non-trivial yang muncul akibat batasan infra
     2. Override `cookies.pkceCodeVerifier` di `src/lib/auth.js` dengan `secure: false` dan `sameSite: "lax"`.
     3. Selalu akses via `http://localhost:8788` (bukan IP).
 
+## 6. The 1970 Timestamp Bug (String vs Integer)
+- **Symptom**: Semua tanggal notifikasi atau produk muncul sebagai "1 Jan 1970".
+- **Root Cause**: SQLite `CURRENT_TIMESTAMP` mengembalikan string ISO, sedangkan Drizzle mode `timestamp` mengharapkan `integer` (milidetik) untuk kolom bertipe `integer`.
+- **Solution**: Gunakan `sql\`(unixepoch() * 1000)\`` sebagai default value di `schema.js` dan pastikan data diinput menggunakan `new Date().getTime()` atau biarkan Drizzle mengonversi `new Date()`.
+
+## 7. R2 Storage Leak (Orphaned Media)
+- **Symptom**: Storage R2 membengkak padahal barang sudah banyak yang dihapus.
+- **Root Cause**: Menghapus baris data di Database (D1) tidak otomatis menghapus file fisik di R2. Begitu juga saat mengupdate foto produk.
+- **Solution**: 
+    - Gunakan **Diffing Logic** di `updateProduct`: Bandingkan list foto lama vs baru, hapus yang tidak terpakai dari R2.
+    - Gunakan **Pre-deletion Fetch**: Ambil semua `r2Key` sebelum menghapus produk dari database agar bisa dihapus dari R2 setelahnya.
+    - **Note**: Selalu hapus database dulu baru R2 (atau sebaliknya) dalam satu alur kerja untuk menjaga sinkronisasi.
+
 ---
 *Catatan: Dokumen ini wajib dibaca Agent AI sebelum melakukan perubahan besar pada alur Auth atau Media.*

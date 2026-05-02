@@ -50,4 +50,8 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/lib/image.js` | Utility frontend untuk kompresi gambar ke 12MP WebP |
 | `src/modules/auth/actions.js` | Server Actions untuk manajemen pendaftaran dan proses onboarding role |
 | `src/modules/user/actions.js` | Server Actions untuk manajemen profil user (Seller/Buyer Settings & Upgrade Role) |
-| `src/modules/notification/actions.js` | Server Actions untuk mengambil dan menandai notifikasi (Approve/Reject) |
+| `src/modules/notification/actions.js` | Server Actions untuk manajemen data notifikasi (Create, Get, MarkAsRead) |
+| `src/modules/notification/components/NotificationList.jsx` | Komponen reusable untuk menampilkan log riwayat notifikasi (Eternal Log) |
+| `src/components/notifications/NotificationCenter.jsx` | Komponen Popover di Navbar untuk preview notifikasi terbaru & unread badge |
+| `src/app/(seller)/dashboard/notifications/page.jsx` | Halaman riwayat notifikasi lengkap untuk pengguna |
+| `src/lib/r2.js` | Utility Server-side untuk manajemen file di Cloudflare R2 (Delete Objects) |
