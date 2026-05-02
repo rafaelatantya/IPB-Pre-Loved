@@ -57,20 +57,35 @@ else
     echo "📤 Uploading to local R2 (Development)..."
 fi
 
+# Fungsi Progress Bar
+draw_progress() {
+    local current=$1
+    local total=$2
+    local percent=$((current * 100 / total))
+    local filled=$((percent / 5))
+    local empty=$((20 - filled))
+    printf "\r   [UPLOAD] ["
+    printf "%${filled}s" | tr ' ' '▓'
+    printf "%${empty}s" | tr ' ' '░'
+    printf "] %d%% (%d/%d)" $percent $current $total
+}
+
 for i in {1..45}
 do
     if [ -f "$TEMP_DIR/prod_$i.jpg" ]; then
-        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" $WRANGLER_FLAGS --remote > /dev/null
-        echo "   [UPLOAD] Img $i/45 done"
+        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" $WRANGLER_FLAGS --remote > /dev/null 2>&1
+        draw_progress $i 45
     fi
 done
+echo "" # New line after images
 
 for i in {1..3}
 do
     if [ -f "$TEMP_DIR/video_$i.mp4" ]; then
-        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" $WRANGLER_FLAGS --remote > /dev/null
-        echo "   [UPLOAD] Vid $i/3 done"
+        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" $WRANGLER_FLAGS --remote > /dev/null 2>&1
+        draw_progress $i 3
     fi
 done
+echo "" # New line after videos
 
 echo "✨ SEED MEDIA COMPLETE! All assets are ready in R2."
