@@ -59,6 +59,9 @@ Berikut daftar fungsi modular yang siap digunakan oleh Frontend:
 | **Product** | `createProduct({ urls, ... })` | Simpan produk (validasi aturan 3 foto / 1+1 video). |
 | **Product** | `updateProduct(id, ...)` | Edit barang (status reset ke `PENDING` jika non-admin). |
 | **Admin** | `reviewProduct(...)` | Admin Approve/Reject produk + Log review. |
+| **Admin** | `getAdminInventory({page, limit})` | Ambil seluruh inventory produk (Paginated). |
+| **Admin** | `getAdminUsers(search)` | Ambil seluruh database user (Searchable). |
+| **Admin** | `deleteUser(id)` | Hard delete user + Cascade delete semua produknya. |
 | **User** | `updateSellerProfile(...)` | Update nomor WhatsApp di Settings. |
 
 ## 🛠️ Aturan Pengembangan (PENTING)
@@ -89,3 +92,4 @@ import { getApprovedProducts, getProductById, getFeaturedProducts } from "@/modu
 ### B. Role-Based Logic (Frontend Rules)
 - **Cek Role**: Gunakan `const isAdmin = session?.user?.role === "ADMIN"`.
 - **Proteksi Halaman**: Gunakan middleware atau server-side checks untuk mengalihkan user non-onboarding menjauh dari `/onboarding`.
+- **User Blocking**: Jika flag `isBlocked` di database diatur ke `true`, middleware wajib menghentikan akses user tersebut (Session Invalidated).

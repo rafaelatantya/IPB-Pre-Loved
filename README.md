@@ -1,72 +1,134 @@
-# 🛍️ IPB Pre-Loved (Kelompok 5 R3)
+<div align="center">
+  <img src="https://img.shields.io/badge/Kelompok_5_R3-IPB_University-f97316?style=for-the-badge" />
+  <h1>🌌 IPB PRE-LOVED</h1>
+  <p><strong>Cloud-Native Marketplace Infrastructure • Serverless Architecture • Edge Computing</strong></p>
+  
+  <p align="center">
+    <img src="https://img.shields.io/badge/Next.js_15-000?style=flat&logo=nextdotjs&logoColor=white" />
+    <img src="https://img.shields.io/badge/React_19-20232A?style=flat&logo=react&logoColor=61DAFB" />
+    <img src="https://img.shields.io/badge/Tailwind_4-38B2AC?style=flat&logo=tailwind-css&logoColor=white" />
+    <img src="https://img.shields.io/badge/Cloudflare_Pages-F38020?style=flat&logo=cloudflare&logoColor=white" />
+    <img src="https://img.shields.io/badge/Cloudflare_D1-F38020?style=flat&logo=cloudflare&logoColor=white" />
+    <img src="https://img.shields.io/badge/Cloudflare_R2-F38020?style=flat&logo=cloudflare&logoColor=white" />
+    <br/>
+    <img src="https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat&logo=drizzle&logoColor=black" />
+    <img src="https://img.shields.io/badge/Zod-3E67B1?style=flat&logo=zod&logoColor=white" />
+    <img src="https://img.shields.io/badge/Auth.js-000?style=flat&logo=authjs&logoColor=white" />
+    <img src="https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white" />
+    <img src="https://img.shields.io/badge/Wrangler-F38020?style=flat&logo=cloudflare&logoColor=white" />
+    <img src="https://img.shields.io/badge/Lucide-FF0000?style=flat&logo=lucide&logoColor=white" />
+  </p>
+</div>
 
-Platform jual-beli barang bekas layak pakai khusus untuk Civitas Akademika IPB University.
+<br/>
 
-## 🛠️ Tech Stack
-- **Framework:** Next.js 15 (App Router)
-- **Runtime:** Cloudflare Pages (Edge)
-- **Database:** Cloudflare D1 (SQLite)
-- **ORM:** Drizzle ORM
-- **Storage:** Cloudflare R2
-- **Auth:** NextAuth (Google SSO - @apps.ipb.ac.id)
-- **Styling:** Tailwind CSS & Shadcn UI
+### 🏗️ SYSTEM ARCHITECTURE
+Visualisasi alur data dan interaksi komponen sistem berbasis *UML Sequence Diagram*.
 
-### 🐳 Docker Environment
-Proyek ini mendukung penuh Docker untuk kemudahan setup:
-- **Auto-install:** Dependencies di-install otomatis saat container jalan.
-- **Auto-Sync DB (Checksum):** Sistem menggunakan MD5 hashing untuk mendeteksi perubahan pada `drizzle/seed.sql`. Jika ada perubahan data dari anggota tim lain, Docker akan otomatis meriset database lokal Anda agar tetap sinkron tanpa perlu intervensi manual.
-- **Port:** Aplikasi berjalan di `http://localhost:8788`.
+<p align="center">
+  <img src="public/images/architecture.svg" width="100%" alt="System Architecture" />
+</p>
 
-## 💻 Manual Setup (Tanpa Docker)
-Jika Anda ingin menjalankan secara native:
+<br/>
 
-## 🚀 Cara Menjalankan (Development)
+### 📦 PROJECT MATRIX
 
-### A. Menggunakan Docker (Rekomendasi - Paling Stabil)
-1.  Copy `.dev.vars.example` menjadi `.dev.vars` dan isi secret-nya.
-2.  Jalankan `docker-compose up --build`.
-3.  Akses di `http://localhost:8788`.
-    *   *Sistem akan otomatis mendeteksi perubahan pada seed.sql via MD5 Checksum dan mensinkronisasi data dummy untuk Anda.*
+<table align="center">
+  <tr>
+    <td width="50%" valign="top">
+      <h4>🛍️ Katalog & Discovery</h4>
+      <p>Sistem katalog produk dengan fitur <i>Doom Scroll</i>, filter kategori dinamis, dan integrasi WhatsApp Direct untuk transaksi aman.</p>
+      <code>Search Engine</code> <code>WA Integration</code> <code>Grid UI</code>
+    </td>
+    <td width="50%" valign="top">
+      <h4>🛡️ Admin Moderation Queue</h4>
+      <p>Antrean moderasi produk (QC) yang efisien. Mendukung fitur <i>Reversion Status</i> jika produk diedit setelah disetujui.</p>
+      <code>QC Queue</code> <code>Role Protection</code> <code>Audit Logs</code>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>🐳 Docker-Sync Database</h4>
+      <p>Otomasi sinkronisasi database lokal antar tim pengembang menggunakan <b>MD5 Checksum</b> untuk mencegah konflik migrasi.</p>
+      <code>Docker Compose</code> <code>MD5 Checksum</code> <code>Auto-Migration</code>
+    </td>
+    <td width="50%" valign="top">
+      <h4>🔒 Security Boundaries</h4>
+      <p>Otentikasi khusus domain <b>@apps.ipb.ac.id</b> dengan proteksi <i>Self-Moderation Guard</i> dan validasi Server-Side Action.</p>
+      <code>Auth Guard</code> <code>Internal Session</code> <code>Zod Validation</code>
+    </td>
+  </tr>
+</table>
 
-### B. Menjalankan Lokal (Native)
-1.  **Install Dependencies**: `npm install --legacy-peer-deps`
-2.  **Environment**: Setup `.dev.vars`.
-3.  **Database**: `npx wrangler d1 migrations apply DB --local`
-4.  **Run Dev**: `npm run pages:dev`
+<br/>
 
-**Opsi B: Fast Development (Recommended for Daily Coding)**
-> Gunakan ini biar ngoding UI/Logic dapet HMR instan tapi tetep konek ke D1/R2.
-> Buka 2 terminal:
-> - **Terminal 1:** `npm run dev:turbo`
-> - **Terminal 2:** `npm run dev:proxy`
-> - **Akses di:** `http://localhost:8788`
+### 🛠️ TECHNICAL ARSENAL
 
-## 🛡️ Security & Boundaries
-1.  **Auth:** Wajib login menggunakan email `@apps.ipb.ac.id`.
-2.  **Media:** Video otomatis dikompres ke **720p 2500kbps** (H.264) untuk efisiensi bandwidth.
-3.  **Workflow:** Setiap edit barang oleh Non-Admin akan meriset status barang menjadi `PENDING` untuk di-review ulang oleh Admin.
+| Layer | Technology Stack |
+| :--- | :--- |
+| **Frontend** | Next.js 15 (App Router), React 19, Tailwind CSS, Lucide Icons |
+| **Backend** | Cloudflare Edge Runtime, Drizzle ORM, Zod Validation |
+| **Storage** | Cloudflare D1 (Relational), Cloudflare R2 (Media/Images) |
+| **DevOps** | Docker, Wrangler CLI, MD5 Checksum Automation |
 
-## 📊 Sample Data Overview (GIGA SEED V5)
-Setelah menjalankan `npm run db:wipe`, database Anda akan terisi dengan 15+ produk dummy untuk keperluan testing:
+<br/>
 
-| Kategori | Jumlah Produk | Contoh Barang |
-| :--- | :--- | :--- |
-| **Elektronik** | 4 | MacBook Air M1, Monitor LG, Headset Logitech |
-| **Buku & Modul** | 3 | Buku Python, Modul Kalkulus I & II |
-| **Kebutuhan Kost** | 4 | Meja Lipat, Kipas Angin, Rak Sepatu, Termos |
-| **Peralatan Praktikum** | 2 | Kalkulator Casio FX-991EX, Jas Lab |
-| **Fashion & Formal** | 2 | Sepatu Pantofel, Batik IPB Official |
+### 📊 REPOSITORY ANALYTICS
 
-### 📸 Media Consistency Mapping
-Semua produk dijamin memiliki kombinasi media yang konsisten sesuai aturan bisnis:
+<p align="center">
+  <img src="https://img.shields.io/github/languages/top/rafaelatantya/IPB-Pre-Loved?style=for-the-badge&color=f97316" />
+  <img src="https://img.shields.io/github/stars/rafaelatantya/IPB-Pre-Loved?style=for-the-badge&color=3b82f6" />
+  <img src="https://img.shields.io/github/forks/rafaelatantya/IPB-Pre-Loved?style=for-the-badge&color=27c93f" />
+  <img src="https://img.shields.io/github/repo-size/rafaelatantya/IPB-Pre-Loved?style=for-the-badge&color=8b5cf6" />
+</p>
 
-| Product ID | Pattern | Media Assets |
-| :--- | :--- | :--- |
-| **p-1 (MacBook)** | 3 Img + 1 Vid | `prod_1-3.jpg`, `video_1.mp4` |
-| **p-3 (Meja)** | 3 Img + 1 Vid | `prod_7-9.jpg`, `video_2.mp4` |
-| **p-7 (Sepatu)** | 3 Img + 1 Vid | `prod_19-21.jpg`, `video_3.mp4` |
-| **p-2, p-4 s/d p-6** | 3 Images | `prod_X.jpg` (Unique per product) |
-| **p-8 s/d p-15** | 3 Images | `prod_X.jpg` (Unique per product) |
+<br/>
+
+### 🚀 QUICK START GUIDE
+
+#### 1. Repository Setup
+```zsh
+git clone https://github.com/rafaelatantya/IPB-Pre-Loved.git
+cd IPB-Pre-Loved
+```
+
+#### 2. Configuration (`.dev.vars`)
+Salin `.dev.vars.example` dan isi variabel berikut untuk mengaktifkan fitur Auth & Database.
+
+[IMPORTANT]
+> - `AUTH_SECRET`: Gunakan `npx auth secret` untuk generate.
+> - `AUTH_GOOGLE_ID`: Client ID dari Google Cloud Console.
+> - `ADMIN_EMAILS`: Email yang diberikan hak akses Admin (pisahkan dengan koma).
+
+#### 3. Run Development Server
+
+**A. Menggunakan Docker (Sync Database)**
+<br>
+<img src="https://img.shields.io/badge/-~/p/IPB--Pre--Loved-blue?style=flat-square" /><img src="https://img.shields.io/badge/-yellow?style=flat-square" />
+```zsh
+docker-compose up --build
+```
+
+**B. Menggunakan Wrangler (Native)**
+<br>
+<img src="https://img.shields.io/badge/-~/p/IPB--Pre--Loved-blue?style=flat-square" /><img src="https://img.shields.io/badge/-yellow?style=flat-square" />
+```zsh
+npm install --legacy-peer-deps
+npx wrangler d1 migrations apply DB --local
+npm run pages:dev
+```
+
+<br/>
+
+### 🛡️ SYSTEM BOUNDARIES & RULES
+- **No Internal Payments**: Transaksi dilakukan secara eksternal via WhatsApp untuk menjamin fleksibilitas.
+- **Email Restricted**: Hanya civitas akademika IPB (@apps.ipb.ac.id) yang dapat mengakses sistem.
+- **Automatic QC**: Setiap perubahan data pada produk `APPROVED` akan mengembalikan status ke `PENDING`.
+
+<br/>
 
 ---
-*Note: Selalu ikuti [Hierarchy of Truth](.agents/rules/agents.md) sebelum melakukan perubahan besar.*
+<div align="center">
+  <p><strong>Kelompok 5 R3 - Pengembangan Aplikasi Web</strong></p>
+  <p>Departemen Ilmu Komputer • IPB University</p>
+</div>

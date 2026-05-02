@@ -10,8 +10,10 @@ Berfokus pada rute Group Terproteksi `(seller)` untuk penjual dan `(admin)` untu
 - `src/app/(seller)/layout.jsx` : Layout Mode Penjual. Sisipkan komponen `Sidebar.jsx`. Menampilkan area kerja utama di sebelah kanannya.
 - `src/app/(seller)/dashboard/page.jsx` : Menampilkan tabel `List Produkku` dengan status *badge* yang jelas (Pending/Disetujui/Ditolak).
 - `src/app/(seller)/product/add/page.jsx` : Laman utuh penambahan Barang. Tempat memanggil form submission ke Backend.
-- `src/app/(admin)/layout.jsx` : Layout Admin QC, mereplika layout Penjual, hanya beda tab sisi.
-- `src/app/(admin)/dashboard/page.jsx` : Tabel `Antrean Produk Pending`. Mengandung wewenang tinggi bagi Admin.
+- `src/app/(admin)/dashboard/page.jsx` : Dashboard utama Admin (Statistik & Overview Antrean).
+- `src/app/(admin)/admin/queue/page.jsx` : Laman Moderasi "Doom Scroll". Menampilkan satu per satu barang PENDING untuk di-QC secara berantai.
+- `src/app/(admin)/admin/inventory/page.jsx` : Inventori global seluruh barang (Approved/Pending/Sold).
+- `src/app/(admin)/admin/users/page.jsx` : Manajemen akun user (Ban/Unban/Delete).
 
 ### 2. Komponen Antarmuka (UI Components)
 Lokasi: `src/components/ui/` (Komponen *Shadcn*)
@@ -56,6 +58,19 @@ const productResult = await createProduct({
   ... 
 });
 ```
+
+
+## 🛡️ Alur Kerja Admin QC (Doom Scroll)
+Halaman `/admin/queue` menggunakan desain **Doom Scroll** untuk efisiensi tinggi:
+1. **Single View**: Admin hanya melihat satu barang paling depan di antrean.
+2. **Instant Action**: Tombol Approve/Reject memproses barang dan otomatis memicu *state update* untuk menampilkan barang berikutnya.
+3. **Verdict Note**: Setiap penolakan (Reject) wajib menyertakan alasan yang akan dikirimkan sebagai notifikasi ke penjual.
+
+## 👥 Kontrol Moderasi User
+Admin memiliki wewenang penuh atas akun pengguna:
+- **Ban Account**: Mengubah flag `isBlocked` menjadi true. User tidak akan bisa login.
+- **Delete Account**: Melakukan *Hard Delete* pada tabel User. Semua produk milik user tersebut akan terhapus secara otomatis (*Cascade Delete*).
+- **Self-Protection**: Sistem secara otomatis mencegah Admin untuk memblokir atau menghapus akun mereka sendiri melalui pengecekan `session.user.id`.
 
 - **PENTING**: Saat memanggil `updateProduct`, informasikan kepada user bahwa barang akan masuk antrean moderasi ulang (status reset ke `PENDING`).
 - **SECURITY**: Jangan pernah mengirim `userId` atau `role` dari client-side form. Backend sudah menanganinya secara aman di server.

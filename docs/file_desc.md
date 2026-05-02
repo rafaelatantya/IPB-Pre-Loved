@@ -30,8 +30,10 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/admin-test/page.js` | Dashboard modular untuk pengujian CRUD Backend (User, Category, R2 Product) |
 | `src/components/auth/OnboardingGuard.jsx` | Komponen Client-Side yang memaksa user ONBOARDING menyelesaikan profil |
 | `src/app/(admin)/admin/dashboard/page.jsx` | Dashboard utama panel administrasi (Statistik & Overview) |
-| `src/app/(admin)/admin/queue/page.jsx` | Antrean moderasi produk PENDING untuk direview Admin |
-| `src/app/(admin)/admin/queue/[id]/page.jsx` | Detail produk dalam antrean QC beserta kontrol Approve/Reject |
+| `src/app/(admin)/admin/queue/page.jsx` | Moderasi produk PENDING mode "Doom Scroll" (Satu per satu otomatis) |
+| `src/app/(admin)/admin/queue/[id]/page.jsx` | Detail produk dalam antrean QC (Legacy/Direct Access) |
+| `src/app/(admin)/admin/inventory/page.jsx` | Manajemen stok barang global (Pagination & Search) |
+| `src/app/(admin)/admin/users/page.jsx` | Manajemen akun user global (Ban/Delete & Database) |
 | `src/app/(seller)/dashboard/page.jsx` | Dashboard pusat kontrol untuk penjual (Manajemen Produk & Penjualan) |
 | `src/app/(seller)/product/add/page.jsx` | Form pengajuan produk baru oleh penjual |
 | `src/components/layouts/Sidebar.jsx` | Komponen navigasi samping universal untuk dashboard |
