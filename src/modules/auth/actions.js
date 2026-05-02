@@ -37,7 +37,7 @@ export async function completeOnboarding({ role, whatsappNumber }) {
         role: role,
         whatsappNumber: whatsappNumber || "",
       })
-      .where(eq(users.email, userEmail));
+      .where(eq(users.email, userEmail)).run();
     
     console.log("ONBOARDING SUCCESS: Database updated");
 

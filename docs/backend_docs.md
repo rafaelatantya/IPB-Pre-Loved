@@ -115,3 +115,7 @@ Sistem secara proaktif menjaga kebersihan storage Cloudflare R2:
 - Produk berstatus `SOLD` otomatis **disembunyikan** dari Katalog Publik, Produk Unggulan, dan Rekomendasi.
 - Tetap muncul di Dashboard Penjual sebagai riwayat transaksi.
 - Memberikan notifikasi "SUCCESS" otomatis ke penjual saat diaktifkan.
+
+### D. Cloudflare D1 & Drizzle ORM Edge Cases (CRITICAL)
+- **Mandatory `.run()` / `.execute()`**: Semua operasi Write (`db.insert`, `db.update`, `db.delete`) **WAJIB** diakhiri dengan `.run()` atau `.execute()`. Jika hanya menggunakan `await db.update(...)` tanpa eksekutor, Drizzle D1 **TIDAK AKAN** menjalankan query-nya (Silent Failure / "0 aksi").
+- **Timestamp Integer Normalization**: Drizzle SQLite tidak memiliki tipe `Date` asli. Jangan pernah gunakan `{ mode: 'timestamp' }` di schema karena Next.js Edge Runtime akan salah mengkalkulasi Epoch (menjadi tahun 58304). Selalu gunakan `integer('created_at').default(sql\`(unixepoch() * 1000)\`)` untuk menyimpan milidetik secara natif.

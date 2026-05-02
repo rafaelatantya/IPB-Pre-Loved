@@ -61,6 +61,8 @@ Pastikan setiap interaksi database yang dibuat oleh AI menggunakan **Drizzle ORM
     3. Check `README.md` (for environment & setup info)
     4. Only then, analyze code files and implement changes.
 12. **🚨 SACRED README RULE**: The `README.md` file is considered **FINAL** and **IMMUTABLE**. AI Agents are strictly **FORBIDDEN** from editing, modifying, or overwriting this file under any circumstances, unless explicitly ordered by the USER with a specific confirmation code.
+13. **🚨 ZERO AUTO-PUSH POLICY**: AI Agents are **STRICTLY FORBIDDEN** from automatically running `git push` or `git commit` to the cloud repository without explicit user consent. Always leave the workspace changes local for the user to review and push manually.
+14. **🚨 D1 DRIZZLE EXECUTION RULE**: Every `db.insert`, `db.update`, and `db.delete` statement against Cloudflare D1 MUST end with `.run()` or `.execute()`. Drizzle does not automatically execute writes in D1 just by awaiting the builder. Failure to do so is considered "slop code" and will result in silent logic failures.
 
 ## 7. ROLE-BASED AGENT INSTRUCTIONS
 Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend, 2 Frontend).

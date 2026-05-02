@@ -44,7 +44,7 @@ export async function addCategory(name) {
 export async function deleteCategory(id) {
   try {
     const db = await getContextDb();
-    await db.delete(categories).where(eq(categories.id, id));
+    await db.delete(categories).where(eq(categories.id, id)).run();
     return { success: true, message: "Kategori berhasil dihapus" };
   } catch (error) {
     return { success: false, error: "Gagal menghapus kategori" };

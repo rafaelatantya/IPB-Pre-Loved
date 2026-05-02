@@ -52,7 +52,7 @@ export function getAuthConfig(env) {
               name: user.name,
               email: user.email,
               role: initialRole,
-            });
+            }).run();
           }
         } catch (error) {
           console.error("Auto-register error", error);

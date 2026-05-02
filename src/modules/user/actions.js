@@ -51,7 +51,8 @@ export async function updateSellerProfile({ whatsappNumber }) {
         whatsappNumber,
         updatedAt: new Date().getTime()
       })
-      .where(eq(users.email, session.user.email));
+      .where(eq(users.email, session.user.email))
+      .run();
     
     revalidatePath("/seller/settings");
     return { success: true, message: "Profil berhasil diperbarui!" };
@@ -104,7 +105,8 @@ export async function upgradeToSeller(whatsappNumber = null) {
 
     await db.update(users)
       .set(updateData)
-      .where(eq(users.email, userEmail));
+      .where(eq(users.email, userEmail))
+      .run();
 
     // revalidatePath("/"); // DIMATIKAN SEMENTARA: Sering bikin crash di Cloudflare Pages Dev (Internal DNS Error)
     return { success: true, message: "Selamat! Anda sekarang adalah SELLER." };

@@ -49,7 +49,7 @@ export async function toggleWishlist(productId) {
 
     if (existing) {
       // PROSES UNLIKE: Hapus dari wishlist
-      await db.delete(wishlists).where(eq(wishlists.id, existing.id));
+      await db.delete(wishlists).where(eq(wishlists.id, existing.id)).run();
       return { success: true, wishlisted: false, message: "Dihapus dari favorit" };
     } else {
       // PROSES LIKE: Tambah ke wishlist
@@ -57,7 +57,7 @@ export async function toggleWishlist(productId) {
         id: crypto.randomUUID(),
         userId,
         productId,
-      });
+      }).run();
       return { success: true, wishlisted: true, message: "Ditambahkan ke favorit" };
     }
   } catch (error) {

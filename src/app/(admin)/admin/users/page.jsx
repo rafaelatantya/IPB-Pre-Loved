@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input 
                         type="text" 
-                        placeholder="Search by name, email, or NIM..." 
+                        placeholder="Search by name, email, NIM, or User Type..." 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all w-72"
@@ -70,8 +70,10 @@ export default function AdminUsersPage() {
                     <thead>
                         <tr className="bg-gray-50/50 border-b border-gray-100">
                             <th className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-6 py-4">User Details</th>
+                            <th className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Type</th>
                             <th className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Role</th>
                             <th className="text-center text-[10px] font-black uppercase tracking-widest text-gray-400 px-4 py-4">Status</th>
+                            <th className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Contact</th>
                             <th className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Joined At</th>
                             <th className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 px-6 py-4">Actions</th>
                         </tr>
@@ -91,6 +93,11 @@ export default function AdminUsersPage() {
                                     </div>
                                 </td>
                                 <td className="px-4 py-4">
+                                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                                        {u.userType || "STUDENT"}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-4">
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${u.role === "ADMIN" ? "text-blue-600" : "text-gray-400"}`}>
                                         {u.role}
                                     </span>
@@ -103,6 +110,13 @@ export default function AdminUsersPage() {
                                             <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-green-100 text-green-600 border border-green-200">ACTIVE</span>
                                         )}
                                     </div>
+                                </td>
+                                <td className="px-4 py-4 text-center text-[10px] font-bold text-gray-600">
+                                    {u.whatsappNumber ? (
+                                        <a href={`https://wa.me/${u.whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-green-600 hover:underline">
+                                            +{u.whatsappNumber}
+                                        </a>
+                                    ) : "—"}
                                 </td>
                                 <td className="px-4 py-4 text-center text-[10px] font-bold text-gray-400 uppercase">
                                     {u.createdAt ? new Date(u.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }) : "—"}

@@ -395,7 +395,7 @@ export async function deleteProduct(id) {
         })
       ]);
     } else {
-      await db.delete(products).where(eq(products.id, id));
+      await db.delete(products).where(eq(products.id, id)).run();
     }
 
     // 2. Sapu bersih di R2 (Async Cleanup)
@@ -420,7 +420,8 @@ export async function trackWhatsAppClick(productId) {
     // 🛡️ EDGE CASE: Increment atomic biar nggak tabrakan kalau diklik barengan
     await db.update(products)
       .set({ whatsappClicks: sql`${products.whatsappClicks} + 1` })
-      .where(eq(products.id, productId));
+      .where(eq(products.id, productId))
+      .run();
     return { success: true };
   } catch (error) {
     console.error("Track WA Click Error:", error);
