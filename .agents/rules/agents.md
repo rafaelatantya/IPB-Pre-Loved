@@ -60,6 +60,7 @@ Pastikan setiap interaksi database yang dibuat oleh AI menggunakan **Drizzle ORM
     2. Check `docs/` directory (for technical specs & system boundaries)
     3. Check `README.md` (for environment & setup info)
     4. Only then, analyze code files and implement changes.
+12. **🚨 SACRED README RULE**: The `README.md` file is considered **FINAL** and **IMMUTABLE**. AI Agents are strictly **FORBIDDEN** from editing, modifying, or overwriting this file under any circumstances, unless explicitly ordered by the USER with a specific confirmation code.
 
 ## 7. ROLE-BASED AGENT INSTRUCTIONS
 Tim developer (coding) terdiri dari 3 entitas aktif di repository ini (1 Backend, 2 Frontend).
