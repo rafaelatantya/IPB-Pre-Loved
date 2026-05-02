@@ -391,3 +391,41 @@ export async function trackWhatsAppClick(productId) {
     return { success: false };
   }
 }
+
+/**
+ * Action: Ambil Statistik Penjual (Personal Analytics)
+ */
+export async function getSellerStats() {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (!session?.user?.id) return { success: false, code: 401 };
+
+  try {
+    const db = await getContextDb();
+    const sellerId = session.user.id;
+
+    // 1. Hitung Produk Berdasarkan Status milik seller ini
+    const productStats = await db.select({
+      status: products.status,
+      count: sql`count(*)`,
+      totalClicks: sql`sum(${products.whatsappClicks})`,
+    })
+    .from(products)
+    .where(eq(products.sellerId, sellerId))
+    .groupBy(products.status);
+
+    // Map hasil ke format yang enak dipake UI
+    const stats = {
+      activeProducts: productStats.find(s => s.status === "APPROVED")?.count || 0,
+      soldProducts: productStats.find(s => s.status === "SOLD")?.count || 0,
+      pendingQC: productStats.find(s => s.status === "PENDING")?.count || 0,
+      totalLeads: productStats.reduce((acc, curr) => acc + (Number(curr.totalClicks) || 0), 0),
+    };
+
+    return { success: true, data: stats };
+  } catch (error) {
+    console.error("Seller Stats Error:", error);
+    return { success: false, error: "Gagal mengambil statistik penjual" };
+  }
+}
