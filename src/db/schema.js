@@ -12,6 +12,7 @@ export const users = sqliteTable('users', {
   isBlocked: integer('is_blocked', { mode: 'boolean' }).default(false),
   isFlagged: integer('is_flagged', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

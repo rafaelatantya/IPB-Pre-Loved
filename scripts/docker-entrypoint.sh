@@ -37,8 +37,11 @@ if [ "$DB_RESET" = "true" ] || [ -f "RESET_DB" ] || [ "$CURRENT_HASH" != "$LAST_
   # Bersihkan file trigger kalau ada
   if [ -f "RESET_DB" ]; then rm RESET_DB; fi
 else
-  echo "✅ Database is up-to-date with seed.sql. Checking for migrations..."
-  npm run db:push:local || echo "⚠️ Migration failed, but continuing..."
+  echo "✅ Database is up-to-date with seed.sql."
+  echo "📦 Checking for new migrations..."
+  # Gunakan echo "y" untuk auto-confirm migration apply
+  npm run db:push:local || { echo "❌ Migration failed! Please check your schema or migration files."; exit 1; }
+  echo "🚀 All migrations applied successfully."
 fi
 
 # 3. Build Project (Generate .vercel/output/static)

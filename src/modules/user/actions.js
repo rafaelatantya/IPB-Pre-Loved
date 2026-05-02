@@ -44,10 +44,13 @@ export async function updateSellerProfile({ whatsappNumber }) {
     return { success: false, error: "Nomor WhatsApp tidak valid (10-15 karakter)" };
   }
 
-  try {
+    try {
     const db = await getContextDb();
     await db.update(users)
-      .set({ whatsappNumber })
+      .set({ 
+        whatsappNumber,
+        updatedAt: new Date().getTime()
+      })
       .where(eq(users.email, session.user.email));
     
     revalidatePath("/seller/settings");
@@ -93,7 +96,10 @@ export async function upgradeToSeller(whatsappNumber = null) {
     }
 
     // Update Role menjadi SELLER
-    const updateData = { role: "SELLER" };
+    const updateData = { 
+      role: "SELLER",
+      updatedAt: new Date().getTime()
+    };
     if (whatsappNumber) updateData.whatsappNumber = whatsappNumber;
 
     await db.update(users)

@@ -104,8 +104,8 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
         status: initialStatus,
         videoUrl: safeVideo,
         videoDuration: safeVideo ? videoDuration : 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date().getTime(),
+        updatedAt: new Date().getTime()
       }),
       ...safeImages.map((url, i) => db.insert(productImages).values({
         id: crypto.randomUUID(),

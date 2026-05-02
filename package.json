@@ -15,6 +15,7 @@
     "db:generate": "drizzle-kit generate",
     "db:push:local": "echo \"y\" | npx wrangler d1 migrations apply DB --local --persist-to ./local-db-info",
     "db:push:remote": "npx wrangler d1 migrations apply DB --remote",
+    "db:wipe": "rm -rf ./local-db-info/v3/d1 && npm run db:push:local && npm run db:seed:local",
     "db:seed:local": "npx wrangler d1 execute DB --local --file=./drizzle/seed.sql --persist-to ./local-db-info && bash scripts/seed-media.sh",
     "db:reset:local": "rm -rf ./local-db-info/v3/d1 && npm run db:push:local && npm run db:seed:local",
     "db:reset:cloud": "echo '🚨 BAHAYA: Reset TOTAL Cloudflare (DB & Media)? (y/N)' && read confirm && [ \"$confirm\" = \"y\" ] && npm run db:push:remote && bash scripts/seed-media.sh --remote && npx wrangler d1 execute DB --remote --command='DELETE FROM notifications; DELETE FROM admin_logs; DELETE FROM wishlists; DELETE FROM product_images; DELETE FROM qc_reviews; DELETE FROM products; DELETE FROM users; DELETE FROM categories;' && npx wrangler d1 execute DB --remote --file=./drizzle/seed.sql"

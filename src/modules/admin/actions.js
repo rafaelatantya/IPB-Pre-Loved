@@ -193,11 +193,14 @@ export async function toggleBlockUser(userId, status) {
     return { success: false, error: "Anda tidak bisa memblokir akun Anda sendiri" };
   }
 
-  try {
+    try {
     const db = await getContextDb();
     
     await db.batch([
-      db.update(users).set({ isBlocked: status }).where(eq(users.id, userId)),
+      db.update(users).set({ 
+        isBlocked: status,
+        updatedAt: new Date().getTime() 
+      }).where(eq(users.id, userId)),
       db.insert(adminLogs).values({
         id: crypto.randomUUID(),
         adminId: session.user.id,
@@ -231,10 +234,13 @@ export async function toggleFlagUser(userId, status) {
 
   if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
 
-  try {
+    try {
     const db = await getContextDb();
     await db.batch([
-      db.update(users).set({ isFlagged: status }).where(eq(users.id, userId)),
+      db.update(users).set({ 
+        isFlagged: status,
+        updatedAt: new Date().getTime()
+      }).where(eq(users.id, userId)),
       db.insert(adminLogs).values({
         id: crypto.randomUUID(),
         adminId: session.user.id,
@@ -292,11 +298,14 @@ export async function toggleUserRole(userId, currentRole) {
     return { success: false, error: "Unauthorized" };
   }
 
-  try {
+    try {
     const db = await getContextDb();
     const newRole = currentRole === "ADMIN" ? "BUYER" : "ADMIN";
     await db.batch([
-      db.update(users).set({ role: newRole }).where(eq(users.id, userId)),
+      db.update(users).set({ 
+        role: newRole,
+        updatedAt: new Date().getTime()
+      }).where(eq(users.id, userId)),
       db.insert(adminLogs).values({
         id: crypto.randomUUID(),
         adminId: session.user.id,

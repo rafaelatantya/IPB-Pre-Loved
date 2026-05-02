@@ -15,6 +15,13 @@
       "when": 1777540707502,
       "tag": "0001_classy_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777747392585,
+      "tag": "0002_slim_katie_power",
+      "breakpoints": true
     }
   ]
 }
