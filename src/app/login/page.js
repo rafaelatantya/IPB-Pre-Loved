@@ -1,5 +1,8 @@
 "use client";
 
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
 import { signIn } from "next-auth/react";
 import { AlertTriangle, LogIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";

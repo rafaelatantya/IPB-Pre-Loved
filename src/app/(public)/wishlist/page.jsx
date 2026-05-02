@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+export const runtime = "edge";
+
+import React, { useState, useEffect } from "react";
 import { Heart, ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";

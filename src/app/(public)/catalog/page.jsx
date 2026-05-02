@@ -1,29 +1,60 @@
 "use client";
 
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect, Suspense } from "react";
 import { Search, Filter, Grid, List, ChevronDown, MapPin, Tag, Clock } from "lucide-react";
 import ProductCard from "@/modules/catalog/components/ProductCard";
 import { getApprovedProducts } from "@/modules/catalog/services";
+import { getCategories } from "@/modules/category/actions";
 import { useSearchParams } from "next/navigation";
 
 // Sub-component untuk handle logic search params
 function CatalogContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
-  const initialCategory = searchParams.get("category") || "SEMUA KATEGORI";
+  const initialCategory = searchParams.get("category") || "all";
 
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // State untuk input (yang diketik user)
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  // State untuk query (yang dikirim ke backend - di-debounce)
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
 
+  // 1. Fetch Categories
+  useEffect(() => {
+    async function loadCategories() {
+      const res = await getCategories();
+      if (res.success) {
+        setCategories(res.data || []);
+      }
+    }
+    loadCategories();
+  }, []);
+
+  // 2. Debounce Search Input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 500); // Tunggu 500ms setelah user berhenti ngetik
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // 3. Fetch Products when search/category changes
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
       try {
         const res = await getApprovedProducts({
           search: searchQuery,
-          category: selectedCategory === "SEMUA KATEGORI" ? "" : selectedCategory,
+          categoryId: selectedCategory === "all" ? "" : selectedCategory,
         });
         if (res.success) {
           setProducts(res.data || []);
@@ -54,11 +85,14 @@ function CatalogContent() {
                 type="text"
                 placeholder="Cari buku, elektronik, atau furniture..."
                 className="w-full pl-12 pr-4 py-4 bg-[#F1F5F9] border-none rounded-2xl text-[#1E293B] text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
-            <button className="px-8 py-4 bg-[#2563EB] text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2">
+            <button 
+              onClick={() => setSearchQuery(searchInput)}
+              className="px-8 py-4 bg-[#2563EB] text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2"
+            >
               <Filter className="w-4 h-4" />
               <span>CARI</span>
             </button>
@@ -74,17 +108,27 @@ function CatalogContent() {
           <div className="flex flex-col gap-4">
             <h3 className="text-[#0F172A] text-xs font-bold uppercase tracking-widest border-b border-gray-200 pb-2">KATEGORI UTAMA</h3>
             <div className="flex flex-col gap-2">
-              {["SEMUA KATEGORI", "BUKU & MODUL", "ELEKTRONIK", "KEBUTUHAN KOST", "PERALATAN PRAKTIKUM", "FASHION"].map((cat) => (
+              <button 
+                onClick={() => setSelectedCategory("all")}
+                className={`text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  selectedCategory === "all" 
+                    ? "bg-[#2563EB] text-white shadow-md" 
+                    : "text-[#64748B] hover:bg-white hover:text-[#2563EB]"
+                }`}
+              >
+                SEMUA KATEGORI
+              </button>
+              {categories.map((cat) => (
                 <button 
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
                   className={`text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    selectedCategory === cat 
+                    selectedCategory === cat.id 
                       ? "bg-[#2563EB] text-white shadow-md" 
                       : "text-[#64748B] hover:bg-white hover:text-[#2563EB]"
                   }`}
                 >
-                  {cat}
+                  {cat.name.toUpperCase()}
                 </button>
               ))}
             </div>
