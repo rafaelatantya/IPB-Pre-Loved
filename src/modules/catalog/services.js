@@ -55,9 +55,9 @@ export async function getApprovedProducts({
     } else {
         if (sortBy === "cheapest") orderBy = asc(products.price);
         else if (sortBy === "expensive") orderBy = desc(products.price);
-        else if (sortBy === "latest") orderBy = asc(products.createdAt);
-        else if (sortBy === "oldest") orderBy = desc(products.createdAt);
-        else orderBy = asc(products.createdAt); 
+        else if (sortBy === "latest") orderBy = desc(products.createdAt);
+        else if (sortBy === "oldest") orderBy = asc(products.createdAt);
+        else orderBy = desc(products.createdAt); 
     }
 
     const data = await db.query.products.findMany({

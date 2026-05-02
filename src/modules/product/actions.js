@@ -1,7 +1,7 @@
 "use server";
 
 import { getContextDb } from "@/lib/db";
-import { products, productImages, qcReviews } from "@/db/schema";
+import { products, productImages, qcReviews, notifications, adminLogs } from "@/db/schema";
 import { eq, sql, desc, and } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
 import { productSchema } from "@/lib/validation";
@@ -206,9 +206,24 @@ export async function markProductAsSold(id) {
         return { success: false, error: "Hanya produk yang sudah disetujui Admin yang bisa ditandai Terjual." };
     }
 
-    await db.update(products).set({ status: "SOLD" }).where(eq(products.id, id));
+    await db.batch([
+      db.update(products).set({ 
+        status: "SOLD",
+        updatedAt: new Date() 
+      }).where(eq(products.id, id)),
+      // Kirim Notifikasi Selamat ke Penjual
+      db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: product.sellerId, // Memastikan notif masuk ke Penjual, bukan Admin yang klik
+        title: "Selamat! Produk Terjual",
+        message: `Produk "${product.title}" Anda telah ditandai sebagai terjual. Terima kasih telah menggunakan IPB Pre-Loved!`,
+        type: "SUCCESS",
+      })
+    ]);
+    
     return { success: true, message: "Produk ditandai sebagai terjual" };
   } catch (error) {
+    console.error("Mark Sold Error:", error);
     return { success: false, error: "Gagal update status terjual" };
   }
 }
@@ -262,7 +277,21 @@ export async function deleteProduct(id) {
         return { success: false, code: 403, error: "Akses ditolak" };
     }
 
-    await db.delete(products).where(eq(products.id, id));
+    if (isAdmin && !isOwner) {
+      await db.batch([
+        db.delete(products).where(eq(products.id, id)),
+        db.insert(adminLogs).values({
+          id: crypto.randomUUID(),
+          adminId: session.user.id,
+          action: "DELETE_PRODUCT",
+          targetId: id,
+          details: `Admin deleted product: ${product.title} (Seller ID: ${product.sellerId})`,
+        })
+      ]);
+    } else {
+      await db.delete(products).where(eq(products.id, id));
+    }
+    
     return { success: true, message: "Produk dihapus" };
   } catch (error) {
     return { success: false, error: "Gagal menghapus" };
