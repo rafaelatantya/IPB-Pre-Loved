@@ -49,5 +49,6 @@ export const productSchema = z.object({
 export const qcReviewSchema = z.object({
   productId: z.string().uuid(),
   decision: z.enum(["APPROVED", "REJECTED"]),
+  reasonCode: z.string().optional().nullable(),
   note: z.string().optional(),
 });

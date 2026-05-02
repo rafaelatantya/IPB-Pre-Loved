@@ -67,9 +67,23 @@ export async function getAdminInventory({ page = 1, limit = 20, status = null })
 }
 
 /**
- * Action: Review Produk (Approve/Reject + Log QC)
+ * Daftar Alasan Penolakan Standar (Advanced QC Feedback)
  */
-export async function reviewProduct({ productId, decision, note }) {
+export const REJECTION_REASONS = {
+  BAD_PHOTO: "Foto produk buram, gelap, atau tidak jelas.",
+  INAPPROPRIATE: "Produk mengandung konten yang melanggar aturan atau tidak pantas.",
+  PRICE_UNREALISTIC: "Harga yang dicantumkan tidak masuk akal atau mencurigakan.",
+  MISLEADING: "Judul atau deskripsi barang menyesatkan atau tidak sesuai.",
+  DUPLICATE: "Produk ini terdeteksi sebagai duplikasi dari listing yang sudah ada.",
+  LOW_QUALITY: "Deskripsi terlalu singkat atau informasi barang sangat minim.",
+  OUT_OF_SCOPE: "Barang ini tidak diizinkan untuk dijual di platform IPB Pre-Loved.",
+  OTHER: "Alasan lainnya (cek catatan admin)."
+};
+
+/**
+ * Action: Review Produk (Approve/Reject + Log QC + Advanced Feedback)
+ */
+export async function reviewProduct({ productId, decision, reasonCode = null, note = "" }) {
   const auth = await getAuth();
   const session = await auth();
 
@@ -78,13 +92,9 @@ export async function reviewProduct({ productId, decision, note }) {
   }
 
   // Validasi Zod
-  const validation = qcReviewSchema.safeParse({ productId, decision, note });
+  const validation = qcReviewSchema.safeParse({ productId, decision, note, reasonCode });
   if (!validation.success) {
-    const fieldErrors = validation.error.flatten().fieldErrors;
-    const formattedErrors = Object.fromEntries(
-      Object.entries(fieldErrors).map(([key, value]) => [key, value[0]])
-    );
-    return { success: false, code: 400, error: "Validasi gagal", errors: formattedErrors };
+    return { success: false, code: 400, error: "Validasi gagal", errors: validation.error.flatten().fieldErrors };
   }
 
   try {
@@ -99,6 +109,13 @@ export async function reviewProduct({ productId, decision, note }) {
       return { success: false, error: "Produk sudah diproses atau tidak ditemukan" };
     }
 
+    // Tentukan pesan penolakan yang ramah
+    let rejectionMessage = "Produk Anda ditolak karena belum memenuhi kriteria komunitas.";
+    if (decision === "REJECTED") {
+      const reasonText = REJECTION_REASONS[reasonCode] || note || "Melanggar aturan komunitas.";
+      rejectionMessage = `Produk "${currentProduct.title}" ditolak. Alasan: ${reasonText}${note && reasonCode ? " | Catatan: " + note : ""}`;
+    }
+
     // Jalankan dalam transaksi agar atomik
     await db.batch([
       // 1. Update status produk
@@ -110,7 +127,7 @@ export async function reviewProduct({ productId, decision, note }) {
         productId,
         adminId: session.user.id,
         decision,
-        note: note || "",
+        note: note || (reasonCode ? REJECTION_REASONS[reasonCode] : ""),
       }),
 
       // 3. Log Aktivitas Admin (Audit Trail)
@@ -119,17 +136,17 @@ export async function reviewProduct({ productId, decision, note }) {
         adminId: session.user.id,
         action: "REVIEW_PRODUCT",
         targetId: productId,
-        details: `Decision: ${decision}. Note: ${note || "none"}`,
+        details: `Decision: ${decision}. Reason: ${reasonCode || "N/A"}. Note: ${note || "none"}`,
       }),
 
       // 4. Kirim Notifikasi ke Seller
       db.insert(notifications).values({
         id: crypto.randomUUID(),
         userId: currentProduct.sellerId,
-        title: decision === "APPROVED" ? "Produk Disetujui!" : "Produk Ditolak",
+        title: decision === "APPROVED" ? "Produk Disetujui! 🎉" : "Produk Ditolak ⚠️",
         message: decision === "APPROVED" 
-          ? `Produk "${currentProduct.title}" Anda sekarang sudah tayang di katalog.`
-          : `Produk "${currentProduct.title}" ditolak. Alasan: ${note || "Melanggar aturan."}`,
+          ? `Produk "${currentProduct.title}" Anda sekarang sudah tayang di katalog publik.`
+          : rejectionMessage,
         type: decision === "APPROVED" ? "SUCCESS" : "DANGER",
       })
     ]);
