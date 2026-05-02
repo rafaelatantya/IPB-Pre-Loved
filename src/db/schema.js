@@ -11,7 +11,7 @@ export const users = sqliteTable('users', {
   userType: text('user_type').default('STUDENT'), // STUDENT, STAFF, ALUMNI
   isBlocked: integer('is_blocked', { mode: 'boolean' }).default(false),
   isFlagged: integer('is_flagged', { mode: 'boolean' }).default(false),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -83,7 +83,7 @@ export const qcReviews = sqliteTable('qc_reviews', {
   adminId: text('admin_id').notNull().references(() => users.id),
   decision: text('decision').notNull(), // APPROVE, REJECT
   note: text('note'),
-  reviewedAt: integer('reviewed_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  reviewedAt: integer('reviewed_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
 
 export const qcReviewsRelations = relations(qcReviews, ({ one }) => ({
@@ -101,7 +101,7 @@ export const wishlists = sqliteTable('wishlists', {
   id: text('id').primaryKey(), 
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 }, (table) => ({
   unq: uniqueIndex('wishlist_user_product_idx').on(table.userId, table.productId),
 }));
@@ -124,7 +124,7 @@ export const notifications = sqliteTable('notifications', {
   message: text('message').notNull(),
   type: text('type').default('INFO'), // INFO, SUCCESS, WARNING, DANGER
   isRead: integer('is_read', { mode: 'boolean' }).default(false),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
 
 export const adminLogs = sqliteTable('admin_logs', {
@@ -133,7 +133,7 @@ export const adminLogs = sqliteTable('admin_logs', {
   action: text('action').notNull(), // REVIEW_PRODUCT, BLOCK_USER, etc.
   targetId: text('targetId'),
   details: text('details'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { User, LogOut, LayoutDashboard } from "lucide-react";
+import NotificationCenter from "../notifications/NotificationCenter";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -28,6 +29,9 @@ export default function Navbar() {
             <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
           ) : isAuthenticated ? (
             <div className="flex items-center gap-3">
+              {/* Notification Center */}
+              <NotificationCenter />
+
               {/* Dashboard Link */}
               <Link 
                 href={session?.user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard"} 

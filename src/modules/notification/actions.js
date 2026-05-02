@@ -3,25 +3,41 @@
 import { getContextDb } from "@/lib/db";
 import { notifications } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { getAuth } from "@/lib/auth";
 
 /**
- * Action: Ambil notifikasi user (untuk lonceng notif)
+ * Action: Kirim Notifikasi ke User
  */
-export async function getNotifications() {
-  const auth = await getAuth();
-  const session = await auth();
+export async function createNotification({ userId, title, message, type = "INFO" }) {
+  try {
+    const db = await getContextDb();
+    const id = crypto.randomUUID();
 
-  if (!session?.user?.id) return { success: false, code: 401 };
+    await db.insert(notifications).values({
+      id,
+      userId,
+      title,
+      message,
+      type,
+    }).run();
 
+    return { success: true, id };
+  } catch (error) {
+    console.error("Failed to create notification:", error);
+    return { success: false, error: "Gagal mengirim notifikasi" };
+  }
+}
+
+/**
+ * Action: Ambil Notifikasi User
+ */
+export async function getUserNotifications(userId) {
   try {
     const db = await getContextDb();
     const result = await db.query.notifications.findMany({
-      where: eq(notifications.userId, session.user.id),
+      where: eq(notifications.userId, userId),
       orderBy: [desc(notifications.createdAt)],
       limit: 20
     });
-
     return { success: true, data: result };
   } catch (error) {
     return { success: false, error: "Gagal mengambil notifikasi" };
@@ -29,25 +45,17 @@ export async function getNotifications() {
 }
 
 /**
- * Action: Tandai notifikasi sudah dibaca
+ * Action: Tandai Notifikasi sudah dibaca
  */
-export async function markNotificationAsRead(id) {
-  const auth = await getAuth();
-  const session = await auth();
-
-  if (!session?.user?.id) return { success: false, code: 401 };
-
+export async function markAsRead(notificationId) {
   try {
     const db = await getContextDb();
     await db.update(notifications)
       .set({ isRead: true })
-      .where(and(
-        eq(notifications.id, id),
-        eq(notifications.userId, session.user.id)
-      ));
-    
+      .where(eq(notifications.id, notificationId))
+      .run();
     return { success: true };
   } catch (error) {
-    return { success: false, error: "Gagal update status" };
+    return { success: false, error: "Gagal mengupdate notifikasi" };
   }
 }

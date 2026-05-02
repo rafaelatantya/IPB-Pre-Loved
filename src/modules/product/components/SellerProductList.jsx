@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Trash2, Check, ExternalLink } from "lucide-react";
+import NotificationList from "@/modules/notification/components/NotificationList";
 import { getProducts, deleteProduct, markProductAsSold } from "@/modules/product/actions";
 
 // Badge QC Status
@@ -182,6 +183,9 @@ export default function SellerProductList({ initialData = [], initialHasMore = f
                     {error}
                 </div>
             )}
+
+            {/* Notifications Log */}
+            <NotificationList limit={3} />
 
             {/* Empty state */}
             {products.length === 0 && !loading ? (

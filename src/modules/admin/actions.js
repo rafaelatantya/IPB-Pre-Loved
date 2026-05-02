@@ -187,6 +187,15 @@ export async function toggleBlockUser(userId, status) {
         action: status ? "BLOCK_USER" : "UNBLOCK_USER",
         targetId: userId,
         details: status ? "Account suspended" : "Account reactivated",
+      }),
+      db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: userId,
+        title: status ? "Akun Ditangguhkan" : "Akun Diaktifkan Kembali",
+        message: status 
+          ? "Akun Anda telah ditangguhkan oleh Admin karena melanggar ketentuan layanan."
+          : "Akun Anda telah diaktifkan kembali. Silakan masuk untuk melanjutkan.",
+        type: status ? "DANGER" : "SUCCESS",
       })
     ]);
 
@@ -277,6 +286,13 @@ export async function toggleUserRole(userId, currentRole) {
         action: "CHANGE_USER_ROLE",
         targetId: userId,
         details: `Role changed from ${currentRole} to ${newRole}`,
+      }),
+      db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: userId,
+        title: "Perubahan Peran Akun",
+        message: `Peran akun Anda telah diubah oleh Admin dari ${currentRole} menjadi ${newRole}.`,
+        type: "INFO",
       })
     ]);
     return { success: true, message: `Role berhasil diubah menjadi ${newRole}` };
