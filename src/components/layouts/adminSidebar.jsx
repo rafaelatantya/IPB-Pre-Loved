@@ -4,17 +4,18 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutGrid, ClipboardList, Archive, Users, FileText, LogOut } from "lucide-react";
+import { LayoutGrid, ClipboardList, Archive, Users, History, FileText, LogOut } from "lucide-react";
 
 const topLinks = [
     { name: "Overview", href: "/admin/dashboard", icon: LayoutGrid },
     { name: "Pending Reviews", href: "/admin/queue", icon: ClipboardList },
     { name: "Inventory", href: "/admin/inventory", icon: Archive },
     { name: "User Accounts", href: "/admin/users", icon: Users },
+    { name: "Activity Logs", href: "/admin/logs", icon: History },
 ];
 
 const bottomLinks = [
-    { name: "Documentation", href: "/admin/docs", icon: FileText },
+    // { name: "Documentation", href: "/admin/docs", icon: FileText },
 ];
 
 export default function AdminSidebar() {

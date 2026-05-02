@@ -207,7 +207,16 @@ export async function toggleFlagUser(userId, status) {
 
   try {
     const db = await getContextDb();
-    await db.update(users).set({ isFlagged: status }).where(eq(users.id, userId));
+    await db.batch([
+      db.update(users).set({ isFlagged: status }).where(eq(users.id, userId)),
+      db.insert(adminLogs).values({
+        id: crypto.randomUUID(),
+        adminId: session.user.id,
+        action: status ? "FLAG_USER" : "UNFLAG_USER",
+        targetId: userId,
+        details: status ? "User marked as suspicious" : "Suspicious flag removed",
+      })
+    ]);
     return { success: true, message: "Status flag diperbarui" };
   } catch (error) {
     return { success: false, error: "Gagal update flag" };
@@ -260,7 +269,16 @@ export async function toggleUserRole(userId, currentRole) {
   try {
     const db = await getContextDb();
     const newRole = currentRole === "ADMIN" ? "BUYER" : "ADMIN";
-    await db.update(users).set({ role: newRole }).where(eq(users.id, userId));
+    await db.batch([
+      db.update(users).set({ role: newRole }).where(eq(users.id, userId)),
+      db.insert(adminLogs).values({
+        id: crypto.randomUUID(),
+        adminId: session.user.id,
+        action: "CHANGE_USER_ROLE",
+        targetId: userId,
+        details: `Role changed from ${currentRole} to ${newRole}`,
+      })
+    ]);
     return { success: true, message: `Role berhasil diubah menjadi ${newRole}` };
   } catch (error) {
     return { success: false, error: `Gagal mengubah role: ${error.message}` };
@@ -280,7 +298,16 @@ export async function deleteUser(userId) {
 
   try {
     const db = await getContextDb();
-    await db.delete(users).where(eq(users.id, userId));
+    await db.batch([
+      db.delete(users).where(eq(users.id, userId)),
+      db.insert(adminLogs).values({
+        id: crypto.randomUUID(),
+        adminId: session.user.id,
+        action: "DELETE_USER",
+        targetId: userId,
+        details: "User account permanently deleted",
+      })
+    ]);
     return { success: true, message: "User berhasil dihapus" };
   } catch (error) {
     return { success: false, error: `Gagal menghapus user: ${error.message}` };
@@ -309,5 +336,36 @@ export async function initializeDatabaseInternal(sessionUser = null) {
     return { success: true, message: "Database berhasil diinisialisasi & User disinkronkan!" };
   } catch (error) {
     return { success: false, error: `Seeding gagal: ${error.message}` };
+  }
+}
+
+/**
+ * Action: Ambil Seluruh Admin Logs (Audit Trail)
+ */
+export async function getAdminLogs({ page = 1, limit = 50 } = {}) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const db = await getContextDb();
+    const offset = (page - 1) * limit;
+
+    const result = await db.query.adminLogs.findMany({
+      with: {
+        admin: { columns: { name: true, email: true } },
+      },
+      orderBy: [desc(adminLogs.createdAt)],
+      limit,
+      offset
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Fetch Logs Error:", error);
+    return { success: false, error: "Gagal mengambil log aktivitas" };
   }
 }
