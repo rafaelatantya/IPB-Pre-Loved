@@ -270,19 +270,10 @@ export async function markProductAsSold(id) {
     const db = await getContextDb();
     const product = await db.query.products.findFirst({ where: eq(products.id, id) });
 
-    const isAdmin = userRole === "ADMIN";
-    const isOwner = product.sellerId === session.user.id;
-
-    if (!product || (!isOwner && !isAdmin)) {
     if (!product) {
-        return { success: false, error: "Produk tidak ditemukan" };
+      return { success: false, error: "Produk tidak ditemukan" };
     }
 
-    // 🛡️ EDGE CASE: Hanya produk APPROVED yang bisa jadi SOLD
-    if (product.status !== "APPROVED") {
-        return { success: false, error: "Hanya produk yang sudah disetujui Admin yang bisa ditandai Terjual." };
-    }
-    
     const isAdmin = userRole === "ADMIN";
     const isOwner = product.sellerId === session.user.id;
 
@@ -290,11 +281,16 @@ export async function markProductAsSold(id) {
       return { success: false, code: 403, error: "Akses ditolak" };
     }
 
+    // 🛡️ EDGE CASE: Hanya produk APPROVED yang bisa jadi SOLD
+    if (product.status !== "APPROVED") {
+      return { success: false, error: "Hanya produk yang sudah disetujui Admin yang bisa ditandai Terjual." };
+    }
+
     const operations = [
       // 1. Update status produk
       db.update(products).set({ 
         status: "SOLD",
-        updatedAt: new Date().getTime() // Standar milidetik kita
+        updatedAt: new Date().getTime() 
       }).where(eq(products.id, id)),
 
       // 2. Kirim Notifikasi ke Penjual
