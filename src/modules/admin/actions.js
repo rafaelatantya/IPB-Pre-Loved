@@ -385,3 +385,56 @@ export async function getAdminLogs({ page = 1, limit = 50 } = {}) {
     return { success: false, error: "Gagal mengambil log aktivitas" };
   }
 }
+
+/**
+ * Action: Ambil Statistik Dashboard Admin (Optimized)
+ */
+export async function getAdminDashboardStats() {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const db = await getContextDb();
+
+    // 1. Hitung Produk Berdasarkan Status
+    const productStats = await db.select({
+      status: products.status,
+      count: sql`count(*)`,
+    }).from(products).groupBy(products.status);
+
+    // 2. Hitung Total Users
+    const userStats = await db.select({
+      count: sql`count(*)`,
+    }).from(users);
+
+    // 3. Hitung Produk Baru Hari Ini (Terakhir 24 Jam)
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const newProductsToday = await db.select({
+      count: sql`count(*)`,
+    }).from(products).where(sql`${products.createdAt} >= ${dayAgo.getTime()}`);
+
+    // 4. Hitung Total Klik WA (Leads)
+    const waStats = await db.select({
+      totalClicks: sql`sum(${products.whatsappClicks})`,
+    }).from(products);
+
+    // Map hasil ke format yang enak dipake UI
+    const stats = {
+      totalUsers: userStats[0]?.count || 0,
+      pendingQC: productStats.find(s => s.status === "PENDING")?.count || 0,
+      approvedProducts: productStats.find(s => s.status === "APPROVED")?.count || 0,
+      soldProducts: productStats.find(s => s.status === "SOLD")?.count || 0,
+      newToday: newProductsToday[0]?.count || 0,
+      totalLeads: waStats[0]?.totalClicks || 0,
+    };
+
+    return { success: true, data: stats };
+  } catch (error) {
+    console.error("Admin Stats Error:", error);
+    return { success: false, error: "Gagal memuat statistik" };
+  }
+}

@@ -42,6 +42,7 @@ export const products = sqliteTable('products', {
   videoUrl: text('video_url'), 
   videoDuration: integer('video_duration'), // Dalam detik
   location: text('location').default('IPB Dramaga'),
+  whatsappClicks: integer('whatsapp_clicks').default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch() * 1000)`),
 });
