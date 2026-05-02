@@ -189,7 +189,7 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
     // 5. Eksekusi Batch Update
     const newStatus = isAdmin ? (formData.status || product.status) : "PENDING";
     
-    await db.batch([
+    const operations = [
       // Update data utama produk
       db.update(products).set({
         title: formData.title,
@@ -201,7 +201,7 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
         status: newStatus,
         videoUrl: safeVideoUrl,
         videoDuration: safeVideoUrl ? videoDuration : 0,
-        updatedAt: new Date(),
+        updatedAt: new Date().getTime(), // Standar milidetik kita
       }).where(eq(products.id, id)),
 
       // Hapus record gambar yang dibuang
@@ -222,9 +222,24 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
       ...currentImages.filter(img => safeImageUrls.includes(img.url)).map(img => 
         db.update(productImages).set({ sortOrder: safeImageUrls.indexOf(img.url) }).where(eq(productImages.id, img.id))
       )
-    ]);
+    ];
 
-    // 5. Cleanup R2 (Background)
+    // 6. Log Aktivitas jika dilakukan Admin (dan bukan pemilik)
+    if (isAdmin && !isOwner) {
+      operations.push(
+        db.insert(adminLogs).values({
+          id: crypto.randomUUID(),
+          adminId: session.user.id,
+          action: "UPDATE_PRODUCT",
+          targetId: id,
+          details: `Admin updated product details: ${formData.title} (Seller ID: ${product.sellerId})`,
+        })
+      );
+    }
+
+    await db.batch(operations);
+
+    // 7. Cleanup R2 (Background)
     if (keysToDelete.length > 0) {
       deleteFilesFromR2(keysToDelete);
     }
@@ -259,28 +274,53 @@ export async function markProductAsSold(id) {
     const isOwner = product.sellerId === session.user.id;
 
     if (!product || (!isOwner && !isAdmin)) {
-        return { success: false, code: 403, error: "Akses ditolak. Anda bukan pemilik barang ini." };
+    if (!product) {
+        return { success: false, error: "Produk tidak ditemukan" };
     }
 
     // 🛡️ EDGE CASE: Hanya produk APPROVED yang bisa jadi SOLD
     if (product.status !== "APPROVED") {
         return { success: false, error: "Hanya produk yang sudah disetujui Admin yang bisa ditandai Terjual." };
     }
+    
+    const isAdmin = userRole === "ADMIN";
+    const isOwner = product.sellerId === session.user.id;
 
-    await db.batch([
+    if (!isAdmin && !isOwner) {
+      return { success: false, code: 403, error: "Akses ditolak" };
+    }
+
+    const operations = [
+      // 1. Update status produk
       db.update(products).set({ 
         status: "SOLD",
-        updatedAt: new Date() 
+        updatedAt: new Date().getTime() // Standar milidetik kita
       }).where(eq(products.id, id)),
-      // Kirim Notifikasi Selamat ke Penjual
+
+      // 2. Kirim Notifikasi ke Penjual
       db.insert(notifications).values({
         id: crypto.randomUUID(),
-        userId: product.sellerId, // Memastikan notif masuk ke Penjual, bukan Admin yang klik
-        title: "Selamat! Produk Terjual",
+        userId: product.sellerId,
+        title: "Selamat! Produk Terjual 🎉",
         message: `Produk "${product.title}" Anda telah ditandai sebagai terjual. Terima kasih telah menggunakan IPB Pre-Loved!`,
         type: "SUCCESS",
       })
-    ]);
+    ];
+
+    // 3. Log Aktivitas jika dilakukan Admin
+    if (isAdmin && !isOwner) {
+      operations.push(
+        db.insert(adminLogs).values({
+          id: crypto.randomUUID(),
+          adminId: session.user.id,
+          action: "MARK_PRODUCT_SOLD",
+          targetId: id,
+          details: `Admin marked product as SOLD: ${product.title} (Seller ID: ${product.sellerId})`,
+        })
+      );
+    }
+
+    await db.batch(operations);
     
     return { success: true, message: "Produk ditandai sebagai terjual" };
   } catch (error) {

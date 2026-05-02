@@ -355,15 +355,24 @@ export async function initializeDatabaseInternal(sessionUser = null) {
     const db = await getContextDb();
     
     if (sessionUser && sessionUser.email) {
-      await db.insert(users).values({
-        id: sessionUser.id || crypto.randomUUID(),
-        name: sessionUser.name || 'Anonymous User',
-        email: sessionUser.email,
-        role: 'ADMIN' 
-      }).onConflictDoUpdate({ 
-        target: users.email, 
-        set: { role: 'ADMIN' } 
-      }).run();
+      await db.batch([
+        db.insert(users).values({
+          id: sessionUser.id || crypto.randomUUID(),
+          name: sessionUser.name || 'Anonymous User',
+          email: sessionUser.email,
+          role: 'ADMIN' 
+        }).onConflictDoUpdate({ 
+          target: users.email, 
+          set: { role: 'ADMIN' } 
+        }),
+        db.insert(adminLogs).values({
+          id: crypto.randomUUID(),
+          adminId: sessionUser.id || "system",
+          action: "INITIALIZE_DATABASE",
+          targetId: "DATABASE",
+          details: `Database initialized/synced by ${sessionUser.email}`,
+        })
+      ]);
     }
 
     return { success: true, message: "Database berhasil diinisialisasi & User disinkronkan!" };

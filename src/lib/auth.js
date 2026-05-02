@@ -68,31 +68,30 @@ export function getAuthConfig(env) {
         }
 
         // KUNCI PERBAIKAN: 
-        // Kita sinkronisasi dengan database jika:
-        // 1. Baru login (user ada)
-        // 2. Ada trigger "update" dari client
-        // 3. (FAIL-SAFE) Role saat ini masih ONBOARDING (cek ulang siapa tau udah kelar)
-        if (user || trigger === "update" || token.role === "ONBOARDING") {
-          try {
-            const { getDb } = await import("@/lib/db");
-            const { users } = await import("@/db/schema");
-            const { eq } = await import("drizzle-orm");
+        // Kita sinkronisasi dengan database secara proaktif untuk mendeteksi BAN real-time.
+        try {
+          const { getDb } = await import("@/lib/db");
+          const { users } = await import("@/db/schema");
+          const { eq } = await import("drizzle-orm");
 
-            const db = getDb(env);
-            const dbUser = await db.select().from(users).where(eq(users.email, userEmail)).get();
-            
-            if (dbUser) {
-              if (dbUser.isBlocked) return null;
-              token.id = dbUser.id;
-              token.role = dbUser.role;
-              console.log(`[AUTH] JWT Sync: ${userEmail} role is now ${dbUser.role}`);
-            } else if (user) {
-              token.id = user.id;
-              token.role = "ONBOARDING";
+          const db = getDb(env);
+          const dbUser = await db.select().from(users).where(eq(users.email, userEmail)).get();
+          
+          if (dbUser) {
+            // 🚨 STRIKE: Jika diblokir, batalkan token (User ditendang otomatis)
+            if (dbUser.isBlocked) {
+              console.warn(`[AUTH] ACCESS REVOKED: User ${userEmail} is currently BLOCKED.`);
+              return null; 
             }
-          } catch (e) {
-            console.error("[AUTH] JWT Sync Error:", e);
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+            // console.log(`[AUTH] JWT Sync: ${userEmail} role is now ${dbUser.role}`);
+          } else if (user) {
+            token.id = user.id;
+            token.role = "ONBOARDING";
           }
+        } catch (e) {
+          console.error("[AUTH] JWT Sync Error:", e);
         }
 
         if (!token.role) token.role = "ONBOARDING";
