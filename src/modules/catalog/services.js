@@ -53,9 +53,11 @@ export async function getApprovedProducts({
             (CASE WHEN ${products.description} LIKE ${`%${search}%`} THEN 1 ELSE 0 END) DESC
         `;
     } else {
-        orderBy = desc(products.createdAt);
         if (sortBy === "cheapest") orderBy = asc(products.price);
-        if (sortBy === "expensive") orderBy = desc(products.price);
+        else if (sortBy === "expensive") orderBy = desc(products.price);
+        else if (sortBy === "latest") orderBy = asc(products.createdAt);
+        else if (sortBy === "oldest") orderBy = desc(products.createdAt);
+        else orderBy = asc(products.createdAt); 
     }
 
     const data = await db.query.products.findMany({

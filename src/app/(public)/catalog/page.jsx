@@ -22,10 +22,19 @@ function CatalogContent() {
   
   // State untuk input (yang diketik user)
   const [searchInput, setSearchInput] = useState(initialSearch);
-  // State untuk query (yang dikirim ke backend - di-debounce)
+  // State untuk query (yang dikirim ke backend - dipicu manual)
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  
+  // State Filter & Sort
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sortBy, setSortBy] = useState("latest");
+  
+  // State Pagination
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ totalPages: 1, totalItems: 0 });
 
   // 1. Fetch Categories
   useEffect(() => {
@@ -38,16 +47,18 @@ function CatalogContent() {
     loadCategories();
   }, []);
 
-  // 2. Debounce Search Input
+  // 2. Manual Search Trigger
+  const handleSearch = () => {
+    setPage(1); // Reset ke hal 1 tiap cari baru
+    setSearchQuery(searchInput);
+  };
+
+  // Reset page ke 1 kalau filter/kategori ganti
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchQuery(searchInput);
-    }, 500); // Tunggu 500ms setelah user berhenti ngetik
+    setPage(1);
+  }, [selectedCategory, minPrice, maxPrice, sortBy]);
 
-    return () => clearTimeout(timer);
-  }, [searchInput]);
-
-  // 3. Fetch Products when search/category changes
+  // 3. Fetch Products when searchQuery/category/page/price/sort changes
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
@@ -55,9 +66,15 @@ function CatalogContent() {
         const res = await getApprovedProducts({
           search: searchQuery,
           categoryId: selectedCategory === "all" ? "" : selectedCategory,
+          minPrice: minPrice ? parseInt(minPrice) : 0,
+          maxPrice: maxPrice ? parseInt(maxPrice) : 1000000000,
+          sortBy: sortBy,
+          page: page,
+          limit: 12
         });
         if (res.success) {
           setProducts(res.data || []);
+          setPagination(res.pagination);
         }
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -66,7 +83,7 @@ function CatalogContent() {
       }
     }
     loadProducts();
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, page, minPrice, maxPrice, sortBy]);
 
   return (
     <>
@@ -87,10 +104,11 @@ function CatalogContent() {
                 className="w-full pl-12 pr-4 py-4 bg-[#F1F5F9] border-none rounded-2xl text-[#1E293B] text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition-all"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
             <button 
-              onClick={() => setSearchQuery(searchInput)}
+              onClick={handleSearch}
               className="px-8 py-4 bg-[#2563EB] text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2"
             >
               <Filter className="w-4 h-4" />
@@ -141,14 +159,26 @@ function CatalogContent() {
                 <label className="text-[10px] font-bold text-[#94A3B8]">MINIMAL</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#64748B]">RP</span>
-                  <input type="number" className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs" placeholder="0" />
+                  <input 
+                    type="number" 
+                    className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="0" 
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold text-[#94A3B8]">MAKSIMAL</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#64748B]">RP</span>
-                  <input type="number" className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs" placeholder="10.000.000" />
+                  <input 
+                    type="number" 
+                    className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="10.000.000" 
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -167,9 +197,19 @@ function CatalogContent() {
                 <button className="p-2 text-[#94A3B8] hover:text-[#2563EB]"><List className="w-4 h-4" /></button>
               </div>
               <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-              <button className="flex items-center gap-2 text-sm font-bold text-[#1E293B] hover:text-[#2563EB] transition-colors">
-                TERBARU <ChevronDown className="w-4 h-4" />
-              </button>
+              <div className="relative group">
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="appearance-none bg-transparent pl-2 pr-8 py-2 text-sm font-bold text-[#1E293B] hover:text-[#2563EB] outline-none cursor-pointer uppercase tracking-widest"
+                >
+                  <option value="latest">Terbaru</option>
+                  <option value="cheapest">Termurah</option>
+                  <option value="expensive">Termahal</option>
+                  <option value="oldest">Terlama</option>
+                </select>
+                <ChevronDown className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
+              </div>
             </div>
           </div>
 
@@ -185,9 +225,26 @@ function CatalogContent() {
           </div>
 
           {/* PAGINATION */}
-          <div className="flex justify-center items-center gap-2 py-10">
-            <button className="w-10 h-10 flex justify-center items-center rounded-xl bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#2563EB] hover:text-white transition-all shadow-sm">1</button>
-          </div>
+          {pagination.totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 py-10">
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                <button 
+                  key={p}
+                  onClick={() => {
+                    setPage(p);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`w-10 h-10 flex justify-center items-center rounded-xl border transition-all shadow-sm font-bold ${
+                    page === p 
+                      ? "bg-[#2563EB] text-white border-[#2563EB]" 
+                      : "bg-white border-[#E2E8F0] text-[#64748B] hover:bg-gray-50"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>
