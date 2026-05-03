@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";
+import WishlistButton from "@/modules/wishlist/components/WishlistButton";
 import { openWhatsAppChat } from "@/lib/whatsapp";
 
 export default function ProductDetailPage() {
@@ -108,12 +109,11 @@ export default function ProductDetailPage() {
           </button>
           <div className="flex items-center gap-4">
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors"><Share2 className="w-5 h-5 text-gray-500" /></button>
-            <button 
-              onClick={() => setIsWishlisted(!isWishlisted)}
-              className={`p-2 hover:bg-gray-100 rounded-full transition-colors ${isWishlisted ? "text-red-500" : "text-gray-500"}`}
-            >
-              <Heart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
-            </button>
+            <WishlistButton 
+              productId={product.id} 
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+              iconSize={20}
+            />
           </div>
         </div>
       </div>

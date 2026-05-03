@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Heart, MapPin, Tag } from "lucide-react";
+import WishlistButton from "@/modules/wishlist/components/WishlistButton";
 
 const ProductCard = ({ product }) => {
   // Logic untuk handle data asli vs dummy
@@ -18,16 +19,12 @@ const ProductCard = ({ product }) => {
           alt={product.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-3 right-3">
-          <button 
+        <div className="absolute top-3 right-3 z-10" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+          <WishlistButton 
+            productId={product.id} 
             className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 transition-colors shadow-sm"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <Heart className="w-4 h-4" />
-          </button>
+            iconSize={16}
+          />
         </div>
         <div className="absolute bottom-3 left-3">
           <div className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded text-[10px] font-bold text-black uppercase tracking-wider shadow-sm flex items-center gap-1">
