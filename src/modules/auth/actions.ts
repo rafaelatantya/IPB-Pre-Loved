@@ -22,7 +22,7 @@ export async function completeOnboarding({ role, whatsappNumber }) {
   // Validasi dengan Zod
   const validation = onboardingSchema.safeParse({ role, whatsappNumber });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0].message };
+    return { success: false, error: (validation.error as any).errors[0].message };
   }
 
   const userEmail = session.user.email;

@@ -97,7 +97,7 @@ export async function upgradeToSeller(whatsappNumber = null) {
     }
 
     // Update Role menjadi SELLER
-    const updateData = { 
+    const updateData: any = { 
       role: "SELLER",
       updatedAt: new Date().getTime()
     };

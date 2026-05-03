@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Schema untuk Onboarding User
 export const onboardingSchema = z.object({
-  role: z.enum(["BUYER", "SELLER"]),
+  role: z.string().refine(v => ["BUYER", "SELLER"].includes(v)),
   whatsappNumber: z.string().optional().or(z.literal("")),
 }).refine((data) => {
   if (data.role === "SELLER") {
@@ -26,8 +26,8 @@ export const productSchema = z.object({
     .min(500, "Harga minimal adalah Rp 500")
     .max(100000000, "Harga tidak masuk akal (maks 100jt)"),
   categoryId: z.string().min(1, "Silakan pilih kategori yang valid"),
-  condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"], {
-    errorMap: () => ({ message: "Pilih kondisi barang yang sesuai" })
+  condition: z.string().refine(v => ["NEW", "LIKE_NEW", "GOOD", "FAIR"].includes(v), {
+    message: "Pilih kondisi barang yang sesuai"
   }),
   location: z.string().min(3, "Lokasi pengambilan harus jelas").default("IPB Dramaga"),
   // Info Media (diisi dari backend setelah hitung file)
@@ -48,7 +48,7 @@ export const productSchema = z.object({
 // Schema untuk QC Review
 export const qcReviewSchema = z.object({
   productId: z.string().uuid(),
-  decision: z.enum(["APPROVED", "REJECTED"]),
+  decision: z.string().refine(v => ["APPROVED", "REJECTED"].includes(v)),
   reasonCode: z.string().optional().nullable(),
   note: z.string().optional(),
 });

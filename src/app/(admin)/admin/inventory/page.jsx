@@ -1,7 +1,7 @@
 "use client";
 
 export const runtime = "edge";
-export const forceDynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { Search, Loader2, ExternalLink, Trash2 } from "lucide-react";

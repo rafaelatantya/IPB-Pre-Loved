@@ -1,7 +1,7 @@
 "use client";
 
 export const runtime = "edge";
-export const forceDynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";

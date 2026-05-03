@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { sql, relations } from 'drizzle-orm';
+import { sql, relations, InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 // Tabel Users - Filter domain @apps.ipb.ac.id nanti di level logic
 export const users = sqliteTable('users', {
@@ -15,6 +15,9 @@ export const users = sqliteTable('users', {
   updatedAt: integer('updated_at').default(sql`(unixepoch() * 1000)`),
 });
 
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+
 export const usersRelations = relations(users, ({ many }) => ({
   products: many(products),
   qcReviews: many(qcReviews),
@@ -26,6 +29,9 @@ export const categories = sqliteTable('categories', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
 });
+
+export type Category = InferSelectModel<typeof categories>;
+export type NewCategory = InferInsertModel<typeof categories>;
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   products: many(products),
@@ -47,6 +53,9 @@ export const products = sqliteTable('products', {
   createdAt: integer('created_at').default(sql`(unixepoch() * 1000)`),
   updatedAt: integer('updated_at').default(sql`(unixepoch() * 1000)`),
 });
+
+export type Product = InferSelectModel<typeof products>;
+export type NewProduct = InferInsertModel<typeof products>;
 
 export const productsRelations = relations(products, ({ one, many }) => ({
   seller: one(users, {
@@ -71,6 +80,9 @@ export const productImages = sqliteTable('product_images', {
   sortOrder: integer('sort_order').default(0),
 });
 
+export type ProductImage = InferSelectModel<typeof productImages>;
+export type NewProductImage = InferInsertModel<typeof productImages>;
+
 export const productImagesRelations = relations(productImages, ({ one }) => ({
   product: one(products, {
     fields: [productImages.productId],
@@ -87,6 +99,9 @@ export const qcReviews = sqliteTable('qc_reviews', {
   note: text('note'),
   reviewedAt: integer('reviewed_at').default(sql`(unixepoch() * 1000)`),
 });
+
+export type QcReview = InferSelectModel<typeof qcReviews>;
+export type NewQcReview = InferInsertModel<typeof qcReviews>;
 
 export const qcReviewsRelations = relations(qcReviews, ({ one }) => ({
   product: one(products, {
@@ -107,6 +122,9 @@ export const wishlists = sqliteTable('wishlists', {
 }, (table) => ({
   unq: uniqueIndex('wishlist_user_product_idx').on(table.userId, table.productId),
 }));
+
+export type Wishlist = InferSelectModel<typeof wishlists>;
+export type NewWishlist = InferInsertModel<typeof wishlists>;
 
 export const wishlistsRelations = relations(wishlists, ({ one }) => ({
   user: one(users, {
@@ -129,6 +147,9 @@ export const notifications = sqliteTable('notifications', {
   createdAt: integer('created_at').default(sql`(unixepoch() * 1000)`),
 });
 
+export type Notification = InferSelectModel<typeof notifications>;
+export type NewNotification = InferInsertModel<typeof notifications>;
+
 export const adminLogs = sqliteTable('admin_logs', {
   id: text('id').primaryKey(),
   adminId: text('adminId').notNull().references(() => users.id),
@@ -137,6 +158,9 @@ export const adminLogs = sqliteTable('admin_logs', {
   details: text('details'),
   createdAt: integer('created_at').default(sql`(unixepoch() * 1000)`),
 });
+
+export type AdminLog = InferSelectModel<typeof adminLogs>;
+export type NewAdminLog = InferInsertModel<typeof adminLogs>;
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),

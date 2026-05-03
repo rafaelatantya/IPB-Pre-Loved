@@ -258,19 +258,18 @@ export async function getAdminUsers(search = "") {
 
   try {
     const db = await getContextDb();
-    let baseQuery = db.select().from(users);
-    
+    let result;
     if (search) {
-      baseQuery = baseQuery.where(
+      result = await db.select().from(users).where(
         or(
           like(users.name, `%${search}%`),
           like(users.email, `%${search}%`),
           like(users.userType, `%${search}%`)
         )
-      );
+      ).orderBy(desc(users.createdAt));
+    } else {
+      result = await db.select().from(users).orderBy(desc(users.createdAt));
     }
-    
-    const result = await baseQuery.orderBy(desc(users.createdAt));
     return { success: true, data: result };
   } catch (error) {
     return { success: false, error: `Gagal mengambil data user: ${error.message}` };

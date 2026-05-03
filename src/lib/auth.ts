@@ -116,7 +116,7 @@ export function getAuthConfig(env) {
         name: "authjs.pkce.code_verifier",
         options: {
           httpOnly: true,
-          sameSite: "lax",
+          sameSite: "lax" as const,
           path: "/",
           secure: false, // Wajib false untuk http://localhost
         },
@@ -129,6 +129,7 @@ export function getAuthConfig(env) {
  * Helper to get NextAuth 'auth' object within Server Actions (Edge compatible)
  */
 export async function getAuth() {
+  // @ts-ignore
   const { getRequestContext } = await import("@cloudflare/next-on-pages");
   const NextAuth = (await import("next-auth")).default;
   

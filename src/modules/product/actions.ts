@@ -66,7 +66,7 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
   }
 
   const isInternal = (url) => typeof url === 'string' && url.startsWith("/api/images/products/");
-  const safeImages = [...new Set((imageUrls || []).filter(url => isInternal(url)))];
+  const safeImages = Array.from(new Set((imageUrls || []).filter(url => isInternal(url))));
   const safeVideo = videoUrl && isInternal(videoUrl) ? videoUrl : "";
 
   const validation = productSchema.safeParse({
@@ -155,7 +155,7 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
 
     // 2. Filter URL Internal (Edge Case: Prevent External URLs)
     const isInternal = (url) => typeof url === 'string' && url.startsWith("/api/images/products/");
-    const safeImageUrls = [...new Set((imageUrls || []).filter(url => isInternal(url)))];
+    const safeImageUrls = Array.from(new Set((imageUrls || []).filter(url => isInternal(url))));
     const safeVideoUrl = videoUrl !== null && isInternal(videoUrl) ? videoUrl : (videoUrl === "" ? "" : product.videoUrl);
 
     // 3. Validasi Form
@@ -189,7 +189,7 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
     // 5. Eksekusi Batch Update
     const newStatus = isAdmin ? (formData.status || product.status) : "PENDING";
     
-    const operations = [
+    const operations: any[] = [
       // Update data utama produk
       db.update(products).set({
         title: formData.title,
@@ -237,7 +237,7 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
       );
     }
 
-    await db.batch(operations);
+    await db.batch(operations as any);
 
     // 7. Cleanup R2 (Background)
     if (keysToDelete.length > 0) {
@@ -286,7 +286,7 @@ export async function markProductAsSold(id) {
       return { success: false, error: "Hanya produk yang sudah disetujui Admin yang bisa ditandai Terjual." };
     }
 
-    const operations = [
+    const operations: any[] = [
       // 1. Update status produk
       db.update(products).set({ 
         status: "SOLD",
@@ -316,7 +316,7 @@ export async function markProductAsSold(id) {
       );
     }
 
-    await db.batch(operations);
+    await db.batch(operations as any);
     
     return { success: true, message: "Produk ditandai sebagai terjual" };
   } catch (error) {

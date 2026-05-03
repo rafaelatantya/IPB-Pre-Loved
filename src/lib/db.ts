@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema';
+// @ts-ignore
 import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const getDb = (env) => {
@@ -30,10 +31,10 @@ export const getEnv = async () => {
 export const getContextDb = async () => {
   try {
     const env = await getEnv();
-    if (!env.DB) {
+    if (!(env as any).DB) {
       throw new Error("D1 Database binding 'DB' not found in environment.");
     }
-    return getDb(env);
+    return getDb(env as any);
   } catch (err) {
     console.error("DEBUG [getContextDb]:", err.message);
     throw err;

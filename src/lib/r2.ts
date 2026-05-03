@@ -1,3 +1,4 @@
+// @ts-ignore
 import { getRequestContext } from "@cloudflare/next-on-pages";
 
 /**
@@ -11,7 +12,7 @@ export async function deleteFilesFromR2(keys) {
 
   try {
     const { env } = getRequestContext();
-    const bucket = env.bucket;
+    const bucket = (env as any).bucket;
 
     if (!bucket) {
       console.error("R2 Bucket binding 'bucket' not found in environment.");

@@ -76,7 +76,7 @@ export async function getApprovedProducts({
       .from(products)
       .where(and(...conditions));
     
-    const totalItems = countResult[0]?.count || 0;
+    const totalItems = Number(countResult[0]?.count) || 0;
 
     return { 
       success: true, 
