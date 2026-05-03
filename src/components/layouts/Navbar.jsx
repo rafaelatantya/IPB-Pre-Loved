@@ -3,13 +3,24 @@
 import React from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { User, LogOut, LayoutDashboard } from "lucide-react";
 import NotificationCenter from "../notifications/NotificationCenter";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const isAuthenticated = status === "authenticated";
   const isLoading = status === "loading";
+
+  const isActive = (path) => {
+    if (path === "/" && pathname === "/") return true;
+    if (path !== "/" && pathname?.startsWith(path)) return true;
+    return false;
+  };
+
+  const linkStyle = (path) => 
+    `${isActive(path) ? 'text-black font-bold border-b-2 border-black' : 'text-[#777777]'} text-xs font-medium font-sans uppercase tracking-wide hover:text-black transition-all pb-1`;
 
   return (
     <nav className="w-full px-6 md:px-10 py-4 md:py-6 bg-white border-b border-[#C6C6C6] flex justify-between items-center fixed top-0 z-50">
@@ -17,11 +28,11 @@ export default function Navbar() {
             <div className="text-black text-xl font-bold font-sans uppercase leading-7 tracking-tight">IPB PRE LOVED</div>
         </Link>
 
-        <div className="hidden md:flex justify-start items-start gap-8">
-            <Link href="/" className="text-black text-xs font-medium font-sans uppercase tracking-wide hover:opacity-70 transition-opacity">BERANDA</Link>
-            <Link href="/catalog" className="text-[#777777] text-xs font-medium font-sans uppercase tracking-wide hover:text-black transition-colors">KATEGORI</Link>
-            <Link href="/wishlist" className="text-[#777777] text-xs font-medium font-sans uppercase tracking-wide hover:text-black transition-colors">WISHLIST</Link>
-            <Link href="#" className="text-[#777777] text-xs font-medium font-sans uppercase tracking-wide hover:text-black transition-colors">PANDUAN</Link>
+        <div className="hidden md:flex justify-start items-center gap-8">
+            <Link href="/" className={linkStyle("/")}>BERANDA</Link>
+            <Link href="/catalog" className={linkStyle("/catalog")}>KATEGORI</Link>
+            <Link href="/wishlist" className={linkStyle("/wishlist")}>WISHLIST</Link>
+            <Link href="/guide" className={linkStyle("/guide")}>PANDUAN</Link>
         </div>
         
         <div className="flex items-center gap-4">

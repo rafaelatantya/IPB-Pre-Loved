@@ -48,9 +48,25 @@ export async function getApprovedProducts({
 
     let orderBy;
     if (search) {
+        // ADVANCED SQL RANKING:
+        // 1. Title Match (Exact/Start) = 50 pts
+        // 2. Title Match (Contains) = 20 pts
+        // 3. Description Match = 5 pts
+        // 4. Popularity Boost (WA Clicks) = 1 pt per click (capped at 20)
+        // 5. Recency Boost = 10 pts if created in last 48h
+        const now = new Date().getTime();
+        const twoDaysAgo = now - (48 * 60 * 60 * 1000);
+
         orderBy = sql`
-            (CASE WHEN ${products.title} LIKE ${`%${search}%`} THEN 10 ELSE 0 END) +
-            (CASE WHEN ${products.description} LIKE ${`%${search}%`} THEN 1 ELSE 0 END) DESC
+            (CASE 
+                WHEN ${products.title} LIKE ${`${search}%`} THEN 50 
+                WHEN ${products.title} LIKE ${`%${search}%`} THEN 20 
+                ELSE 0 
+            END) +
+            (CASE WHEN ${products.description} LIKE ${`%${search}%`} THEN 5 ELSE 0 END) +
+            (CASE WHEN ${products.whatsappClicks} > 0 THEN MIN(${products.whatsappClicks}, 20) ELSE 0 END) +
+            (CASE WHEN ${products.createdAt} >= ${twoDaysAgo} THEN 10 ELSE 0 END)
+            DESC
         `;
     } else {
         if (sortBy === "cheapest") orderBy = asc(products.price);
