@@ -35,7 +35,8 @@ export function getAuthConfig(env) {
           const { eq } = await import("drizzle-orm");
 
           const db = getDb(env);
-          const existingUser = await db.select().from(users).where(eq(users.email, user.email)).get();
+          const userEmail = user.email?.toLowerCase();
+          const existingUser = await db.select().from(users).where(eq(users.email, userEmail)).get();
           
           // EDGE CASE: Blocked User
           if (existingUser?.isBlocked) {
@@ -50,7 +51,7 @@ export function getAuthConfig(env) {
             await db.insert(users).values({
               id: user.id || crypto.randomUUID(),
               name: user.name,
-              email: user.email,
+              email: userEmail,
               role: initialRole,
             }).run();
           }

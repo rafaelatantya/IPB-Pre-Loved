@@ -21,7 +21,7 @@ export async function POST(request) {
     }
 
     const env = await getEnv();
-    const bucket = env.bucket || env.BUCKET;
+    const bucket = env.BUCKET || env.bucket;
 
     if (!bucket) {
       throw new Error("R2 Bucket not configured");

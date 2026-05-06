@@ -22,6 +22,13 @@
       "when": 1777747392585,
       "tag": "0002_slim_katie_power",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778070360000,
+      "tag": "0003_add_whatsapp_clicks",
+      "breakpoints": true
     }
   ]
 }

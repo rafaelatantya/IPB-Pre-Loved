@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "@/lib/auth";
-import { getDb } from "@/lib/db";
+import { getDb, getEnv } from "@/lib/db";
 import { wishlists } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
@@ -16,8 +15,8 @@ export async function POST(req) {
     const { productId, action } = await req.json();
     const userId = session.user.id;
     
-    // Support production context
-    const env = process.env.NODE_ENV === 'production' ? getRequestContext().env : process.env;
+    // Support production and local context
+    const env = await getEnv();
     const db = getDb(env);
 
     if (action === "TOGGLE") {
@@ -49,6 +48,8 @@ export async function POST(req) {
 
     return NextResponse.json({ success: false, error: "Invalid Action" }, { status: 400 });
   } catch (error) {
+    console.error("Wishlist API Error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

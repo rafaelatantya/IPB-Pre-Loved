@@ -73,7 +73,7 @@ draw_progress() {
 for i in {1..45}
 do
     if [ -f "$TEMP_DIR/prod_$i.jpg" ]; then
-        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" $WRANGLER_FLAGS --remote > /dev/null 2>&1
+        npx wrangler r2 object put "$BUCKET_NAME/products/prod_$i.jpg" --file="$TEMP_DIR/prod_$i.jpg" $WRANGLER_FLAGS > /dev/null 2>&1
         draw_progress $i 45
     fi
 done
@@ -82,7 +82,7 @@ echo "" # New line after images
 for i in {1..3}
 do
     if [ -f "$TEMP_DIR/video_$i.mp4" ]; then
-        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" $WRANGLER_FLAGS --remote > /dev/null 2>&1
+        npx wrangler r2 object put "$BUCKET_NAME/products/video_$i.mp4" --file="$TEMP_DIR/video_$i.mp4" $WRANGLER_FLAGS > /dev/null 2>&1
         draw_progress $i 3
     fi
 done

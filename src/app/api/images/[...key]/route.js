@@ -9,7 +9,7 @@ export const runtime = "edge";
 export async function GET(request, { params }) {
   try {
     const env = await getEnv();
-    const bucket = env.bucket || env.BUCKET;
+    const bucket = env.BUCKET || env.bucket;
 
     if (!bucket) {
       return new Response("R2 Bucket binding not found", { status: 500 });

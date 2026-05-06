@@ -25,7 +25,7 @@ export async function completeOnboarding({ role, whatsappNumber }) {
     return { success: false, error: (validation.error as any).errors[0].message };
   }
 
-  const userEmail = session.user.email;
+    const userEmail = session.user.email.toLowerCase();
 
   try {
     const db = await getContextDb();

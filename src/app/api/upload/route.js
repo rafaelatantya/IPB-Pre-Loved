@@ -1,5 +1,5 @@
 import { getAuth } from "@/lib/auth";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getEnv } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -44,14 +44,19 @@ export async function POST(req) {
       return NextResponse.json({ error: "Video melebihi 50MB" }, { status: 400 });
     }
 
-    // 3. Persiapan R2
-    const { env } = getRequestContext();
-    const bucket = env.bucket;
+    // 3. Persiapan R2 (Robust retrieval)
+    const env = await getEnv();
+    const bucket = env.BUCKET || env.bucket;
+    
+    if (!bucket) {
+      throw new Error("R2 Bucket binding 'BUCKET' not found in environment.");
+    }
+
     const prefix = type === "image" ? "i" : "v";
     const ext = type === "image" ? "webp" : "mp4";
     const key = `products/${prefix}-${crypto.randomUUID()}-${Date.now()}.${ext}`;
 
-    // 3. Upload ke R2
+    // 4. Upload ke R2
     const buffer = await file.arrayBuffer();
     await bucket.put(key, buffer, {
       httpMetadata: { contentType: file.type }
@@ -65,6 +70,10 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("Upload API Error:", error);
-    return NextResponse.json({ error: "Gagal memproses upload" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Gagal memproses upload",
+      details: error.message 
+    }, { status: 500 });
   }
 }
+
