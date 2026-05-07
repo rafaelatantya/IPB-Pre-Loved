@@ -51,9 +51,29 @@ export async function getProducts({ page = 1, limit = 10 } = {}) {
 }
 
 /**
+ * Types untuk parameter Product
+ */
+interface ProductFormData {
+  title: string;
+  description: string;
+  price: string | number;
+  categoryId: string;
+  condition: "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
+  location?: string;
+  status?: "PENDING" | "APPROVED" | "REJECTED" | "SOLD";
+}
+
+interface ProductMediaData {
+  formData: ProductFormData;
+  imageUrls: string[];
+  videoUrl?: string | null;
+  videoDuration?: number;
+}
+
+/**
  * Action: Create Product (Final Version)
  */
-export async function createProduct({ formData, imageUrls = [], videoUrl = "", videoDuration = 0 }) {
+export async function createProduct({ formData, imageUrls = [], videoUrl = "", videoDuration = 0 }: ProductMediaData) {
   const auth = await getAuth();
   const session = await auth();
 
@@ -65,7 +85,7 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
     return { success: false, code: 403, error: "Anda harus terdaftar sebagai Seller untuk berjualan." };
   }
 
-  const isInternal = (url) => typeof url === 'string' && url.startsWith("/api/images/products/");
+  const isInternal = (url: any) => typeof url === 'string' && url.startsWith("/api/images/products/");
   const safeImages = Array.from(new Set((imageUrls || []).filter(url => isInternal(url))));
   const safeVideo = videoUrl && isInternal(videoUrl) ? videoUrl : "";
 
@@ -78,9 +98,8 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
 
   if (!validation.success) {
     const fieldErrors = validation.error.flatten().fieldErrors;
-    // Map array error jadi string tunggal (ambil yang pertama) buat kemudahan di UI
     const formattedErrors = Object.fromEntries(
-      Object.entries(fieldErrors).map(([key, value]) => [key, value[0]])
+      Object.entries(fieldErrors).map(([key, value]) => [key, value?.[0] || "Validasi gagal"])
     );
     return { success: false, code: 400, error: "Validasi gagal", errors: formattedErrors };
   }
@@ -98,7 +117,7 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
         categoryId: formData.categoryId,
         title: formData.title,
         description: formData.description,
-        price: parseInt(formData.price),
+        price: Math.floor(Number(formData.price) || 0),
         condition: formData.condition,
         location: formData.location || "IPB Dramaga",
         status: initialStatus,
@@ -126,7 +145,7 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
 /**
  * Action: Update Produk (Multi-Image & R2 Cleanup Support)
  */
-export async function updateProduct(id, { formData, imageUrls = [], videoUrl = null, videoDuration = 0 }) {
+export async function updateProduct(id: string, { formData, imageUrls = [], videoUrl = null, videoDuration = 0 }: ProductMediaData) {
   const auth = await getAuth();
   const session = await auth();
 
@@ -153,12 +172,16 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
 
     if (!isOwner && !isAdmin) return { success: false, code: 403, error: "Akses ditolak" };
 
-    // 2. Filter URL Internal (Edge Case: Prevent External URLs)
-    const isInternal = (url) => typeof url === 'string' && url.startsWith("/api/images/products/");
+    // 2. Filter URL Internal (Cegah injection URL luar)
+    const isInternal = (url: any) => typeof url === 'string' && url.startsWith("/api/images/products/");
     const safeImageUrls = Array.from(new Set((imageUrls || []).filter(url => isInternal(url))));
-    const safeVideoUrl = videoUrl !== null && isInternal(videoUrl) ? videoUrl : (videoUrl === "" ? "" : product.videoUrl);
+    
+    // Logic Video: null (tidak berubah), "" (hapus), URL (baru)
+    let safeVideoUrl = product.videoUrl;
+    if (videoUrl === "") safeVideoUrl = "";
+    else if (videoUrl && isInternal(videoUrl)) safeVideoUrl = videoUrl;
 
-    // 3. Validasi Form
+    // 3. Validasi Form via Zod
     const validation = productSchema.safeParse({
       ...formData,
       imageCount: safeImageUrls.length,
@@ -167,30 +190,32 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
     });
 
     if (!validation.success) {
-      return { success: false, code: 400, error: "Validasi gagal", errors: validation.error.flatten().fieldErrors };
+      return { 
+        success: false, 
+        code: 400, 
+        error: "Validasi gagal", 
+        errors: validation.error.flatten().fieldErrors 
+      };
     }
 
-    // 4. Logic Diffing Gambar
+    // 4. Logic Diffing Gambar untuk Cleanup R2
     const currentImages = product.images || [];
-    
-    // Foto yang harus dihapus (Ada di DB tapi nggak ada di list aman baru)
     const imagesToDelete = currentImages.filter(img => !safeImageUrls.includes(img.url));
     const keysToDelete = imagesToDelete.map(img => img.r2Key);
 
-    // Foto yang harus ditambah (Ada di list aman baru tapi nggak ada di DB)
     const existingUrls = currentImages.map(img => img.url);
     const imagesToAdd = safeImageUrls.filter(url => !existingUrls.includes(url));
 
-    // Video Cleanup Logic (Edge Case: Video Removal or Replacement)
+    // Cleanup Video jika diganti atau dihapus
     if (product.videoUrl && safeVideoUrl !== product.videoUrl) {
       keysToDelete.push(product.videoUrl.replace("/api/images/", ""));
     }
 
-    // 5. Eksekusi Batch Update
+    // 5. Tentukan Status (Seller edit APPROVED -> PENDING)
     const newStatus = isAdmin ? (formData.status || product.status) : "PENDING";
     
     const operations: any[] = [
-      // Update data utama produk
+      // A. Update data utama produk
       db.update(products).set({
         title: formData.title,
         description: formData.description,
@@ -201,15 +226,15 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
         status: newStatus,
         videoUrl: safeVideoUrl,
         videoDuration: safeVideoUrl ? videoDuration : 0,
-        updatedAt: new Date().getTime(), // Standar milidetik kita
+        updatedAt: new Date().getTime(),
       }).where(eq(products.id, id)),
 
-      // Hapus record gambar yang dibuang
+      // B. Hapus record gambar lama yang dibuang user
       ...(imagesToDelete.length > 0 
         ? [db.delete(productImages).where(inArray(productImages.id, imagesToDelete.map(i => i.id)))] 
         : []),
 
-      // Insert gambar baru
+      // C. Insert record gambar baru
       ...imagesToAdd.map((url) => db.insert(productImages).values({
         id: crypto.randomUUID(),
         productId: id,
@@ -218,13 +243,13 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
         sortOrder: safeImageUrls.indexOf(url)
       })),
 
-      // Update sortOrder untuk gambar yang masih ada
+      // D. Update urutan (sortOrder) untuk gambar yang dipertahankan
       ...currentImages.filter(img => safeImageUrls.includes(img.url)).map(img => 
         db.update(productImages).set({ sortOrder: safeImageUrls.indexOf(img.url) }).where(eq(productImages.id, img.id))
       )
     ];
 
-    // 6. Log Aktivitas jika dilakukan Admin (dan bukan pemilik)
+    // 6. Audit Trail: Log jika Admin yang melakukan perubahan
     if (isAdmin && !isOwner) {
       operations.push(
         db.insert(adminLogs).values({
@@ -232,22 +257,27 @@ export async function updateProduct(id, { formData, imageUrls = [], videoUrl = n
           adminId: session.user.id,
           action: "UPDATE_PRODUCT",
           targetId: id,
-          details: `Admin updated product details: ${formData.title} (Seller ID: ${product.sellerId})`,
+          details: `Admin updated product: ${formData.title} (Seller: ${product.sellerId})`,
         })
       );
     }
 
+    // 7. Eksekusi Batch
     await db.batch(operations as any);
 
-    // 7. Cleanup R2 (Background)
+    // 8. Cleanup R2 (Background Task)
     if (keysToDelete.length > 0) {
       deleteFilesFromR2(keysToDelete);
     }
 
-    return { success: true, message: isAdmin ? "Updated" : "Updated, Pending QC" };
+    return { 
+      success: true, 
+      message: isAdmin ? "Produk diperbarui" : "Produk diperbarui, menunggu QC Admin",
+      status: newStatus 
+    };
   } catch (error) {
     console.error("Update Product Error:", error);
-    return { success: false, error: "Gagal update produk" };
+    return { success: false, error: "Terjadi kesalahan sistem saat update produk" };
   }
 }
 
