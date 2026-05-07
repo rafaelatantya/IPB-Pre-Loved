@@ -112,14 +112,33 @@ export function getAuthConfig(env) {
     secret: env.AUTH_SECRET || process.env.AUTH_SECRET,
     
     // KUNCI PERBAIKAN: Paksa kebijakan cookie agar ramah Docker/Local
+    // Kita biarkan Auth.js menentukan prefix tapi kita paksa 'secure: false' jika bukan HTTPS
     cookies: {
       pkceCodeVerifier: {
         name: "authjs.pkce.code_verifier",
         options: {
           httpOnly: true,
-          sameSite: "lax" as const,
+          sameSite: "lax",
           path: "/",
-          secure: false, // Wajib false untuk http://localhost
+          secure: false, // Wajib false untuk http://localhost di Docker
+        },
+      },
+      callbackUrl: {
+        name: "authjs.callback-url",
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure: false,
+        },
+      },
+      csrfToken: {
+        name: "authjs.csrf-token",
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure: false,
         },
       },
     },
