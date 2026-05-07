@@ -118,7 +118,7 @@ export function getAuthConfig(env) {
         name: "authjs.pkce.code_verifier",
         options: {
           httpOnly: true,
-          sameSite: "lax",
+          sameSite: "lax" as const,
           path: "/",
           secure: false, // Wajib false untuk http://localhost di Docker
         },
@@ -127,7 +127,7 @@ export function getAuthConfig(env) {
         name: "authjs.callback-url",
         options: {
           httpOnly: true,
-          sameSite: "lax",
+          sameSite: "lax" as const,
           path: "/",
           secure: false,
         },
@@ -136,7 +136,7 @@ export function getAuthConfig(env) {
         name: "authjs.csrf-token",
         options: {
           httpOnly: true,
-          sameSite: "lax",
+          sameSite: "lax" as const,
           path: "/",
           secure: false,
         },
