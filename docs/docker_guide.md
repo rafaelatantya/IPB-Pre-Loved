@@ -33,6 +33,10 @@ docker-compose up --build
     1.  Gunakan browser di `http://localhost:8788` (Jangan pake IP).
     2.  Variabel `AUTH_TRUST_HOST=true` sudah ada di `docker-compose.yml` atau `.dev.vars`.
     3.  Variabel `AUTH_URL` sesuai dengan alamat yang diakses di browser.
+-   **Container Crash (Exited 137):** Ini biasanya tandanya **Out of Memory (OOM)** saat build Next.js.
+    1.  Tingkatkan RAM di Docker Desktop (Minimal 4GB disarankan).
+    2.  Jika di Linux, pastikan swap tersedia.
+    3.  Hapus folder `.next` dan `.vercel` lalu coba build ulang.
 
 ---
 *Kembali ke: [Agents Rules](../.agents/rules/agents.md) | [File Dictionary](./file_desc.md)*

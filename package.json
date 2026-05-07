@@ -58,6 +58,7 @@
     "better-sqlite3": "^12.9.0",
     "drizzle-kit": "^0.31.10",
     "typescript": "^6.0.3",
+    "vercel": "^53.2.0",
     "wrangler": "^4.84.0"
   }
 }
