@@ -12,19 +12,20 @@ services:
     environment:
       - NODE_ENV=development
       - AUTH_TRUST_HOST=true
+      - NODE_OPTIONS=--max-old-space-size=1536
       # - DB_RESET=true  # Hapus tanda '#' di awal untuk paksa RESET database saat startup
     stdin_open: true
     tty: true
     restart: unless-stopped
-    # Alokasi resource biar ga OOM saat build Next.js
-    mem_limit: 4g
-    mem_reservation: 2g
+    # Alokasi resource yang lebih ramah laptop (2GB)
+    mem_limit: 2g
+    mem_reservation: 1g
     deploy:
       resources:
         limits:
-          memory: 4G
-        reservations:
           memory: 2G
+        reservations:
+          memory: 1G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8788/login"]
       interval: 30s
