@@ -73,6 +73,9 @@ export default async function middleware(req: NextRequest) {
     
     // GUARD: Jika user mencoba masuk ke halaman login padahal sudah punya session
     if (isLoginPage) {
+      if (role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+      }
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
 
@@ -83,12 +86,20 @@ export default async function middleware(req: NextRequest) {
     }
 
     // GUARD: Seller Dashboard
-    if (path.startsWith('/dashboard') && role === 'ONBOARDING') {
-      return NextResponse.redirect(new URL('/onboarding', nextUrl));
+    if (path.startsWith('/dashboard')) {
+      if (role === 'ONBOARDING') {
+        return NextResponse.redirect(new URL('/onboarding', nextUrl));
+      }
+      if (role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+      }
     }
 
     // GUARD: Onboarding Loop (Jika sudah punya role tapi balik ke onboarding)
     if (path === '/onboarding' && role !== 'ONBOARDING') {
+      if (role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+      }
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
 
