@@ -20,9 +20,9 @@ INSERT INTO categories (id, name, slug) VALUES
 
 -- 2. USERS
 INSERT INTO users (id, name, email, role, user_type, whatsapp_number) VALUES 
-('user-admin', 'Admin IPB', 'admin@apps.ipb.ac.id', 'ADMIN', 'STAFF', '628111111111'),
-('user-seller-1', 'Andi Seller', 'andi@apps.ipb.ac.id', 'SELLER', 'STUDENT', '6281234567890'),
-('user-seller-2', 'Budi Seller', 'budi@apps.ipb.ac.id', 'SELLER', 'STUDENT', '6281122334455');
+('user-admin', 'RFA', 'admin@apps.ipb.ac.id', 'ADMIN', 'STAFF', '+628568101973'),
+('user-seller-1', 'Royco', 'andi@apps.ipb.ac.id', 'SELLER', 'STUDENT', '+628568101973'),
+('user-seller-2', 'Coco', 'budi@apps.ipb.ac.id', 'SELLER', 'STUDENT', '+628568101973');
 
 -- 3. PRODUCTS (15 Entri)
 INSERT INTO products (id, seller_id, category_id, title, description, price, condition, status, location, video_url, video_duration) VALUES 

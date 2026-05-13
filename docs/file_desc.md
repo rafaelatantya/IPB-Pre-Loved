@@ -9,6 +9,7 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/db/schema.js` | Struktur rancangan tabel database D1 menggunakan Drizzle ORM |
 | `src/lib/db.js` | Helper koneksi Drizzle + Context Helpers (`getEnv`, `getContextDb`) |
 | `src/lib/auth.js` | Konfigurasi inti dan callback rules pembatasan domain NextAuth (SSO Google) |
+| `src/lib/validation.ts` | Skema validasi universal Zod untuk form data (Produk, Onboarding, Auto-format WA) |
 | `src/app/api/auth/[...nextauth]/route.js` | Route handler yang mengakomodir standard fetch Edge dari library NextAuth |
 | `src/middleware.js` | Middleware pelindung rute SSR Next.js berdasarkan Role (SELLER/ADMIN bypass rules) |
 | `wrangler.toml` | Konfigurasi build Cloudflare Emulator, Binding Database ID, dan R2 ID |
@@ -55,3 +56,4 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/components/notifications/NotificationCenter.jsx` | Komponen Popover di Navbar untuk preview notifikasi terbaru & unread badge |
 | `src/app/(seller)/dashboard/notifications/page.jsx` | Halaman riwayat notifikasi lengkap untuk pengguna |
 | `src/lib/r2.js` | Utility Server-side untuk manajemen file di Cloudflare R2 (Delete Objects) |
+| `src/components/profile/PhoneSettingModal.jsx` | Komponen modal pemicu edit nomor WhatsApp instan langsung di Sidebar (Admin & Seller) |

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, PlusSquare, FileText } from "lucide-react";
+import PhoneSettingModal from "@/components/profile/PhoneSettingModal";
 
 const sellerLinks = [
     { name: "Daftar Produk Saya", href: "/dashboard", icon: LayoutGrid },
@@ -45,7 +46,7 @@ export default function Sidebar({ role = "seller" }) {
             </div>
 
             {/* Nav */}
-            <nav className="flex flex-col gap-0.5">
+            <nav className="flex flex-col gap-0.5 mb-auto">
                 {links.map((link) => {
                     const Icon = link.icon;
                     const isActive =
@@ -66,6 +67,10 @@ export default function Sidebar({ role = "seller" }) {
                     );
                 })}
             </nav>
+
+            <div className="pt-4 border-t border-gray-100">
+                <PhoneSettingModal />
+            </div>
         </aside>
     );
 }

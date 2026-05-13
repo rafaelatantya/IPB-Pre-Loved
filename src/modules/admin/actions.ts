@@ -126,7 +126,7 @@ export async function reviewProduct({ productId, decision, reasonCode = null, no
         adminId: session.user.id,
         action: "REVIEW_PRODUCT",
         targetId: productId,
-        details: `Decision: ${decision}. Reason: ${reasonCode || "N/A"}. Note: ${note || "none"}`,
+        details: `Decision: ${decision}. Reason: ${note || reasonCode || "Tidak ada alasan"}`,
       }),
 
       // 4. Kirim Notifikasi ke Seller
@@ -135,7 +135,7 @@ export async function reviewProduct({ productId, decision, reasonCode = null, no
         userId: currentProduct.sellerId,
         title: decision === "APPROVED" ? "Produk Disetujui! 🎉" : "Produk Ditolak ⚠️",
         message: decision === "APPROVED" 
-          ? `Produk "${currentProduct.title}" Anda sekarang sudah tayang di katalog publik.`
+          ? `Produk "${currentProduct.title}" Anda sekarang sudah tayang di katalog publik. Catatan Admin: ${note || "Lolos QC"}`
           : rejectionMessage,
         type: decision === "APPROVED" ? "SUCCESS" : "DANGER",
       })
@@ -186,7 +186,7 @@ export async function toggleBlockUser(userId, status) {
     try {
     const db = await getContextDb();
     
-    await db.batch([
+    const operations: any[] = [
       db.update(users).set({ 
         isBlocked: status,
         updatedAt: new Date().getTime() 
@@ -196,22 +196,36 @@ export async function toggleBlockUser(userId, status) {
         adminId: session.user.id,
         action: status ? "BLOCK_USER" : "UNBLOCK_USER",
         targetId: userId,
-        details: status ? "Account suspended" : "Account reactivated",
+        details: status ? "Account suspended, products archived" : "Account reactivated, products restored",
       }),
       db.insert(notifications).values({
         id: crypto.randomUUID(),
         userId: userId,
         title: status ? "Akun Ditangguhkan" : "Akun Diaktifkan Kembali",
         message: status 
-          ? "Akun Anda telah ditangguhkan oleh Admin karena melanggar ketentuan layanan."
-          : "Akun Anda telah diaktifkan kembali. Silakan masuk untuk melanjutkan.",
+          ? "Akun Anda telah ditangguhkan oleh Admin karena melanggar ketentuan layanan. Seluruh produk Anda telah diarsipkan."
+          : "Akun Anda telah diaktifkan kembali. Seluruh produk Anda telah dikembalikan.",
         type: status ? "DANGER" : "SUCCESS",
       })
-    ]);
+    ];
 
-    return { success: true, message: status ? "User diblokir" : "Blokir dibuka" };
+    if (status) {
+      // BAN: set all user's APPROVED products to ARCHIVED
+      operations.push(
+        db.update(products).set({ status: "ARCHIVED" }).where(sql`${products.sellerId} = ${userId} AND ${products.status} = 'APPROVED'`)
+      );
+    } else {
+      // UNBAN: restore ARCHIVED back to APPROVED
+      operations.push(
+        db.update(products).set({ status: "APPROVED" }).where(sql`${products.sellerId} = ${userId} AND ${products.status} = 'ARCHIVED'`)
+      );
+    }
+
+    await db.batch(operations as any);
+
+    return { success: true, message: status ? "User diblokir & produk diarsipkan" : "Blokir dibuka & produk dipulihkan" };
   } catch (error) {
-    return { success: false, error: "Gagal update status blokir" };
+    return { success: false, error: "Gagal update status blokir: " + error.message };
   }
 }
 
@@ -317,6 +331,29 @@ export async function toggleUserRole(userId, currentRole) {
 }
 
 /**
+ * Action: Ambil Info Produk User Sebelum Dihapus
+ */
+export async function getUserProductsInfo(userId) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (session?.user?.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const db = await getContextDb();
+    const result = await db.select({
+      id: products.id,
+      title: products.title
+    }).from(products).where(eq(products.sellerId, userId));
+    return { success: true, data: result };
+  } catch (error) {
+    return { success: false, error: `Gagal mengambil info produk: ${error.message}` };
+  }
+}
+
+/**
  * Action: Hapus User
  */
 export async function deleteUser(userId) {
@@ -329,16 +366,31 @@ export async function deleteUser(userId) {
 
   try {
     const db = await getContextDb();
-    await db.batch([
-      db.delete(users).where(eq(users.id, userId)),
-      db.insert(adminLogs).values({
-        id: crypto.randomUUID(),
-        adminId: session.user.id,
-        action: "DELETE_USER",
-        targetId: userId,
-        details: "User account permanently deleted",
-      })
-    ]);
+    
+    // Ambil semua produk user
+    const userProducts = await db.select({ id: products.id }).from(products).where(eq(products.sellerId, userId));
+    const productIds = userProducts.map(p => p.id);
+
+    const operations: any[] = [];
+    if (productIds.length > 0) {
+      // Hapus data relasi produk
+      for (const pId of productIds) {
+        operations.push(db.delete(qcReviews).where(eq(qcReviews.productId, pId)));
+        operations.push(db.delete(productImages).where(eq(productImages.productId, pId)));
+      }
+      operations.push(db.delete(products).where(eq(products.sellerId, userId)));
+    }
+    
+    operations.push(db.delete(users).where(eq(users.id, userId)));
+    operations.push(db.insert(adminLogs).values({
+      id: crypto.randomUUID(),
+      adminId: session.user.id,
+      action: "DELETE_USER",
+      targetId: userId,
+      details: `Permanently deleted user account (${userId}) along with ${productIds.length} products.`,
+    }));
+
+    await db.batch(operations as any);
     return { success: true, message: "User berhasil dihapus" };
   } catch (error) {
     return { success: false, error: `Gagal menghapus user: ${error.message}` };

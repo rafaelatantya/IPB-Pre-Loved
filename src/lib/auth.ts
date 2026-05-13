@@ -2,8 +2,20 @@ import Google from "next-auth/providers/google";
 
 export function getAuthConfig(env) {
   // Parsing Environment Variables
-  const ALLOWED_DOMAINS = (env.ALLOWED_DOMAINS || "@apps.ipb.ac.id").split(",").map(d => d.trim().toLowerCase());
-  const ADMIN_EMAILS = (env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const domainRegex = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
+  const ALLOWED_DOMAINS = (env.ALLOWED_DOMAINS || "@apps.ipb.ac.id")
+    .match(domainRegex)
+    ?.map(d => d.trim().toLowerCase()) || ["@apps.ipb.ac.id"];
+
+  const ADMIN_EMAILS = (env.ADMIN_EMAILS || "")
+    .match(emailRegex)
+    ?.map(e => e.trim().toLowerCase()) || [];
+
+  const WHITELISTED_EMAILS = (env.WHITELISTED_EMAILS || "")
+    .match(emailRegex)
+    ?.map(e => e.trim().toLowerCase()) || [];
 
   return {
     providers: [
@@ -19,12 +31,15 @@ export function getAuthConfig(env) {
     },
     callbacks: {
       async signIn({ user, account, profile }) {
-        // Pengecekan Domain Dinamis (Default: @apps.ipb.ac.id)
-        const userEmail = user.email?.toLowerCase();
-        const isAllowed = ALLOWED_DOMAINS.some(domain => userEmail?.endsWith(domain));
+        // Pengecekan Domain Dinamis & Whitelist
+        const userEmail = user.email?.toLowerCase() || "";
+        const isAdmin = ADMIN_EMAILS.includes(userEmail);
+        const isWhitelisted = WHITELISTED_EMAILS.includes(userEmail);
+        const isAllowedDomain = ALLOWED_DOMAINS.some(domain => userEmail.endsWith(domain));
 
-        if (!isAllowed) {
-          console.warn(`SIGNIN BLOCKED: Domain [${userEmail}] not in [${ALLOWED_DOMAINS.join(", ")}]`);
+        // Jika domainnya tidak diizinkan DAN emailnya nggak ada di list whitelist/admin, TOLAK!
+        if (!isAllowedDomain && !isAdmin && !isWhitelisted) {
+          console.warn(`SIGNIN BLOCKED: [${userEmail}] is not in Allowed Domains or Whitelist.`);
           return false;
         }
 
@@ -63,13 +78,9 @@ export function getAuthConfig(env) {
       async jwt({ token, user, trigger }) {
         const userEmail = (user?.email || token?.email)?.toLowerCase();
         
-        // Cek Role Admin dari Env List (Prioritas Utama untuk Testing)
-        if (userEmail && ADMIN_EMAILS.includes(userEmail)) {
-          token.role = "ADMIN";
-        }
+        // Cek apakah user ada di list ADMIN_EMAILS (Prioritas Tertinggi)
+        const isHardcodedAdmin = userEmail && ADMIN_EMAILS.includes(userEmail);
 
-        // KUNCI PERBAIKAN: 
-        // Kita sinkronisasi dengan database secara proaktif untuk mendeteksi BAN real-time.
         try {
           const { getDb } = await import("@/lib/db");
           const { users } = await import("@/db/schema");
@@ -85,14 +96,40 @@ export function getAuthConfig(env) {
               return null; 
             }
             token.id = dbUser.id;
-            token.role = dbUser.role;
-            // console.log(`[AUTH] JWT Sync: ${userEmail} role is now ${dbUser.role}`);
+            
+            // PRIORITAS ROLE SINKRONISASI:
+            if (isHardcodedAdmin) {
+              // Jika dia admin di .dev.vars tapi di DB bukan admin -> Paksa jadi ADMIN (dan diam-diam update DB biar sinkron)
+              if (dbUser.role !== "ADMIN") {
+                token.role = "ADMIN";
+                db.update(users).set({ role: "ADMIN" }).where(eq(users.email, userEmail)).run().catch(e => console.error("Auto-Admin DB Update Error:", e));
+              } else {
+                token.role = "ADMIN";
+              }
+            } else {
+              // Jika sebelumnya dia ADMIN di DB tapi sekarang dicopot dari list ADMIN_EMAILS di .dev.vars
+              if (dbUser.role === "ADMIN") {
+                const targetDemotedRole = dbUser.whatsappNumber ? "SELLER" : "BUYER";
+                token.role = targetDemotedRole;
+                // Diam-diam turunkan role di database agar sinkron
+                db.update(users).set({ role: targetDemotedRole }).where(eq(users.email, userEmail)).run().catch(e => console.error("Admin Demotion DB Update Error:", e));
+              } else {
+                // Jika bukan admin, percayakan role sepenuhnya dari Database
+                token.role = dbUser.role;
+              }
+            }
           } else if (user) {
             token.id = user.id;
-            token.role = "ONBOARDING";
+            token.role = isHardcodedAdmin ? "ADMIN" : "ONBOARDING";
+          } else {
+            // 🚨 STRIKE: User tidak ditemukan di DB dan ini bukan login baru (User telah dihapus!)
+            console.warn(`[AUTH] ACCESS REVOKED: User ${userEmail} was deleted from database.`);
+            return null; // Batalkan token (User ditendang otomatis)
           }
         } catch (e) {
           console.error("[AUTH] JWT Sync Error:", e);
+          // Fallback darurat
+          if (isHardcodedAdmin) token.role = "ADMIN";
         }
 
         if (!token.role) token.role = "ONBOARDING";

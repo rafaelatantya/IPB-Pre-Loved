@@ -26,7 +26,8 @@ Kita menggunakan **Modular Monolith** dengan Next.js App Router. Setiap fitur ut
 Karena batasan runtime Cloudflare pada root path (`/`), sistem menggunakan arsitektur berikut untuk stabilitas:
 - **Dedicated Upgrade API**: Proses upgrade Buyer ke Seller dilakukan via `POST /api/user/upgrade` untuk menghindari error 405 pada root path.
 - **JWT Sinkronisasi**: Menggunakan fail-safe check di `src/lib/auth.js` yang memaksa re-fetch ke D1 jika user berstatus `ONBOARDING`.
-- **Trust Host Policy**: Mengaktifkan `AUTH_TRUST_HOST` dan custom cookie policy untuk mendukung development di dalam Docker/Windows.
+- **Trust Host Policy & Dynamic Auth URL**: Mengaktifkan `AUTH_TRUST_HOST` dan custom injection di `src/app/api/auth/[...nextauth]/route.js` untuk memaksa protokol `https://` saat via Ngrok dan `http://` saat Localhost, sehingga NextAuth aman berjalan berdampingan tanpa config ganda.
+- **Auto-Formatting WhatsApp**: Semua input nomor WhatsApp (Onboarding & Upgrade Profile) akan otomatis diubah ke format internasional Indonesia (`+62...`) di level API (Validation Transform & Backend Actions). Angka `0` di depan otomatis dihapus.
 
 ### 1. Keamanan & Role (Guard Logic)
 Sistem memiliki 4 role utama:
@@ -119,3 +120,16 @@ Sistem secara proaktif menjaga kebersihan storage Cloudflare R2:
 ### D. Cloudflare D1 & Drizzle ORM Edge Cases (CRITICAL)
 - **Mandatory `.run()` / `.execute()`**: Semua operasi Write (`db.insert`, `db.update`, `db.delete`) **WAJIB** diakhiri dengan `.run()` atau `.execute()`. Jika hanya menggunakan `await db.update(...)` tanpa eksekutor, Drizzle D1 **TIDAK AKAN** menjalankan query-nya (Silent Failure / "0 aksi").
 - **Timestamp Integer Normalization**: Drizzle SQLite tidak memiliki tipe `Date` asli. Jangan pernah gunakan `{ mode: 'timestamp' }` di schema karena Next.js Edge Runtime akan salah mengkalkulasi Epoch (menjadi tahun 58304). Selalu gunakan `integer('created_at').default(sql\`(unixepoch() * 1000)\`)` untuk menyimpan milidetik secara natif.
+
+### E. Moderasi Akun & Cascade Delete
+- **Ban / Block User**: Memblokir pengguna akan mengubah status akun `isBlocked` menjadi `true`. Seluruh produk berstatus `APPROVED` milik pengguna tersebut otomatis diubah menjadi `ARCHIVED` (dihapus dari katalog publik, tapi tetap tersimpan). Saat di-unban, semua produk `ARCHIVED` otomatis dikembalikan ke `APPROVED`.
+- **Session Eviction**: Sesi login pengguna yang di-ban otomatis ditolak pada refresh halaman berikutnya via validasi JWT di callback `jwt()`. Percobaan login baru akan diblokir dengan pesan dialog instruksi menghubungi admin.
+- **Cascade Delete**: Menghapus akun user akan melakukan pemindaian produk terlebih dahulu untuk konfirmasi admin. Begitu disetujui, sistem menghapus ulasan QC, gambar produk relasional, produk milik user, dan barulah baris akun user tersebut dihapus secara atomik menggunakan transaksi batch `db.batch`. Seluruh proses dicatat secara mendalam di `adminLogs`.
+
+### F. Manajemen Database Lokal Fast Reset
+- Untuk melakukan reset database teks relasional tanpa menghapus dan mengunduh ulang gambar biner di R2 lokal (yang memakan waktu 35+ detik), tim pengembang dapat menjalankan `npm run db:reset:fast`. Ini hanya akan menyeka folder `./local-db-info/v3/d1` dan mengabaikan emulasi folder `/r2` sehingga reset database selesai dalam waktu kurang dari 3 detik dengan gambar yang tetap tampil sempurna di browser.
+
+### G. Manajemen Database Cloud (Production) Reset
+Untuk mengelola database produksi di Cloudflare Cloud (D1 & R2), tim pengembang memiliki 2 perintah utama di `package.json`:
+- **Reset Total (`npm run db:reset:cloud`)**: Menghapus seluruh tabel relasional di database produksi Cloudflare D1, menerapkan migrasi ulang dari awal, mengeksekusi seed SQL data, dan mengunduh serta mengunggah ulang seluruh gambar biner produk awal (seeding) ke Cloudflare R2 secara sekuensial. Gunakan ini jika terdapat perubahan struktur tabel (skema) yang bersifat destruktif.
+- **Reset Cepat (`npm run db:reset:fast:remote`)**: Menghapus baris seluruh data di database produksi Cloudflare D1 (tanpa merusak skema tabel), menerapkan migrasi pending, dan meng-execute seed SQL data baru. Perintah ini **sama sekali tidak menyentuh/menghapus storage R2 produksi**, sehingga seluruh gambar produk bawaan tetap utuh, terhubung sempurna, dan reset selesai dalam waktu kurang dari 5 detik!

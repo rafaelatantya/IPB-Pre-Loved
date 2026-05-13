@@ -8,6 +8,22 @@ import { onboardingSchema } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 
 /**
+ * Format nomor telepon secara otomatis ke format +62
+ */
+function formatPhoneNumber(phone) {
+  if (!phone) return "";
+  let clean = phone.replace(/[^0-9+]/g, "");
+  if (clean.startsWith("0")) {
+    clean = "+62" + clean.substring(1);
+  } else if (clean.startsWith("62")) {
+    clean = "+" + clean;
+  } else if (!clean.startsWith("+62") && clean.length > 0) {
+    clean = "+62" + clean.replace(/\+/g, "");
+  }
+  return clean;
+}
+
+/**
  * Action: Ambil profil user yang sedang login
  */
 export async function getUserProfile() {
@@ -39,16 +55,17 @@ export async function updateSellerProfile({ whatsappNumber }) {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Validasi format nomor WA
-  if (!whatsappNumber || whatsappNumber.length < 10 || whatsappNumber.length > 15) {
-    return { success: false, error: "Nomor WhatsApp tidak valid (10-15 karakter)" };
+  // Validasi & Format nomor WA
+  const formattedNumber = formatPhoneNumber(whatsappNumber);
+  if (!formattedNumber || formattedNumber.length < 10 || formattedNumber.length > 16) {
+    return { success: false, error: "Nomor WhatsApp tidak valid (min 10 karakter)" };
   }
 
     try {
     const db = await getContextDb();
     await db.update(users)
       .set({ 
-        whatsappNumber,
+        whatsappNumber: formattedNumber,
         updatedAt: new Date().getTime()
       })
       .where(eq(users.email, session.user.email))
@@ -84,10 +101,13 @@ export async function upgradeToSeller(whatsappNumber = null) {
       return { success: false, error: "Data user tidak ditemukan di database." };
     }
 
-    // Jika nomor WA dikirim, validasi
+    let finalWhatsappNumber = null;
+
+    // Jika nomor WA dikirim, format dan validasi
     if (whatsappNumber) {
-        if (whatsappNumber.length < 10 || whatsappNumber.length > 15) {
-            return { success: false, error: "Nomor WhatsApp tidak valid (10-15 karakter)" };
+        finalWhatsappNumber = formatPhoneNumber(whatsappNumber);
+        if (finalWhatsappNumber.length < 10 || finalWhatsappNumber.length > 16) {
+            return { success: false, error: "Nomor WhatsApp tidak valid (min 10 karakter)" };
         }
     } else {
         // Jika tidak dikirim, cek apakah sudah ada
@@ -101,7 +121,7 @@ export async function upgradeToSeller(whatsappNumber = null) {
       role: "SELLER",
       updatedAt: new Date().getTime()
     };
-    if (whatsappNumber) updateData.whatsappNumber = whatsappNumber;
+    if (finalWhatsappNumber) updateData.whatsappNumber = finalWhatsappNumber;
 
     await db.update(users)
       .set(updateData)

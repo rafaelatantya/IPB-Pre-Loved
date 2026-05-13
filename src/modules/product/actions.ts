@@ -106,11 +106,19 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
 
   try {
     const db = await getContextDb();
+    
+    // 🛡️ SECURITY: Pastikan User/Admin punya nomor WA sebelum jualan
+    const { users } = await import("@/db/schema");
+    const seller = await db.select().from(users).where(eq(users.id, session.user.id)).get();
+    if (!seller || !seller.whatsappNumber) {
+      return { success: false, code: 400, error: "Nomor WhatsApp belum disetel. Silakan lengkapi di Pengaturan Profil terlebih dahulu." };
+    }
+
     const productId = crypto.randomUUID();
     const userId = session.user.id;
     const initialStatus = userRole === "ADMIN" ? "APPROVED" : "PENDING";
 
-    await db.batch([
+    const operations: any[] = [
       db.insert(products).values({
         id: productId,
         sellerId: userId,
@@ -133,7 +141,30 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
         r2Key: url.replace("/api/images/", ""),
         sortOrder: i
       }))
-    ]);
+    ];
+
+    if (userRole === "ADMIN") {
+      operations.push(
+        db.insert(adminLogs).values({
+          id: crypto.randomUUID(),
+          adminId: userId,
+          action: "CREATE_PRODUCT",
+          targetId: productId,
+          details: `Admin uploaded product: ${formData.title} (Auto-Approved)`,
+        })
+      );
+      operations.push(
+        db.insert(notifications).values({
+          id: crypto.randomUUID(),
+          userId: userId,
+          title: "Produk Terunggah 🎉",
+          message: `Anda baru saja mengupload barang baru "${formData.title}" (auto approve)`,
+          type: "SUCCESS",
+        })
+      );
+    }
+
+    await db.batch(operations as any);
 
     return { success: true, message: `Berhasil! Status: ${initialStatus}`, productId };
   } catch (error) {

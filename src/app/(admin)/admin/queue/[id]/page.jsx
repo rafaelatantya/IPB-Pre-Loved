@@ -44,6 +44,7 @@ export default function AdminReviewDetailPage() {
     const [activeImg, setActiveImg] = useState(0);
     const [submitting, setSubmitting] = useState(null); // "approve" | "reject"
     const [flagging, setFlagging] = useState(false);
+    const [reason, setReason] = useState("Tidak ada alasan");
 
     useEffect(() => {
         async function fetchData() {
@@ -67,11 +68,15 @@ export default function AdminReviewDetailPage() {
 
     async function handleDecision(action) {
         let decision = action === "approve" ? "APPROVED" : "REJECTED";
-        let note = "";
         
-        if (decision === "REJECTED") {
-            note = prompt("Alasan Penolakan:", "Foto kurang jelas / Deskripsi tidak sesuai");
-            if (!note) return;
+        const finalReason = reason.trim() || "Tidak ada alasan";
+        if (finalReason.length < 10) {
+            alert("Alasan review minimal harus 10 karakter!");
+            return;
+        }
+        if (finalReason.length > 250) {
+            alert("Alasan review maksimal 250 karakter!");
+            return;
         }
 
         setSubmitting(action);
@@ -79,7 +84,7 @@ export default function AdminReviewDetailPage() {
             const res = await reviewProduct({ 
                 productId, 
                 decision, 
-                note: note || "Lolos QC Admin" 
+                note: finalReason
             });
 
             if (res.success) {
@@ -237,8 +242,23 @@ export default function AdminReviewDetailPage() {
                         </div>
                     </div>
 
-                    {/* Spacer */}
-                    <div className="flex-1" />
+                    {/* Alasan Review (QC Note) */}
+                    <div className="border-t border-gray-100 pt-4 mb-4">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1.5">
+                            Alasan Review (QC Note)
+                        </label>
+                        <textarea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            placeholder="Tulis alasan approve/reject..."
+                            className="w-full h-20 px-3 py-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 resize-none bg-white font-sans"
+                            maxLength={250}
+                        />
+                        <div className="flex justify-between items-center mt-1 text-[10px] text-gray-400">
+                            <span>Min 10, Max 250 kar.</span>
+                            <span>{reason.length}/250</span>
+                        </div>
+                    </div>
 
                     {/* Action Buttons */}
                     <div className="border-t border-gray-100 pt-5 flex gap-3">

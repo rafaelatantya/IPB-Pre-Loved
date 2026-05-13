@@ -6,11 +6,17 @@ export const dynamic = "force-dynamic";
 import { signIn } from "next-auth/react";
 import { AlertTriangle, LogIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+
+  useEffect(() => {
+    if (error === "AccessDenied") {
+      alert("Silakan kontak admin, akun anda di-banned.\n\nProduk anda tidak dihapus namun di-archive.");
+    }
+  }, [error]);
 
   return (
     <div className="w-full h-screen bg-white flex flex-col md:flex-row font-sans overflow-hidden">

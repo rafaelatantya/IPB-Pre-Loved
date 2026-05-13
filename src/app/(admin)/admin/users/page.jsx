@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Search, ShieldAlert, Trash2, UserCheck, Loader2 } from "lucide-react";
-import { getAdminUsers, toggleBlockUser, deleteUser } from "@/modules/admin/actions";
+import { getAdminUsers, toggleBlockUser, deleteUser, getUserProductsInfo } from "@/modules/admin/actions";
 
 export default function AdminUsersPage() {
     const { data: session } = useSession();
@@ -40,9 +40,37 @@ export default function AdminUsersPage() {
     };
 
     const handleDelete = async (userId) => {
-        if (!confirm("Hapus akun secara permanen? Tindakan ini tidak bisa dibatalkan.")) return;
-        const res = await deleteUser(userId);
-        if (res.success) setUsers(prev => prev.filter(u => u.id !== userId));
+        setLoading(true);
+        try {
+            const infoRes = await getUserProductsInfo(userId);
+            if (!infoRes.success) {
+                alert(infoRes.error || "Gagal mengambil info produk user.");
+                return;
+            }
+            const userProducts = infoRes.data || [];
+            let confirmMsg = "Hapus akun secara permanen? Tindakan ini tidak bisa dibatalkan.";
+            if (userProducts.length > 0) {
+                const titles = userProducts.map(p => `• ${p.title}`).join("\n");
+                confirmMsg = `User ini memiliki ${userProducts.length} produk berikut:\n\n${titles}\n\nSeluruh produk ini akan ikut TERHAPUS SECARA OTOMATIS!\n\nApakah Anda yakin ingin menghapus akun ini secara permanen?`;
+            } else {
+                confirmMsg = `User ini tidak memiliki produk.\n\nHapus akun secara permanen? Tindakan ini tidak bisa dibatalkan.`;
+            }
+            
+            if (!confirm(confirmMsg)) return;
+            
+            const res = await deleteUser(userId);
+            if (res.success) {
+                setUsers(prev => prev.filter(u => u.id !== userId));
+                alert("Akun user dan semua produknya berhasil dihapus secara permanen.");
+            } else {
+                alert(res.error || "Gagal menghapus user.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Terjadi kesalahan sistem saat mencoba menghapus user.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -113,8 +141,8 @@ export default function AdminUsersPage() {
                                 </td>
                                 <td className="px-4 py-4 text-center text-[10px] font-bold text-gray-600">
                                     {u.whatsappNumber ? (
-                                        <a href={`https://wa.me/${u.whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-green-600 hover:underline">
-                                            +{u.whatsappNumber}
+                                        <a href={`https://wa.me/${u.whatsappNumber.replace(/^\+/, '')}`} target="_blank" rel="noreferrer" className="hover:text-green-600 hover:underline">
+                                            {u.whatsappNumber.startsWith("+") ? u.whatsappNumber : `+${u.whatsappNumber}`}
                                         </a>
                                     ) : "—"}
                                 </td>

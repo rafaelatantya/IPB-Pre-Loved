@@ -110,7 +110,7 @@ export default async function AdminLogsPage() {
                                                 </code>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="text-xs text-gray-600 line-clamp-1 max-w-[200px]" title={log.details}>
+                                                <p className="text-xs text-gray-600 line-clamp-2 max-w-[450px] break-words" title={log.details}>
                                                     {log.details}
                                                 </p>
                                             </td>

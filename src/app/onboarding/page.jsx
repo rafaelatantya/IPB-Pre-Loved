@@ -79,7 +79,31 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await performSubmit(formData);
+    
+    // Autocorrect Prompt
+    let rawPhone = formData.whatsappNumber;
+    let clean = rawPhone.replace(/[^0-9+]/g, "");
+    let corrected = clean;
+    if (clean.startsWith("0")) {
+      corrected = "+62" + clean.substring(1);
+    } else if (clean.startsWith("62")) {
+      corrected = "+" + clean;
+    } else if (clean.startsWith("+62")) {
+      corrected = clean;
+    } else if (clean.length > 0) {
+      corrected = "+62" + clean;
+    }
+
+    // Tampilkan prompt jika user menginput 0, 62, atau +62 secara manual padahal sudah ada label +62 di kiri
+    const needsPrompt = clean.startsWith("0") || clean.startsWith("62") || clean.startsWith("+62");
+    if (needsPrompt) {
+      const confirmBox = window.confirm(`Autocorrect: nomor yang akan tercatat: ${corrected}\n\nKlik OK untuk setuju, atau Cancel untuk ketik ulang.`);
+      if (!confirmBox) return; // Batalkan kirim
+    }
+
+    const finalData = { ...formData, whatsappNumber: corrected };
+    setFormData(finalData);
+    await performSubmit(finalData);
   };
 
   if (status === "loading") {

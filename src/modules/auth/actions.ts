@@ -34,8 +34,8 @@ export async function completeOnboarding({ role, whatsappNumber }) {
     // Update user menggunakan email sebagai identifier yang paling stabil
     const result = await db.update(users)
       .set({
-        role: role,
-        whatsappNumber: whatsappNumber || "",
+        role: validation.data.role,
+        whatsappNumber: validation.data.whatsappNumber || "",
       })
       .where(eq(users.email, userEmail)).run();
     

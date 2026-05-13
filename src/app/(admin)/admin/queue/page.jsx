@@ -40,6 +40,7 @@ export default function AdminQueueDoomScrollPage() {
     const [activeImg, setActiveImg] = useState(0);
     const [submitting, setSubmitting] = useState(null);
     const [flagging, setFlagging] = useState(false);
+    const [reason, setReason] = useState("Tidak ada alasan");
 
     async function fetchQueue() {
         try {
@@ -63,11 +64,15 @@ export default function AdminQueueDoomScrollPage() {
     async function handleDecision(action) {
         if (!item) return;
         let decision = action === "approve" ? "APPROVED" : "REJECTED";
-        let note = "";
         
-        if (decision === "REJECTED") {
-            note = prompt("Alasan Penolakan:", "Foto kurang jelas / Deskripsi tidak sesuai");
-            if (!note) return;
+        const finalReason = reason.trim() || "Tidak ada alasan";
+        if (finalReason.length < 10) {
+            alert("Alasan review minimal harus 10 karakter!");
+            return;
+        }
+        if (finalReason.length > 250) {
+            alert("Alasan review maksimal 250 karakter!");
+            return;
         }
 
         setSubmitting(action);
@@ -75,13 +80,14 @@ export default function AdminQueueDoomScrollPage() {
             const res = await reviewProduct({ 
                 productId: item.id, 
                 decision, 
-                note: note || "Lolos QC Admin" 
+                note: finalReason
             });
 
             if (res.success) {
                 // Hapus barang yang baru di-review dari state (Doom Scroll effect)
                 setItems(prev => prev.slice(1));
                 setActiveImg(0);
+                setReason("Tidak ada alasan"); // Reset
             } else {
                 alert(res.error || "Gagal memproses review");
             }
@@ -232,8 +238,26 @@ export default function AdminQueueDoomScrollPage() {
                         </div>
                     </div>
 
+                    {/* Alasan Review (QC Note) */}
+                    <div className="border-t border-gray-100 pt-4 mb-4">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1.5">
+                            Alasan Review (QC Note)
+                        </label>
+                        <textarea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            placeholder="Tulis alasan approve/reject..."
+                            className="w-full h-20 px-3 py-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 resize-none bg-white font-sans"
+                            maxLength={250}
+                        />
+                        <div className="flex justify-between items-center mt-1 text-[10px] text-gray-400">
+                            <span>Min 10, Max 250 kar.</span>
+                            <span>{reason.length}/250</span>
+                        </div>
+                    </div>
+
                     {/* Action Buttons */}
-                    <div className="border-t border-gray-100 pt-5 flex gap-3 mt-auto">
+                    <div className="border-t border-gray-100 pt-5 flex gap-3">
                         <button
                             onClick={() => handleDecision("reject")}
                             disabled={!!submitting}

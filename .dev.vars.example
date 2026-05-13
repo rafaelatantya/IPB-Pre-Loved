@@ -10,9 +10,17 @@ AUTH_GOOGLE_ID="isi_client_id_dari_google_console"
 AUTH_GOOGLE_SECRET="isi_client_secret_dari_google"
 
 # [APP CONFIG]
-# Pisahkan dengan koma jika lebih dari satu
+# Mendukung pemisah koma, spasi, atau baris baru (multi-line) dengan aman
 ALLOWED_DOMAINS="@apps.ipb.ac.id"
-ADMIN_EMAILS="admin1@apps.ipb.ac.id,admin2@apps.ipb.ac.id"
+
+ADMIN_EMAILS="
+  admin1@apps.ipb.ac.id,
+  rafael.atantya@gmail.com
+"
+
+WHITELISTED_EMAILS="
+  rflatntya@gmail.com
+"
 
 # [NOTES]
 # R2 Storage menggunakan Native Binding ("BUCKET") di wrangler.toml.

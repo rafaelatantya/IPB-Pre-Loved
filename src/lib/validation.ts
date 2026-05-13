@@ -3,14 +3,27 @@ import { z } from "zod";
 // Schema untuk Onboarding User
 export const onboardingSchema = z.object({
   role: z.string().refine(v => ["BUYER", "SELLER"].includes(v)),
-  whatsappNumber: z.string().optional().or(z.literal("")),
+  whatsappNumber: z.string().optional().or(z.literal(""))
+    .transform(v => {
+      if (!v) return "";
+      let clean = v.replace(/[^0-9+]/g, "");
+      if (clean.startsWith("0")) {
+        clean = "+62" + clean.substring(1);
+      } else if (clean.startsWith("62")) {
+        clean = "+" + clean;
+      } else if (!clean.startsWith("+62") && clean.length > 0) {
+        clean = "+62" + clean.replace(/\+/g, "");
+      }
+      return clean;
+    }),
 }).refine((data) => {
   if (data.role === "SELLER") {
-    return data.whatsappNumber && data.whatsappNumber.length >= 10 && data.whatsappNumber.length <= 15;
+    // Memastikan nomor ada dan panjang logis (10-16 char termasuk +62)
+    return data.whatsappNumber && data.whatsappNumber.length >= 10 && data.whatsappNumber.length <= 16;
   }
   return true;
 }, {
-  message: "Nomor WhatsApp wajib diisi (10-15 karakter) untuk Penjual",
+  message: "Nomor WhatsApp wajib diisi dengan format valid (min 10 karakter) untuk Penjual",
   path: ["whatsappNumber"],
 });
 

@@ -71,12 +71,29 @@ export default function LandingPage() {
         
         // Step 2: Jika butuh No WA, minta ke user
         if (!res.success && res.code === "NEED_WHATSAPP") {
-          const wa = window.prompt("Masukkan nomor WhatsApp aktif Anda untuk mulai berjualan (Contoh: 08123456789):");
+          let wa = window.prompt("Masukkan nomor WhatsApp aktif Anda untuk mulai berjualan (Contoh: 08123456789):");
           if (wa) {
+            // Autocorrect Prompt
+            let clean = wa.replace(/[^0-9+]/g, "");
+            let corrected = clean;
+            if (clean.startsWith("0")) {
+              corrected = "+62" + clean.substring(1);
+            } else if (clean.startsWith("62")) {
+              corrected = "+" + clean;
+            } else if (clean.startsWith("+62")) {
+              corrected = clean;
+            } else if (clean.length > 0) {
+              corrected = "+62" + clean;
+            }
+
+            // Selalu konfirmasi karena prompt bawaan browser tidak memiliki label "+62" statis di UI-nya
+            const confirmBox = window.confirm(`Autocorrect: nomor yang akan tercatat: ${corrected}\n\nKlik OK untuk setuju, atau Cancel untuk ketik ulang.`);
+            if (!confirmBox) return; // User membatalkan
+
             response = await fetch("/api/user/upgrade", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ whatsappNumber: wa })
+              body: JSON.stringify({ whatsappNumber: corrected })
             });
             res = await response.json();
           } else {

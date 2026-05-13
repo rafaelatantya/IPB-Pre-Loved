@@ -4,11 +4,13 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutGrid, ClipboardList, Archive, Users, History, FileText, LogOut } from "lucide-react";
+import { LayoutGrid, ClipboardList, Archive, Users, History, FileText, LogOut, PlusSquare } from "lucide-react";
+import PhoneSettingModal from "@/components/profile/PhoneSettingModal";
 
 const topLinks = [
     { name: "Overview", href: "/admin/dashboard", icon: LayoutGrid },
     { name: "Pending Reviews", href: "/admin/queue", icon: ClipboardList },
+    { name: "Upload Product", href: "/product/add", icon: PlusSquare },
     { name: "Inventory", href: "/admin/inventory", icon: Archive },
     { name: "User Accounts", href: "/admin/users", icon: Users },
     { name: "Activity Logs", href: "/admin/logs", icon: History },
@@ -57,7 +59,7 @@ export default function AdminSidebar() {
                 })}
             </nav>
 
-            {/* Bottom section - Documentation & Logout */}
+            {/* Bottom section - Documentation, Set WA & Logout */}
             <div className="flex flex-col gap-1">
                 {bottomLinks.map((link) => {
                     const Icon = link.icon;
@@ -74,6 +76,8 @@ export default function AdminSidebar() {
                         </Link>
                     );
                 })}
+
+                <PhoneSettingModal />
 
                 {/* Logout Button (Fungsional) */}
                 <button

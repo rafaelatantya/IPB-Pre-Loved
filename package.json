@@ -13,12 +13,14 @@
     "pages:build": "npx @cloudflare/next-on-pages",
     "pages:dev": "npm run pages:build && npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 bucket --persist-to ./local-db-info",
     "db:generate": "drizzle-kit generate",
-    "db:push:local": "echo \"y\" | npx wrangler d1 migrations apply DB --local --persist-to ./local-db-info",
+    "db:push:local": "npx wrangler d1 migrations apply DB --local --persist-to ./local-db-info",
     "db:push:remote": "npx wrangler d1 migrations apply DB --remote",
-    "db:wipe": "rm -rf ./local-db-info && npm run db:push:local && npm run db:seed:local",
     "db:seed:local": "npx wrangler d1 execute DB --local --file=./drizzle/seed.sql --persist-to ./local-db-info && bash scripts/seed-media.sh",
     "db:reset:local": "rm -rf ./local-db-info && npm run db:push:local && npm run db:seed:local",
-    "db:reset:cloud": "echo '🚨 BAHAYA: Reset TOTAL Cloudflare (DB & Media)? (y/N)' && read confirm && [ \"$confirm\" = \"y\" ] && npm run db:push:remote && bash scripts/seed-media.sh --remote && npx wrangler d1 execute DB --remote --command='DELETE FROM notifications; DELETE FROM admin_logs; DELETE FROM wishlists; DELETE FROM product_images; DELETE FROM qc_reviews; DELETE FROM products; DELETE FROM users; DELETE FROM categories;' && npx wrangler d1 execute DB --remote --file=./drizzle/seed.sql"
+    "db:reset:fast": "rm -rf ./local-db-info/v3/d1 && npm run db:push:local && npx wrangler d1 execute DB --local --file=./drizzle/seed.sql --persist-to ./local-db-info",
+    "db:reset:remote": "echo '🚨 BAHAYA: Reset TOTAL Cloudflare (DB & Media)? (y/N)' && read confirm && [ \"$confirm\" = \"y\" ] && npx wrangler d1 execute DB --remote --command='DROP TABLE IF EXISTS d1_migrations; DROP TABLE IF EXISTS __drizzle_migrations; DROP TABLE IF EXISTS notifications; DROP TABLE IF EXISTS admin_logs; DROP TABLE IF EXISTS wishlists; DROP TABLE IF EXISTS product_images; DROP TABLE IF EXISTS qc_reviews; DROP TABLE IF EXISTS products; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS categories;' && npx wrangler d1 migrations apply DB --remote && npx wrangler d1 execute DB --remote --file=./drizzle/seed.sql && bash scripts/seed-media.sh --remote",
+    "db:reset:fast:remote": "echo '⚡ Fast Reset Cloudflare Database Relational (Keeping R2 Media)? (y/N)' && read confirm && [ \"$confirm\" = \"y\" ] && npx wrangler d1 execute DB --remote --command='DELETE FROM notifications; DELETE FROM admin_logs; DELETE FROM wishlists; DELETE FROM product_images; DELETE FROM qc_reviews; DELETE FROM products; DELETE FROM users; DELETE FROM categories;' && npx wrangler d1 migrations apply DB --remote && npx wrangler d1 execute DB --remote --file=./drizzle/seed.sql",
+    "db:studio": "drizzle-kit studio"
   },
   "repository": {
     "type": "git",
