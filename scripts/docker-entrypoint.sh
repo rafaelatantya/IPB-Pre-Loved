@@ -41,7 +41,7 @@ fi
 
 if [ "$DB_RESET" = "true" ] || [ -f "RESET_DB" ] || [ "$CURRENT_HASH" != "$LAST_HASH" ]; then
   echo "🧹 Database reset triggered (manual/seed change/new setup)..."
-  npm run db:wipe
+  npm run db:reset:local
   echo "$CURRENT_HASH" > $HASH_FILE
   [ -f "RESET_DB" ] && rm RESET_DB
 else

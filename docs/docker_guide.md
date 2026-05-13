@@ -23,12 +23,12 @@ docker-compose up --build
 ## Perintah Penting Lainnya
 
 -   **Menghentikan Container:** `docker-compose down`
--   **Reset Database:** Jalankan `npm run db:wipe` (disarankan dari dalam container) untuk menghapus data lama dan menerapkan migrasi terbaru.
+-   **Reset Database:** Jalankan `npm run db:reset:local` (disarankan dari dalam container) untuk menghapus data lama dan menerapkan migrasi terbaru.
 -   **Update Schema:** Jika ada perubahan di `schema.js`, jalankan `npm run db:generate` untuk membuat file migrasi baru sebelum melakukan deploy atau reset.
 
 ## Troubleshooting
 -   **Port Conflict:** Jika muncul error `Address already in use`, pastikan tidak ada proses `npm run pages:dev` yang sedang berjalan di luar Docker.
--   **Database Error (No column found):** Ini tandanya migrasi lu ketinggalan. Solusinya: Jalankan `npm run db:generate` lalu `npm run db:wipe`.
+-   **Database Error (No column found):** Ini tandanya migrasi lu ketinggalan. Solusinya: Jalankan `npm run db:generate` lalu `npm run db:reset:local`.
 -   **Login Gagal (PKCE / Cookie Error):** Jika muncul error `pkceCodeVerifier could not be parsed`, pastikan:
     1.  Gunakan browser di `http://localhost:8788` (Jangan pake IP).
     2.  Variabel `AUTH_TRUST_HOST=true` sudah ada di `docker-compose.yml` atau `.dev.vars`.
