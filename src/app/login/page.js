@@ -67,7 +67,7 @@ function LoginContent() {
               <div className="w-full flex flex-col justify-start items-start gap-6 pt-0 md:pt-8 md:pb-10">
                 <div className="w-full flex flex-col justify-start items-start gap-2">
                   <button
-                    onClick={() => signIn("google", { callbackUrl: "/" })}
+                    onClick={() => signIn("google", { callbackUrl: "/", prompt: "select_account" })}
                     className="w-full px-6 py-5 md:h-14 bg-[#2563EB] md:border border-transparent md:border-[#1E40AF] rounded-sm md:rounded-none flex justify-center items-center gap-3 hover:bg-[#1d4ed8] transition-colors shadow-sm"
                   >
                     <LogIn className="w-5 h-5 text-[#E5E5E5] md:text-[#E2E2E2]" />

@@ -9,6 +9,7 @@ import NotificationCenter from "../notifications/NotificationCenter";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const pathname = usePathname();
   const isAuthenticated = status === "authenticated";
   const isLoading = status === "loading";
@@ -53,8 +54,11 @@ export default function Navbar() {
               </Link>
 
               {/* Profile Avatar */}
-              <div className="relative group">
-                <button className="w-10 h-10 rounded-full bg-gray-100 flex justify-center items-center border border-gray-300 overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="w-10 h-10 rounded-full bg-gray-100 flex justify-center items-center border border-gray-300 overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all focus:outline-none"
+                >
                   {session?.user?.image ? (
                     <img src={session.user.image} alt={session.user.name || "Profile"} className="w-full h-full object-cover" />
                   ) : (
@@ -62,22 +66,31 @@ export default function Navbar() {
                   )}
                 </button>
                 
-                {/* Dropdown Logout (Hover) */}
-                <div className="absolute right-0 top-full pt-2 hidden group-hover:block">
-                  <div className="bg-white border border-gray-200 shadow-xl rounded-xl p-2 min-w-[160px]">
-                    <div className="px-3 py-2 border-b border-gray-100 mb-1">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Logged in as</p>
-                      <p className="text-xs font-semibold text-gray-800 truncate">{session?.user?.name || "User"}</p>
+                {/* Dropdown Logout */}
+                {isProfileOpen && (
+                  <>
+                    {/* Overlay to close on click outside */}
+                    <div className="fixed inset-0 z-[-1]" onClick={() => setIsProfileOpen(false)}></div>
+                    <div className="absolute right-0 top-full pt-2 z-50">
+                      <div className="bg-white border border-gray-200 shadow-xl rounded-xl p-2 min-w-[160px] animate-in fade-in zoom-in duration-100">
+                        <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Logged in as</p>
+                          <p className="text-xs font-semibold text-gray-800 truncate">{session?.user?.name || "User"}</p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            signOut();
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-red-600 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          LOGOUT
+                        </button>
+                      </div>
                     </div>
-                    <button 
-                      onClick={() => signOut()}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-red-600 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      LOGOUT
-                    </button>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             </div>
           ) : (

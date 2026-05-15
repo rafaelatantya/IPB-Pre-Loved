@@ -60,3 +60,4 @@ const wishlisted = await isProductWishlisted(productId);
   - Optimasi responsivitas `ProductCard` untuk mengisi grid secara penuh di perangkat mobile.
   - Penambahan `max-width` container pada Hero Section untuk tampilan layar ultra-wide.
   - Implementasi horizontal scroll pada kategori produk di perangkat mobile.
+  - Fix double Navbar: Menghapus header mobile redundan pada halaman Katalog dan Detail Produk.

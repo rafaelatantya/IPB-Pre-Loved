@@ -74,3 +74,9 @@ Admin memiliki wewenang penuh atas akun pengguna:
 
 - **PENTING**: Saat memanggil `updateProduct`, informasikan kepada user bahwa barang akan masuk antrean moderasi ulang (status reset ke `PENDING`).
 - **SECURITY**: Jangan pernah mengirim `userId` atau `role` dari client-side form. Backend sudah menanganinya secara aman di server.
+
+## 📝 Log Perubahan Terbaru (Agent)
+- **15 Mei 2026**: 
+  - Fix login redirect: Menambahkan `prompt: "select_account"` pada `signIn` Google agar user bisa memilih akun di mobile.
+  - Fix Dashboard "Gagal memuat produk": Sinkronisasi kebijakan cookie `useSecureCookies` antara Middleware dan Server Actions untuk lingkungan Cloudflare HTTPS.
+  - Perbaikan layout dashboard mobile: Optimalisasi tabel dan navigasi.

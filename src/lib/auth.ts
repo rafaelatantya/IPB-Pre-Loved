@@ -148,46 +148,9 @@ export function getAuthConfig(env) {
     trustHost: true,
     secret: env.AUTH_SECRET || process.env.AUTH_SECRET,
     
-    // KUNCI PERBAIKAN: Paksa kebijakan cookie agar ramah Docker/Local
-    // Kita biarkan Auth.js menentukan prefix tapi kita paksa 'secure: false' jika bukan HTTPS
-    cookies: {
-      sessionToken: {
-        name: "authjs.session-token",
-        options: {
-          httpOnly: true,
-          sameSite: "lax" as const,
-          path: "/",
-          secure: false, // Wajib false untuk http://localhost di Docker
-        },
-      },
-      pkceCodeVerifier: {
-        name: "authjs.pkce.code_verifier",
-        options: {
-          httpOnly: true,
-          sameSite: "lax" as const,
-          path: "/",
-          secure: false, // Wajib false untuk http://localhost di Docker
-        },
-      },
-      callbackUrl: {
-        name: "authjs.callback-url",
-        options: {
-          httpOnly: true,
-          sameSite: "lax" as const,
-          path: "/",
-          secure: false,
-        },
-      },
-      csrfToken: {
-        name: "authjs.csrf-token",
-        options: {
-          httpOnly: true,
-          sameSite: "lax" as const,
-          path: "/",
-          secure: false,
-        },
-      },
-    },
+    // 🌐 ENVIRONMENT-AWARE COOKIE POLICY
+    // Memastikan session aman di Production (HTTPS) tapi tetap jalan di Local/Docker (HTTP)
+    useSecureCookies: env.NODE_ENV === "production" || !!env.CF_PAGES,
   };
 }
 

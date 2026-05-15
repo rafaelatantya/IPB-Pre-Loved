@@ -98,17 +98,6 @@ export default function ProductDetailPage() {
   return (
     <div className="w-full min-h-screen bg-[#FAFAFA] md:bg-white font-poppins md:font-sans">
 
-      {/* MOBILE HEADER */}
-      <div className="md:hidden w-full px-6 py-4 bg-white shadow-[0px_4px_20px_0px_rgba(26,28,28,0.03)] flex justify-between items-center sticky top-0 z-50">
-          <div className="flex-1 flex justify-between items-center overflow-hidden">
-              <div className="justify-center text-zinc-900 text-lg font-semibold font-poppins leading-5 uppercase">IPB PRE LOVED</div>
-              <div className="w-9 px-4 py-2 bg-blue-300 rounded-[36px] shadow-[0px_1px_2px_0px_rgba(105,81,255,0.05)] flex justify-center items-center gap-1.5 overflow-hidden">
-                  <div className="size-5 relative overflow-hidden flex items-center justify-center">
-                      <div className="size-4 bg-blue-600 rounded-full"></div>
-                  </div>
-              </div>
-          </div>
-      </div>
 
       {/* BREADCRUMB (Desktop Only) */}
       <div className="hidden md:block w-full bg-white border-b border-gray-200">
