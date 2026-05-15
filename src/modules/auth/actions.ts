@@ -14,6 +14,10 @@ export async function completeOnboarding({ role, whatsappNumber }) {
   const auth = await getAuth();
   const session = await auth();
 
+  // Debugging
+  console.log("DEBUG ONBOARDING SERVER ACTION:");
+  console.log("- Session:", JSON.stringify(session));
+  
   if (!session?.user?.email) {
     console.error("ONBOARDING ERROR: No session or email found");
     return { success: false, error: "Unauthorized" };

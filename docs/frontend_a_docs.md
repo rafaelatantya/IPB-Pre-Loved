@@ -52,3 +52,11 @@ const wishlisted = await isProductWishlisted(productId);
 
 - **PENTING**: Jangan melakukan filter status `APPROVED` secara manual di sisi client. Panggil service di atas agar hanya data yang valid yang dikirim oleh server.
 - **PAGINATION**: Gunakan objek `pagination` (totalPages, currentPage) untuk membangun tombol navigasi halaman.
+
+## 📝 Log Perubahan Terbaru (Agent)
+- **15 Mei 2026**: 
+  - Integrasi Ikon Lucide (`LayoutGrid`, `Banknote`, `BadgeCheck`) pada button filter Landing Page & Katalog.
+  - Perbaikan layout "Squashed" pada Desktop Landing Page akibat nested grid.
+  - Optimasi responsivitas `ProductCard` untuk mengisi grid secara penuh di perangkat mobile.
+  - Penambahan `max-width` container pada Hero Section untuk tampilan layar ultra-wide.
+  - Implementasi horizontal scroll pada kategori produk di perangkat mobile.

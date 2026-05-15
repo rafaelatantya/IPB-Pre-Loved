@@ -64,3 +64,4 @@ npm run pages:build || {
 echo "⚡ Starting Cloudflare Pages dev server..."
 # Bind ke 0.0.0.0 biar bisa diakses dari luar container
 npx wrangler pages dev .vercel/output/static --d1 DB=777ac36d-0a4f-4996-9c38-201fed833d73 --r2 bucket --persist-to ./local-db-info --ip 0.0.0.0 --port 8788
+

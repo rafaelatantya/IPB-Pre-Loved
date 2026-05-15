@@ -57,3 +57,11 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/(seller)/dashboard/notifications/page.jsx` | Halaman riwayat notifikasi lengkap untuk pengguna |
 | `src/lib/r2.js` | Utility Server-side untuk manajemen file di Cloudflare R2 (Delete Objects) |
 | `src/components/profile/PhoneSettingModal.jsx` | Komponen modal pemicu edit nomor WhatsApp instan langsung di Sidebar (Admin & Seller) |
+| `src/app/(public)/page.jsx` | Halaman Landing utama (Hero, Featured Products, Categories, Features) |
+| `src/app/(public)/catalog/page.jsx` | Halaman Katalog utama dengan fitur filtering (Desktop Sidebar & Mobile Modal) |
+| `src/app/(public)/product/[id]/page.jsx` | Halaman Detail Produk (Gallery Media, Seller Info, Recommendation) |
+| `src/app/(public)/wishlist/page.jsx` | Halaman Wishlist personal pengguna |
+| `src/modules/catalog/components/ProductCard.jsx` | Komponen kartu produk universal dengan variant landing & catalog |
+| `src/modules/catalog/components/MobileFilter.jsx` | Komponen modal filter responsif untuk pencarian di perangkat mobile |
+| `src/components/layouts/BottomNav.jsx` | Bar navigasi bawah khusus untuk pengalaman mobile |
+| `src/components/layouts/Navbar.jsx` | Bar navigasi atas universal (Desktop & Mobile Branding) |

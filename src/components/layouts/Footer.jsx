@@ -6,7 +6,7 @@ export default function Footer() {
     <div className="w-full px-6 md:px-10 py-12 bg-white border-t border-[#C6C6C6] flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex flex-col justify-start items-start">
             <div className="justify-center flex flex-col text-black text-sm font-bold font-sans uppercase leading-5 tracking-widest break-words text-center md:text-left">
-                © 2026 IPB PRE LOVED ARCHITECTURAL WIREFRAME
+                © 2026 IPB PRE LOVED
             </div>
         </div>
         <div className="flex justify-start items-start gap-6">

@@ -15,7 +15,8 @@ import {
   Share2,
   CheckCircle2,
   Info,
-  PlayCircle
+  PlayCircle,
+  ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";
@@ -95,216 +96,227 @@ export default function ProductDetailPage() {
   const currentMedia = mediaList[activeIndex];
 
   return (
-    <div className="w-full min-h-screen bg-white font-sans">
-      
-      {/* NAVIGATION BAR */}
-      <div className="w-full border-b border-[#E2E8F0] sticky top-0 bg-white/80 backdrop-blur-md z-30">
-        <div className="w-full px-6 md:px-10 h-16 flex items-center justify-between">
-          <button 
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-[#0F172A] font-bold text-xs uppercase tracking-widest hover:text-[#2563EB] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali
-          </button>
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors"><Share2 className="w-5 h-5 text-gray-500" /></button>
-            <WishlistButton 
-              productId={product.id} 
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
-              iconSize={20}
-            />
+    <div className="w-full min-h-screen bg-[#FAFAFA] md:bg-white font-poppins md:font-sans">
+
+      {/* MOBILE HEADER */}
+      <div className="md:hidden w-full px-6 py-4 bg-white shadow-[0px_4px_20px_0px_rgba(26,28,28,0.03)] flex justify-between items-center sticky top-0 z-50">
+          <div className="flex-1 flex justify-between items-center overflow-hidden">
+              <div className="justify-center text-zinc-900 text-lg font-semibold font-poppins leading-5 uppercase">IPB PRE LOVED</div>
+              <div className="w-9 px-4 py-2 bg-blue-300 rounded-[36px] shadow-[0px_1px_2px_0px_rgba(105,81,255,0.05)] flex justify-center items-center gap-1.5 overflow-hidden">
+                  <div className="size-5 relative overflow-hidden flex items-center justify-center">
+                      <div className="size-4 bg-blue-600 rounded-full"></div>
+                  </div>
+              </div>
           </div>
+      </div>
+
+      {/* BREADCRUMB (Desktop Only) */}
+      <div className="hidden md:block w-full bg-white border-b border-gray-200">
+        <div className="w-full max-w-[1280px] px-10 py-6 mx-auto flex items-center gap-2">
+          <Link href="/catalog" className="text-[#777777] text-[14px] font-poppins font-normal leading-[16.8px] hover:text-black uppercase">KATALOG</Link>
+          <ChevronRight className="w-4 h-4 text-[#777777]" />
+          <span className="text-[#020617] text-[14px] font-poppins font-normal leading-[16.8px] uppercase">PRODUCT DETAIL</span>
         </div>
       </div>
 
-      {/* ALERT STATUS PENDING (BARU) */}
-      {product?.status === "PENDING" && (
-        <div className="w-full bg-orange-50 border-b border-orange-100 px-6 md:px-10 py-4 flex items-center gap-4">
-          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
-            <Clock className="w-5 h-5 text-orange-600" />
-          </div>
-          <div>
-            <h3 className="text-orange-900 font-bold text-xs uppercase tracking-widest">Produk Menunggu Persetujuan</h3>
-            <p className="text-orange-700 text-[10px] font-medium leading-relaxed mt-0.5">
-              Barang ini belum tampil di katalog publik. Tim Admin akan melakukan Quality Control (QC) dalam waktu 1x24 jam.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="w-full px-6 md:px-10 py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="w-full bg-indigo-50 md:bg-[#F8FAFC] pb-32 md:pb-12">
+        <div className="w-full max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12 flex flex-col gap-8">
           
-          {/* LEFT: IMAGE GALLERY (7 Columns) */}
-          <div className="lg:col-span-7 flex flex-col gap-4">
-            <div className="aspect-square bg-[#F8FAFC] overflow-hidden border border-[#E2E8F0] rounded-3xl relative group">
-              {currentMedia?.type === "video" ? (
-                <video 
-                  src={currentMedia.url} 
-                  controls 
-                  className="w-full h-full object-contain bg-black"
-                />
-              ) : (
-                <img 
-                  src={currentMedia?.url || "/placeholder-product.png"} 
-                  alt={product.title} 
-                  className="w-full h-full object-cover"
-                />
-              )}
-
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                {mediaList.map((_, idx) => (
-                  <div key={idx} className={`h-1.5 rounded-full transition-all ${activeIndex === idx ? "w-8 bg-[#2563EB]" : "w-2 bg-gray-300"}`}></div>
-                ))}
-              </div>
-            </div>
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
             
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {mediaList.map((media, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`relative shrink-0 w-24 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${activeIndex === idx ? "border-[#2563EB]" : "border-transparent opacity-60 hover:opacity-100"}`}
-                >
-                  {media.type === "video" && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                      <PlayCircle className="w-8 h-8 text-white" />
-                    </div>
+            {/* LEFT COLUMN: IMAGES & DESCRIPTION */}
+            <div className="flex-1 flex flex-col gap-8 lg:w-[680px]">
+              
+              {/* IMAGE GALLERY (Responsive) */}
+              <div className="flex flex-col gap-4 md:gap-6">
+                {/* Main Image */}
+                <div className="w-full aspect-square md:h-[510px] bg-neutral-200 md:bg-gray-100 rounded-sm md:outline md:outline-1 md:outline-[#C6C6C6] md:-outline-offset-1 flex justify-center items-center relative overflow-hidden group">
+                  {currentMedia?.type === "video" ? (
+                    <video src={currentMedia.url} controls className="w-full h-full object-contain bg-black" />
+                  ) : (
+                    <img src={currentMedia?.url || "/placeholder-product.png"} alt={product.title} className="w-full h-full object-contain" />
                   )}
-                  <img 
-                    src={media.type === "video" ? media.thumbnail : media.url} 
-                    className="w-full h-full object-cover" 
-                    alt={`Thumb ${idx}`} 
-                  />
-                </button>
-              ))}
+                </div>
+
+                {/* Thumbnails */}
+                <div className="flex flex-row gap-3 md:grid md:grid-cols-4 md:gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+                  {mediaList.map((media, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => setActiveIndex(idx)}
+                      className={`relative shrink-0 w-20 h-20 md:w-full md:h-[158px] bg-neutral-200 md:bg-gray-100 rounded-sm md:outline md:outline-1 md:outline-[#C6C6C6] md:-outline-offset-1 overflow-hidden transition-all ${activeIndex === idx ? "ring-2 ring-blue-600 md:outline-[#2563EB] md:outline-2" : "hover:opacity-80"}`}
+                    >
+                      <img src={media.type === "video" ? media.thumbnail : media.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                      {media.type === "video" && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <PlayCircle className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* MOBILE PRODUCT TITLE & PRICE */}
+              <div className="md:hidden flex flex-col gap-4">
+                  <div className="flex flex-row gap-2">
+                      <div className="px-2 py-0.5 bg-blue-600 rounded-[36px] shadow-[0px_1px_2px_0px_rgba(105,81,255,0.05)] flex justify-center items-center overflow-hidden">
+                          <span className="text-green-50 text-xs font-semibold font-poppins uppercase">{product.category?.name || "UMUM"}</span>
+                      </div>
+                      <div className="px-2 py-0.5 bg-green-600 rounded-[36px] shadow-[0px_1px_2px_0px_rgba(105,81,255,0.05)] flex justify-center items-center overflow-hidden">
+                          <span className="text-green-50 text-xs font-semibold font-poppins uppercase">{product.condition}</span>
+                      </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                      <h1 className="text-black text-2xl font-semibold font-poppins leading-7 uppercase">{product.title}</h1>
+                      <div className="text-black text-xl font-semibold font-poppins">Rp {product.price?.toLocaleString("id-ID")}</div>
+                      <div className="flex items-center gap-1.5">
+                          <MapPin className="size-4 text-slate-700" />
+                          <span className="text-slate-700 text-sm font-semibold font-poppins leading-4">{product.location}</span>
+                      </div>
+                  </div>
+              </div>
+
+              {/* DESCRIPTION */}
+              <div className="p-6 bg-white rounded-sm md:bg-transparent md:p-0 md:pt-8 md:border-t md:border-[#C6C6C6] flex flex-col gap-4 md:gap-6">
+                <h2 className="text-black text-lg md:text-[18px] font-poppins font-semibold uppercase leading-5 md:leading-[21.6px]">DESKRIPSI PRODUK</h2>
+                <div className="text-black text-xs md:text-[16px] font-poppins font-normal leading-4 md:leading-[24px] text-justify whitespace-pre-line">
+                  {product.description}
+                </div>
+              </div>
+
+            </div>
+
+            {/* RIGHT COLUMN: INFO & ACTIONS */}
+            <div className="w-full lg:w-[500px] flex flex-col gap-8">
+              
+              {/* DESKTOP INFO AREA */}
+              <div className="hidden md:flex flex-col gap-4">
+                {product?.status === "PENDING" ? (
+                  <div className="h-[24px] px-2.5 bg-orange-50 rounded-full inline-flex items-center gap-2 self-start shadow-[0_1px_2px_rgba(105,81,255,0.05)] border border-orange-200">
+                     <Clock className="w-3 h-3 text-orange-500" />
+                     <span className="text-orange-500 text-[12px] font-poppins font-semibold">Menunggu Persetujuan</span>
+                  </div>
+                ) : (
+                  <div className="h-[24px] px-2.5 bg-[#ECFEFF] rounded-full inline-flex items-center gap-2 self-start shadow-[0_1px_2px_rgba(105,81,255,0.05)]">
+                     <div className="w-2.5 h-2.5 bg-[#06B6D4] rounded-full"></div>
+                     <span className="text-[#06B6D4] text-[12px] font-poppins font-semibold leading-[14.4px]">Admin Verified</span>
+                  </div>
+                )}
+                
+                <h1 className="text-black text-[40px] font-poppins font-semibold leading-[48px] uppercase">{product.title}</h1>
+                <div className="text-black text-[24px] font-poppins font-normal leading-[28.8px]">Rp {product.price?.toLocaleString("id-ID")}</div>
+              </div>
+
+              {/* DESKTOP INFO BOX */}
+              <div className="hidden md:flex p-6 bg-white outline outline-1 outline-[#E2E8F0] -outline-offset-1 flex flex-col gap-4">
+                 <div className="flex flex-row gap-4">
+                    <div className="w-[157px] flex flex-col gap-1">
+                       <span className="text-[#777777] text-[12px] font-poppins uppercase leading-[18px]">KATEGORI</span>
+                       <span className="text-black text-[14px] font-poppins leading-[16.8px] uppercase">{product.category?.name || "UMUM"}</span>
+                    </div>
+                    <div className="w-[157px] flex flex-col gap-1">
+                       <span className="text-[#777777] text-[12px] font-poppins uppercase leading-[18px]">KONDISI</span>
+                       <span className="text-black text-[14px] font-poppins leading-[16.8px] uppercase">{product.condition}</span>
+                    </div>
+                 </div>
+                 <div className="w-full flex flex-col gap-1 pt-2">
+                    <span className="text-[#777777] text-[12px] font-poppins uppercase leading-[18px]">LOKASI</span>
+                    <div className="flex items-center gap-2">
+                       <MapPin className="w-4 h-4 text-black" />
+                       <span className="text-black text-[14px] font-poppins leading-[16.8px] uppercase">{product.location}</span>
+                    </div>
+                 </div>
+              </div>
+
+              {/* SELLER IDENTITY BOX */}
+              <div className="p-6 bg-white rounded-sm md:outline md:outline-1 md:outline-[#E2E8F0] md:-outline-offset-1 flex flex-col gap-4 shadow-[0px_20px_40px_0px_rgba(26,28,28,0.06)] md:shadow-none">
+                 <h2 className="text-black text-lg font-semibold font-poppins leading-5 uppercase">INFORMASI PENJUAL</h2>
+                 <div className="flex items-center gap-4">
+                    <img src={product.seller?.image || `https://ui-avatars.com/api/?name=${product.seller?.name}&background=random`} alt={product.seller?.name} className="size-12 rounded-xl object-cover shrink-0" />
+                    <div className="flex-1 flex flex-col justify-center items-start gap-1">
+                        <span className="text-black text-sm md:text-[18px] font-poppins font-semibold uppercase">{product.seller?.name || "NAMA PENJUAL"}</span>
+                        <div className="h-4 px-1.5 py-[1.38px] bg-cyan-50 rounded-3xl shadow-[0px_0.69px_1.38px_0px_rgba(105,81,255,0.05)] inline-flex items-center gap-1.5 overflow-hidden">
+                           <div className="size-1.5 bg-cyan-500 rounded-full"></div>
+                           <span className="text-cyan-500 text-[8.3px] md:text-[10px] font-semibold font-poppins uppercase tracking-wider">Admin Verified</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                        <span className="text-zinc-700 text-[10px] md:text-xs font-semibold font-poppins uppercase">MEMBER SEJAK</span>
+                        <span className="text-black text-xs font-semibold font-poppins uppercase">{product.seller?.createdAt ? new Date(product.seller.createdAt).getFullYear() : "2024"}</span>
+                    </div>
+                 </div>
+              </div>
+
+              {/* WARNING BOX */}
+              <div className="p-4 bg-zinc-100 md:bg-[#E2E2E2] rounded-sm border-l-4 border-black flex items-start gap-3 md:outline md:outline-1 md:outline-[#C6C6C6] md:-outline-offset-1 md:border-none">
+                 <Info className="size-4 md:w-4 md:h-4 text-black md:text-[#5E5E5E] shrink-0 mt-0.5" />
+                 <p className="text-zinc-900 md:text-[#5E5E5E] text-xs md:text-[12px] font-poppins leading-4 md:leading-[18px]">
+                    Bertransaksilah secara COD (Cash on Delivery) di area kampus IPB. Hindari transfer uang sebelum menerima dan mengecek barang.
+                 </p>
+              </div>
+
+              {/* DESKTOP ACTIONS */}
+              <div className="hidden md:flex flex-col gap-2">
+                 <button onClick={handleWhatsApp} className="w-full h-[46px] bg-[#16A34A] rounded-md shadow-[0_1px_2px_rgba(105,81,255,0.05)] flex items-center justify-center gap-2 hover:bg-green-700 transition-colors">
+                    <MessageCircle className="w-[18px] h-[18px] text-[#F0FDF4]" />
+                    <span className="text-[#F0FDF4] text-[14px] font-poppins font-semibold uppercase leading-[16.8px]">HUBUNGI VIA WHATSAPP</span>
+                 </button>
+                 <div className="relative w-full h-[46px]">
+                    <div className="w-full h-full bg-[#2563EB] rounded-md shadow-[0_1px_2px_rgba(105,81,255,0.05)] flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
+                       <Heart className="w-[18px] h-[18px] text-[#F0FDF4]" />
+                       <span className="text-[#F0FDF4] text-[14px] font-poppins font-semibold uppercase leading-[16.8px]">TAMBAH KE WISHLIST</span>
+                    </div>
+                    <WishlistButton productId={product.id} className="absolute inset-0 w-full h-full opacity-0" iconSize={0} />
+                 </div>
+              </div>
+
             </div>
           </div>
 
-          {/* RIGHT: INFO & ACTIONS (5 Columns) */}
-          <div className="lg:col-span-5 flex flex-col gap-8">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-blue-50 text-[#2563EB] text-[10px] font-bold rounded-full uppercase tracking-widest border border-blue-100">
-                  {product.category?.name || "UMUM"}
-                </span>
-                <span className="px-3 py-1 bg-green-50 text-[#16A34A] text-[10px] font-bold rounded-full uppercase tracking-widest border border-green-100">
-                  {product.condition}
-                </span>
+          {/* RECOMMENDED SECTION */}
+          <div className="mt-20 md:mt-32 flex flex-col gap-8 md:gap-12">
+            <div className="flex justify-between items-end">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">REKOMENDASI UNTUK ANDA</h2>
+                <div className="w-20 h-1 bg-black"></div>
               </div>
-              
-              <h1 className="text-[#0F172A] text-3xl md:text-4xl font-bold leading-tight tracking-tight uppercase italic">
-                {product.title}
-              </h1>
-              
-              <div className="flex items-baseline gap-2">
-                <span className="text-[#2563EB] text-4xl font-extrabold tracking-tighter">
-                  Rp {product.price?.toLocaleString("id-ID")}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 py-4 border-y border-gray-100 text-[#64748B] text-[10px] font-bold uppercase tracking-widest">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#2563EB]" />
-                  {product.location}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  {product.createdAt ? new Date(product.createdAt).toLocaleDateString("id-ID") : "Baru Diposting"}
-                </div>
-              </div>
+              <Link href="/catalog" className="text-black text-sm font-semibold underline uppercase tracking-widest">LIHAT LAINNYA</Link>
             </div>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              {recommended.length > 0 ? (
+                recommended.map((prod) => (
+                  <ProductCard key={prod.id} product={prod} variant="landing" />
+                ))
+              ) : (
+                <p className="col-span-full text-center text-gray-400 py-10 italic">Tidak ada rekomendasi saat ini.</p>
+              )}
+            </div>
+          </div>
 
-            {/* SELLER CARD */}
-            <div className="p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-3xl flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                    {product.seller?.name?.charAt(0) || "U"}
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1">
-                      <span className="text-black font-bold uppercase text-sm tracking-wide">{product.seller?.name || "Penjual IPB"}</span>
-                      <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50" />
-                    </div>
-                    <span className="text-[#64748B] text-[10px] font-bold uppercase tracking-widest">
-                      {product.seller?.userType || "STUDENT"} IPB
-                    </span>
-                  </div>
-                </div>
-                <button className="text-[#2563EB] text-xs font-bold underline uppercase tracking-widest">LIHAT PROFIL</button>
-              </div>
+        </div>
+      </div>
 
+      {/* MOBILE STICKY FOOTER */}
+      <div className="md:hidden fixed bottom-20 left-0 w-full p-4 bg-white shadow-[0px_-10px_40px_0px_rgba(26,28,28,0.06)] z-50">
+          <div className="w-full flex justify-start items-center gap-4">
               <button 
                 onClick={handleWhatsApp}
-                className="w-full h-14 bg-[#16A34A] text-white font-bold uppercase tracking-[2px] rounded-2xl flex justify-center items-center gap-3 hover:bg-[#15803d] transition-all shadow-md group active:scale-95"
+                className="flex-1 px-6 py-4 bg-green-600 rounded-sm flex justify-center items-center gap-2 active:scale-[0.98] transition-transform"
               >
-                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                HUBUNGI VIA WHATSAPP
+                  <MessageCircle className="size-5 text-stone-200" />
+                  <span className="text-center text-stone-200 text-sm font-bold font-inter uppercase leading-tight tracking-wider">
+                    HUBUNGI VIA<br/>WHATSAPP
+                  </span>
               </button>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2 text-black font-bold text-xs uppercase tracking-widest border-b border-gray-100 pb-2">
-                <Info className="w-4 h-4" />
-                Info Tambahan
+              <div className="relative size-12 bg-red-500 rounded-sm outline outline-1 outline-neutral-500/40 flex justify-center items-center active:scale-95 transition-transform">
+                  <Heart className="size-5 text-white" />
+                  <WishlistButton productId={product.id} className="absolute inset-0 w-full h-full opacity-0" iconSize={0} />
               </div>
-              <div className="grid grid-cols-2 gap-y-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tight">Kondisi</span>
-                  <span className="text-black text-sm font-semibold">{product.condition}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tight">Lokasi COD</span>
-                  <span className="text-black text-sm font-semibold">{product.location}</span>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
-
-        {/* DESCRIPTION SECTION */}
-        <div className="mt-20 flex flex-col gap-8 max-w-4xl">
-          <div className="flex flex-col gap-4">
-            <h2 className="text-black text-xl font-bold uppercase tracking-widest border-b-2 border-black pb-4 inline-block self-start">DESKRIPSI PRODUK</h2>
-            <p className="text-[#475569] text-lg leading-relaxed whitespace-pre-line">
-              {product.description}
-            </p>
-          </div>
-
-          <div className="p-8 bg-blue-50/50 border border-blue-100 rounded-3xl flex flex-col sm:flex-row items-center gap-6">
-            <ShieldCheck className="w-16 h-16 text-[#2563EB] shrink-0" strokeWidth={1} />
-            <div className="flex flex-col gap-2">
-              <h3 className="text-[#2563EB] text-lg font-bold uppercase tracking-wide">Transaksi Aman Khusus IPB</h3>
-              <p className="text-[#64748B] text-sm leading-relaxed">
-                Pastikan transaksi dilakukan dengan sistem Cash on Delivery (COD) di lingkungan kampus IPB. Selalu periksa kondisi barang secara langsung sebelum melakukan pembayaran. Gunakan akun IPB Apps Anda untuk keamanan bersama.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* RECOMMENDED SECTION */}
-        <div className="mt-32 flex flex-col gap-12">
-          <div className="flex justify-between items-end">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">REKOMENDASI UNTUK ANDA</h2>
-              <div className="w-20 h-1 bg-black"></div>
-            </div>
-            <Link href="/catalog" className="text-black text-sm font-semibold underline uppercase tracking-widest">LIHAT LAINNYA</Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recommended.length > 0 ? (
-              recommended.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
-              ))
-            ) : (
-              <p className="col-span-full text-center text-gray-400 py-10 italic">Tidak ada rekomendasi saat ini.</p>
-            )}
-          </div>
-        </div>
-
       </div>
+
     </div>
   );
 }
+

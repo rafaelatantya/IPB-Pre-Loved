@@ -23,16 +23,16 @@ export default function Navbar() {
     `${isActive(path) ? 'text-black font-bold border-b-2 border-black' : 'text-[#777777]'} text-xs font-medium font-sans uppercase tracking-wide hover:text-black transition-all pb-1`;
 
   return (
-    <nav className="w-full px-6 md:px-10 py-4 md:py-6 bg-white border-b border-[#C6C6C6] flex justify-between items-center fixed top-0 z-50">
-        <Link href="/" className="flex flex-col justify-start items-start">
-            <div className="text-black text-xl font-bold font-sans uppercase leading-7 tracking-tight">IPB PRE LOVED</div>
+    <nav className="w-full px-6 md:px-10 py-4 md:py-6 bg-white shadow-[0px_4px_20px_rgba(26,28,28,0.03)] md:shadow-none md:border-b border-[#C6C6C6] flex justify-between items-center fixed top-0 z-50">
+        <Link href="/" className="flex flex-col justify-start items-start overflow-hidden">
+            <div className="text-[#18181B] md:text-black text-[18px] md:text-xl font-semibold md:font-bold font-poppins md:font-sans leading-5 md:leading-7 md:uppercase tracking-normal md:tracking-tight">IPB PRE LOVED</div>
         </Link>
 
         <div className="hidden md:flex justify-start items-center gap-8">
             <Link href="/" className={linkStyle("/")}>BERANDA</Link>
-            <Link href="/catalog" className={linkStyle("/catalog")}>KATEGORI</Link>
+            <Link href="/catalog" className={linkStyle("/catalog")}>KATALOG</Link>
             <Link href="/wishlist" className={linkStyle("/wishlist")}>WISHLIST</Link>
-            <Link href="/guide" className={linkStyle("/guide")}>PANDUAN</Link>
+            <Link href="/panduan" className={linkStyle("/panduan")}>PANDUAN</Link>
         </div>
         
         <div className="flex items-center gap-4">

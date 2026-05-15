@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Search, MapPin, Grid, MessageCircle, Heart, Tag, ShieldCheck } from "lucide-react";
+import { Search, MapPin, LayoutGrid, MessageCircle, Heart, Tag, Banknote, BadgeCheck } from "lucide-react";
 import ProductCard from "@/modules/catalog/components/ProductCard";
 import { getFeaturedProducts } from "@/modules/catalog/services"; // Tetap simpan jika ada dep lain
 import { upgradeToSeller } from "@/modules/user/actions";
@@ -133,10 +133,60 @@ export default function LandingPage() {
   );
 
   return (
-    <div className="w-full relative bg-gradient-to-t from-[#F9F9F9] to-white flex flex-col items-center font-sans">
+    <div className="w-full relative bg-[#FAFAFA] md:bg-gradient-to-t md:from-[#F9F9F9] md:to-white flex flex-col items-center font-poppins md:font-sans pb-20 md:pb-0">
         
-        {/* HERO SECTION */}
-        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col lg:flex-row justify-between items-center gap-12">
+        {/* MOBILE HERO SECTION */}
+        <div className="md:hidden w-full px-6 py-8 flex flex-col justify-start items-start gap-12">
+            <div className="self-stretch flex flex-col justify-start items-start gap-6">
+                {/* Hero Illustration Placeholder */}
+                <div className="self-stretch h-48 relative rounded-sm bg-blue-100 flex flex-col justify-center items-center overflow-hidden">
+                    <img 
+                      src="/landing_page/Landing_Page.png" 
+                      className="w-full h-full object-contain opacity-80" 
+                      alt="Hero"
+                    />
+                    <div className="absolute inset-0 bg-[#2563EB]/10 pointer-events-none"></div>
+                </div>
+
+                {/* Search Bar Mobile */}
+                <div className="w-full h-16 p-2 bg-white rounded-2xl shadow-[0px_4px_4px_rgba(0,0,0,0.25)] inline-flex justify-start items-start flex-wrap content-start">
+                    <div className="self-stretch flex justify-start items-center">
+                        <div className="pl-4 inline-flex flex-col justify-start items-center">
+                            <Search className="size-4 text-zinc-500" />
+                        </div>
+                    </div>
+                    <div className="flex-1 self-stretch px-4 py-3.5 inline-flex flex-col justify-center items-start overflow-hidden">
+                        <input 
+                          type="text" 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                          placeholder="Cari buku, laptop, atau kursi kos..." 
+                          className="w-full bg-transparent outline-none text-gray-500 text-sm font-normal font-poppins leading-4 placeholder:text-gray-400"
+                        />
+                    </div>
+                </div>
+
+                <div className="self-stretch pb-2 flex justify-start items-start gap-3 overflow-x-auto no-scrollbar">
+                    <button onClick={() => router.push('/catalog')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
+                        <LayoutGrid className="w-3.5 h-3.5 text-white" />
+                        <span className="text-center text-white text-sm font-medium font-poppins leading-5">Kategori</span>
+                    </button>
+                    <button onClick={() => router.push('/catalog')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
+                        <Banknote className="w-3.5 h-3.5 text-white" />
+                        <span className="text-center text-white text-sm font-medium font-poppins leading-5">Harga</span>
+                    </button>
+                    <button onClick={() => router.push('/catalog')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
+                        <BadgeCheck className="w-3.5 h-3.5 text-white" />
+                        <span className="text-center text-white text-sm font-medium font-poppins leading-5">Kondisi</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {/* DESKTOP HERO SECTION */}
+        <div className="hidden md:flex w-full bg-[#EAF2FF]">
+            <div className="w-full max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 flex flex-col lg:flex-row justify-between items-center gap-12">
             <div className="flex-1 flex flex-col justify-start items-start gap-8">
                 <div className="flex flex-col justify-start items-start gap-4">
                     <h1 className="text-[#0F172A] text-4xl md:text-5xl lg:text-[48px] font-semibold leading-tight break-words">IPB Preloved</h1>
@@ -165,20 +215,19 @@ export default function LandingPage() {
                         </button>
                     </div>
 
-                    {/* Filter Pills */}
                     <div className="flex flex-wrap justify-start items-start gap-3">
-                        <div className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2">
-                            <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        <Link href="/catalog" className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                            <LayoutGrid className="w-4 h-4 text-white" />
                             <span className="text-white text-sm font-medium">Kategori</span>
-                        </div>
-                        <div className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2">
-                            <div className="w-3 h-2 bg-white"></div>
+                        </Link>
+                        <Link href="/catalog" className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                            <Banknote className="w-4 h-4 text-white" />
                             <span className="text-white text-sm font-medium">Harga</span>
-                        </div>
-                        <div className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2">
-                            <div className="w-3 h-3 bg-white"></div>
+                        </Link>
+                        <Link href="/catalog" className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                            <BadgeCheck className="w-4 h-4 text-white" />
                             <span className="text-white text-sm font-medium">Kondisi</span>
-                        </div>
+                        </Link>
                     </div>
                 </div>
                 
@@ -189,69 +238,81 @@ export default function LandingPage() {
             
             <div className="flex-1 w-full max-w-[576px]">
                 <img className="w-full h-auto aspect-square rounded-2xl object-contain" src="/landing_page/Landing_Page.png" alt="Hero Image" />
-            </div>
+                </div>
+        </div>
         </div>
 
         {/* TEMUAN PILIHAN */}
-        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-white flex flex-col gap-12">
-            <div className="w-full flex justify-between items-end">
-                <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">TEMUAN PILIHAN</h2>
-                <Link href="/catalog" className="text-black text-sm md:text-base font-semibold underline leading-relaxed uppercase">LIHAT SEMUA</Link>
+        <div className="w-full px-6 md:px-10 py-12 md:py-24 bg-white md:bg-transparent flex flex-col gap-6 md:gap-12">
+            <div className="w-full flex justify-between items-center md:items-end">
+                <h2 className="text-black text-2xl md:text-xl font-semibold md:font-normal leading-7 md:leading-relaxed md:uppercase md:tracking-wide font-poppins">Temuan Pilihan</h2>
+                <Link href="/catalog" className="text-black text-sm md:text-base font-semibold underline leading-relaxed uppercase hidden md:block">LIHAT SEMUA</Link>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {status === "authenticated" ? (
-                  loading ? (
-                    <p className="col-span-full text-center text-gray-500 py-10 uppercase tracking-widest text-xs font-bold animate-pulse">Memuat produk...</p>
-                  ) : featuredProducts.length > 0 ? (
-                    featuredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))
-                  ) : (
-                    <p className="col-span-full text-center text-gray-400 py-10 italic">Tidak ada produk pilihan saat ini.</p>
-                  )
-                ) : (
-                  loginPrompt
-                )}
-            </div>
+            {/* Product Display */}
+            {status === "authenticated" ? (
+              loading ? (
+                <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="aspect-[3/4] bg-gray-200 animate-pulse rounded-xl"></div>
+                  ))}
+                </div>
+              ) : featuredProducts.length > 0 ? (
+                <div className="w-full flex md:grid md:grid-cols-4 gap-6 overflow-x-auto no-scrollbar pb-4 md:pb-0">
+                  {featuredProducts.map((product) => (
+                    <div key={product.id} className="shrink-0 w-48 md:w-full">
+                      <ProductCard product={product} variant="landing" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full py-10 text-center border-2 border-dashed border-gray-200 rounded-2xl">
+                    <p className="text-gray-400 italic">Tidak ada produk pilihan saat ini.</p>
+                </div>
+              )
+            ) : (
+              <div className="w-full">
+                {loginPrompt}
+              </div>
+            )}
         </div>
 
         {/* TEMUAN KATEGORI */}
-        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-[#EAF2FF] flex flex-col gap-12">
-            <h2 className="text-black text-base md:text-xl font-normal leading-relaxed uppercase tracking-wide">TEMUAN KATEGORI</h2>
+        <div className="w-full px-6 md:px-10 py-12 md:py-24 bg-white md:bg-[#EAF2FF] flex flex-col gap-6 md:gap-12">
+            <h2 className="text-black text-2xl md:text-xl font-semibold md:font-normal leading-7 md:leading-relaxed md:uppercase md:tracking-wide font-poppins">Temuan Kategori</h2>
             
             <div className="w-full">
               {status === "authenticated" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-[600px]">
-                    <Link href="/catalog?category=PERALATAN PRAKTIKUM" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                <div className="flex md:grid md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6 overflow-x-auto no-scrollbar pb-4 md:pb-0">
+                    <Link href="/catalog?category=BUKU" className="relative shrink-0 w-64 h-40 md:w-full md:h-[280px] overflow-hidden border border-[#C6C6C6] flex justify-center items-center group cursor-pointer">
+                        <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Buku & Modul" />
+                        <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
+                        <div className="relative z-10 px-4 py-2 bg-white outline outline-[0.38px] outline-slate-950 flex justify-center items-center">
+                            <span className="text-black text-xs md:text-lg font-semibold uppercase tracking-wide font-poppins">BUKU & MODUL</span>
+                        </div>
+                    </Link>
+
+                    <Link href="/catalog?category=PERALATAN PRAKTIKUM" className="relative shrink-0 w-64 h-40 md:w-full md:h-[280px] overflow-hidden border border-[#C6C6C6] flex justify-center items-center group cursor-pointer">
                         <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Peralatan Praktikum" />
                         <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                            <span className="text-black text-lg font-semibold uppercase tracking-wide">PERALATAN PRAKTIKUM</span>
+                        <div className="relative z-10 px-4 py-2 bg-white outline outline-[0.38px] outline-slate-950 flex justify-center items-center text-center">
+                            <span className="text-black text-xs md:text-lg font-semibold uppercase tracking-wide font-poppins">PERALATAN PRAKTIKUM</span>
                         </div>
                     </Link>
                     
-                    <Link href="/catalog?category=ELECTRONICS" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                    <Link href="/catalog?category=ELECTRONICS" className="relative shrink-0 w-64 h-40 md:w-full md:h-[280px] overflow-hidden border border-[#C6C6C6] flex justify-center items-center group cursor-pointer">
                         <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Elektronik" />
                         <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                            <span className="text-black text-lg font-semibold uppercase tracking-wide">ELEKTRONIK</span>
+                        <div className="relative z-10 px-4 py-2 bg-white outline outline-[0.38px] outline-slate-950 flex justify-center items-center text-center">
+                            <span className="text-black text-xs md:text-lg font-semibold uppercase tracking-wide font-poppins">ELEKTRONIK</span>
                         </div>
                     </Link>
 
-                    <Link href="/catalog?category=DORM ESSENTIALS" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
+                    <Link href="/catalog?category=DORM ESSENTIALS" className="relative shrink-0 w-64 h-40 md:w-full md:h-[280px] overflow-hidden border border-[#C6C6C6] flex justify-center items-center group cursor-pointer">
                         <img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=1200&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt="Kebutuhan Kost" />
                         <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                            <span className="text-black text-lg font-semibold uppercase tracking-wide">KEBUTUHAN KOST</span>
-                        </div>
-                    </Link>
-
-                    <Link href="/catalog?category=BUKU" className="relative overflow-hidden border border-[#C6C6C6] flex justify-center items-center p-8 group cursor-pointer aspect-[4/3] md:aspect-auto">
-                        <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" alt="Buku & Modul" />
-                        <div className="absolute inset-0 bg-[#2563EB]/40 group-hover:bg-[#2563EB]/30 transition-colors"></div>
-                        <div className="relative z-10 px-6 py-3 bg-white border border-[#020617] flex justify-center items-center">
-                            <span className="text-black text-lg font-semibold uppercase tracking-wide">BUKU & MODUL</span>
+                        <div className="relative z-10 px-4 py-2 bg-white outline outline-[0.38px] outline-slate-950 flex justify-center items-center text-center">
+                            <span className="text-black text-xs md:text-lg font-semibold uppercase tracking-wide font-poppins">KEBUTUHAN KOST</span>
                         </div>
                     </Link>
                 </div>
@@ -261,8 +322,8 @@ export default function LandingPage() {
             </div>
         </div>
 
-        {/* FEATURES */}
-        <div className="w-full px-6 md:px-10 py-16 md:py-24 bg-white">
+        {/* FEATURES (Hidden on Mobile as per snippet) */}
+        <div className="hidden md:block w-full px-6 md:px-10 py-16 md:py-24 bg-white">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 <div className="p-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl flex flex-col gap-4 group hover:shadow-md transition-all">
@@ -284,7 +345,7 @@ export default function LandingPage() {
                 </div>
 
                 <div className="p-8 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl flex flex-col gap-4 group hover:shadow-md transition-all">
-                    <ShieldCheck className="w-6 h-6 text-purple-600" strokeWidth={2} />
+                    <BadgeCheck className="w-6 h-6 text-purple-600" strokeWidth={2} />
                     <h3 className="text-black text-base font-bold uppercase tracking-wide">VERIFIKASI IPB</h3>
                     <p className="text-[#5E5E5E] text-base font-normal leading-relaxed">Ekosistem aman khusus civitas akademika IPB.</p>
                 </div>
@@ -293,20 +354,20 @@ export default function LandingPage() {
         </div>
 
         {/* CTA SECTION */}
-        <div className="w-full px-6 md:px-10 py-24 md:py-32 bg-[#EAF2FF] flex flex-col justify-center items-center gap-8 mb-24 md:mb-0">
-            <h2 className="text-black text-base md:text-lg font-medium uppercase tracking-widest text-center">SIAP Menjual BARANG ANDA?</h2>
-            <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full px-6 md:px-10 py-16 md:py-32 bg-indigo-50 md:bg-[#EAF2FF] flex flex-col justify-center items-center gap-8 mb-0 md:mb-0">
+            <h2 className="text-black text-[18px] md:text-lg font-normal md:font-medium uppercase tracking-normal md:tracking-widest text-center font-poppins">SIAP Menjual BARANG ANDA?</h2>
+            <div className="flex flex-row md:flex-row gap-4">
                 <button 
                   onClick={handleJualSekarang}
                   disabled={isUpgrading}
-                  className="px-8 py-4 bg-[#2563EB] flex justify-center items-center hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
+                  className="px-4 py-4 md:px-8 md:py-4 bg-blue-700 md:bg-[#2563EB] flex justify-center items-center hover:bg-blue-800 transition-all shadow-md disabled:bg-gray-400"
                 >
-                    <span className="text-white text-base font-bold uppercase tracking-[1.6px]">
+                    <span className="text-white text-sm md:text-base font-semibold md:bold uppercase tracking-normal md:tracking-[1.6px] font-poppins">
                       {isUpgrading ? "Sedang Upgrade..." : "JUAL SEKARANG"}
                     </span>
                 </button>
-                <Link href="/catalog" className="px-8 py-4 border border-black flex justify-center items-center hover:bg-white transition-all">
-                    <span className="text-black text-base font-bold uppercase tracking-[1.6px]">CARI BARANG</span>
+                <Link href="/catalog" className="px-4 py-4 md:px-8 md:py-4 border border-black flex justify-center items-center hover:bg-white transition-all">
+                    <span className="text-black text-sm md:text-base font-semibold md:bold uppercase tracking-normal md:tracking-[1.6px] font-poppins">CARI BARANG</span>
                 </Link>
             </div>
         </div>
