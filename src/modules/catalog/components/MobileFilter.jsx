@@ -6,13 +6,13 @@ export default function MobileFilter({
   onClose, 
   categories, 
   selectedCategory, 
-  setSelectedCategory,
+  toggleCategory,
   minPrice,
   setMinPrice,
   maxPrice,
   setMaxPrice,
   condition,
-  setCondition,
+  toggleCondition,
   onApply,
   onReset
 }) {
@@ -43,34 +43,37 @@ export default function MobileFilter({
             <h3 className="text-slate-950 text-base font-medium font-poppins leading-6">KATEGORI</h3>
             <div className="flex flex-col gap-4">
               <button 
-                onClick={() => setSelectedCategory("all")}
+                onClick={() => toggleCategory("all")}
                 className="flex items-center gap-3 text-left group"
               >
                 <div className={`size-5 rounded-sm border-2 flex items-center justify-center transition-colors ${
-                  selectedCategory === "all" ? "bg-slate-950 border-slate-950" : "bg-white border-zinc-400/50"
+                  selectedCategory.length === 0 ? "bg-slate-950 border-slate-950" : "bg-white border-zinc-400/50"
                 }`}>
-                  {selectedCategory === "all" && <Check className="size-3 text-white" strokeWidth={4} />}
+                  {selectedCategory.length === 0 && <Check className="size-3 text-white" strokeWidth={4} />}
                 </div>
-                <span className={`text-slate-950 text-base font-poppins leading-6 ${selectedCategory === "all" ? "font-bold" : "font-medium"}`}>
+                <span className={`text-slate-950 text-base font-poppins leading-6 ${selectedCategory.length === 0 ? "font-bold" : "font-medium"}`}>
                   Semua Kategori
                 </span>
               </button>
-              {categories.map((cat) => (
-                <button 
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className="flex items-center gap-3 text-left group"
-                >
-                  <div className={`size-5 rounded-sm border-2 flex items-center justify-center transition-colors ${
-                    selectedCategory === cat.id ? "bg-slate-950 border-slate-950" : "bg-white border-zinc-400/50"
-                  }`}>
-                    {selectedCategory === cat.id && <Check className="size-3 text-white" strokeWidth={4} />}
-                  </div>
-                  <span className={`text-slate-950 text-base font-poppins leading-6 ${selectedCategory === cat.id ? "font-bold" : "font-medium"}`}>
-                    {cat.name}
-                  </span>
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const isActive = selectedCategory.includes(cat.id);
+                return (
+                  <button 
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className="flex items-center gap-3 text-left group"
+                  >
+                    <div className={`size-5 rounded-sm border-2 flex items-center justify-center transition-colors ${
+                      isActive ? "bg-slate-950 border-slate-950" : "bg-white border-zinc-400/50"
+                    }`}>
+                      {isActive && <Check className="size-3 text-white" strokeWidth={4} />}
+                    </div>
+                    <span className={`text-slate-950 text-base font-poppins leading-6 ${isActive ? "font-bold" : "font-medium"}`}>
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -111,22 +114,25 @@ export default function MobileFilter({
           <div className="px-6 flex flex-col gap-4">
             <h3 className="text-slate-950 text-base font-medium font-poppins leading-6">KONDISI</h3>
             <div className="flex flex-col gap-4">
-              {["Semua Kondisi", "Baru", "Pernah Dipakai", "Perlu Perbaikan"].map((k) => (
-                <button 
-                  key={k}
-                  onClick={() => setCondition(k)}
-                  className="flex items-center gap-3 text-left group"
-                >
-                  <div className={`size-5 rounded-sm border-2 flex items-center justify-center transition-colors ${
-                    condition === k ? "bg-slate-950 border-slate-950" : "bg-white border-zinc-400/50"
-                  }`}>
-                    {condition === k && <Check className="size-3 text-white" strokeWidth={4} />}
-                  </div>
-                  <span className={`text-slate-950 text-base font-poppins leading-6 ${condition === k ? "font-bold" : "font-medium"}`}>
-                    {k}
-                  </span>
-                </button>
-              ))}
+              {["Semua Kondisi", "Baru", "Pernah Dipakai", "Perlu Perbaikan"].map((k) => {
+                const isActive = k === "Semua Kondisi" ? condition.length === 0 : condition.includes(k);
+                return (
+                  <button 
+                    key={k}
+                    onClick={() => toggleCondition(k)}
+                    className="flex items-center gap-3 text-left group"
+                  >
+                    <div className={`size-5 rounded-sm border-2 flex items-center justify-center transition-colors ${
+                      isActive ? "bg-slate-950 border-slate-950" : "bg-white border-zinc-400/50"
+                    }`}>
+                      {isActive && <Check className="size-3 text-white" strokeWidth={4} />}
+                    </div>
+                    <span className={`text-slate-950 text-base font-poppins leading-6 ${isActive ? "font-bold" : "font-medium"}`}>
+                      {k}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

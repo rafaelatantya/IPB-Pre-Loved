@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { useSession } from "next-auth/react";
 
-export default function WishlistButton({ productId, className = "", iconSize = 16 }) {
+export default function WishlistButton({ productId, className = "", iconSize = 16, onToggle }) {
   const { status } = useSession();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -15,10 +15,13 @@ export default function WishlistButton({ productId, className = "", iconSize = 1
         method: "POST",
         body: JSON.stringify({ productId, action: "CHECK" }),
       }).then(res => res.json()).then(data => {
-        if (data.success) setIsWishlisted(data.wishlisted);
+        if (data.success) {
+          setIsWishlisted(data.wishlisted);
+          if (onToggle) onToggle(data.wishlisted);
+        }
       }).catch(() => {});
     }
-  }, [productId, status]);
+  }, [productId, status, onToggle]);
 
   const handleToggle = async (e) => {
     e.preventDefault();
@@ -43,6 +46,7 @@ export default function WishlistButton({ productId, className = "", iconSize = 1
       const result = await res.json();
       if (result.success) {
         setIsWishlisted(result.wishlisted);
+        if (onToggle) onToggle(result.wishlisted);
       } else {
         setIsWishlisted(previousState);
         alert("Gagal: " + (result.error || "Terjadi kesalahan"));

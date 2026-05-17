@@ -2,7 +2,9 @@
 
 import { getContextDb } from "@/lib/db";
 import { products, users, categories, productImages } from "@/db/schema";
-import { desc, asc, eq, and, or, like, between, sql } from "drizzle-orm";
+import { desc, asc, eq, and, or, like, between, sql, inArray } from "drizzle-orm";
+
+const cache = new Map();
 
 /**
  * Service: Ambil produk yang sudah APPROVED dengan filter canggih & Smart Search
@@ -17,6 +19,11 @@ export async function getApprovedProducts({
   page = 1,
   limit = 12
 } = {}) {
+  const cacheKey = JSON.stringify({ search, categoryId, minPrice, maxPrice, condition, sortBy, page, limit });
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey);
+  }
+
   try {
     const db = await getContextDb();
     const offset = (page - 1) * limit;
@@ -37,23 +44,23 @@ export async function getApprovedProducts({
     }
 
     if (categoryId && categoryId !== "all") {
-      conditions.push(eq(products.categoryId, categoryId));
+      if (Array.isArray(categoryId)) {
+        if (categoryId.length > 0) {
+          conditions.push(inArray(products.categoryId, categoryId));
+        }
+      } else {
+        conditions.push(eq(products.categoryId, categoryId));
+      }
     }
 
     if (condition.length > 0) {
-      conditions.push(sql`${products.condition} IN ${condition}`);
+      conditions.push(inArray(products.condition, condition));
     }
 
     conditions.push(between(products.price, finalMin, finalMax));
 
     let orderBy;
     if (search) {
-        // ADVANCED SQL RANKING:
-        // 1. Title Match (Exact/Start) = 50 pts
-        // 2. Title Match (Contains) = 20 pts
-        // 3. Description Match = 5 pts
-        // 4. Popularity Boost (WA Clicks) = 1 pt per click (capped at 20)
-        // 5. Recency Boost = 10 pts if created in last 48h
         const now = new Date().getTime();
         const twoDaysAgo = now - (48 * 60 * 60 * 1000);
 
@@ -94,7 +101,7 @@ export async function getApprovedProducts({
     
     const totalItems = Number(countResult[0]?.count) || 0;
 
-    return { 
+    const result = { 
       success: true, 
       data, 
       pagination: {
@@ -103,6 +110,9 @@ export async function getApprovedProducts({
         currentPage: page
       }
     };
+
+    cache.set(cacheKey, result);
+    return result;
   } catch (error) {
     console.error("Error fetching catalog products:", error);
     return { success: false, error: "Gagal memuat katalog produk" };

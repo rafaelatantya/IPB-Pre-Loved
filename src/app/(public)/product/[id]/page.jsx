@@ -252,11 +252,13 @@ export default function ProductDetailPage() {
                     <span className="text-[#F0FDF4] text-[14px] font-poppins font-semibold uppercase leading-[16.8px]">HUBUNGI VIA WHATSAPP</span>
                  </button>
                  <div className="relative w-full h-[46px]">
-                    <div className="w-full h-full bg-[#2563EB] rounded-md shadow-[0_1px_2px_rgba(105,81,255,0.05)] flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
-                       <Heart className="w-[18px] h-[18px] text-[#F0FDF4]" />
-                       <span className="text-[#F0FDF4] text-[14px] font-poppins font-semibold uppercase leading-[16.8px]">TAMBAH KE WISHLIST</span>
+                    <div className={`w-full h-full rounded-md shadow-[0_1px_2px_rgba(105,81,255,0.05)] flex items-center justify-center gap-2 transition-colors ${isWishlisted ? "bg-red-500 hover:bg-red-600" : "bg-[#2563EB] hover:bg-blue-700"}`}>
+                       <Heart className={`w-[18px] h-[18px] text-[#F0FDF4] ${isWishlisted ? "fill-current" : ""}`} />
+                       <span className="text-[#F0FDF4] text-[14px] font-poppins font-semibold uppercase leading-[16.8px]">
+                         {isWishlisted ? "TERSIMPAN DI WISHLIST" : "TAMBAH KE WISHLIST"}
+                       </span>
                     </div>
-                    <WishlistButton productId={product.id} className="absolute inset-0 w-full h-full opacity-0" iconSize={0} />
+                    <WishlistButton productId={product.id} className="absolute inset-0 w-full h-full opacity-0" iconSize={0} onToggle={setIsWishlisted} />
                  </div>
               </div>
 
@@ -298,9 +300,9 @@ export default function ProductDetailPage() {
                     HUBUNGI VIA<br/>WHATSAPP
                   </span>
               </button>
-              <div className="relative size-12 bg-red-500 rounded-sm outline outline-1 outline-neutral-500/40 flex justify-center items-center active:scale-95 transition-transform">
-                  <Heart className="size-5 text-white" />
-                  <WishlistButton productId={product.id} className="absolute inset-0 w-full h-full opacity-0" iconSize={0} />
+              <div className={`relative size-12 rounded-sm outline outline-1 outline-neutral-500/40 flex justify-center items-center active:scale-95 transition-transform ${isWishlisted ? "bg-red-500" : "bg-white"}`}>
+                  <Heart className={`size-5 ${isWishlisted ? "text-white fill-current" : "text-gray-400"}`} />
+                  <WishlistButton productId={product.id} className="absolute inset-0 w-full h-full opacity-0" iconSize={0} onToggle={setIsWishlisted} />
               </div>
           </div>
       </div>

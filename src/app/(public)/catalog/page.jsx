@@ -22,19 +22,25 @@ function CatalogContent() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const [searchInput, setSearchInput] = useState(initialSearch);
-  const [searchQuery, setSearchQuery] = useState(initialSearch);
   
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory === "all" ? [] : [initialCategory]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("latest");
-  
-  // Dummy condition state as backend doesn't explicitly filter by it right now
-  const [condition, setCondition] = useState("Semua Kondisi");
+  const [condition, setCondition] = useState([]); // Empty means "Semua Kondisi"
   
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ totalPages: 1, totalItems: 0 });
+
+  // State for applied filters to reduce server load
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: initialSearch,
+    category: initialCategory === "all" ? [] : [initialCategory],
+    minPrice: "",
+    maxPrice: "",
+    condition: [],
+    sortBy: "latest"
+  });
 
   useEffect(() => {
     async function loadCategories() {
@@ -48,35 +54,88 @@ function CatalogContent() {
 
   const handleSearch = () => {
     setPage(1);
-    setSearchQuery(searchInput);
+    setAppliedFilters({
+      search: searchInput,
+      category: selectedCategory,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      condition: condition,
+      sortBy: sortBy
+    });
     setIsFilterOpen(false);
   };
 
   const resetFilters = () => {
-    setSelectedCategory("all");
+    setSelectedCategory([]);
     setMinPrice("");
     setMaxPrice("");
-    setCondition("Semua Kondisi");
+    setCondition([]);
     setSortBy("latest");
     setSearchInput("");
-    setSearchQuery("");
+    setPage(1);
+    setAppliedFilters({
+      search: "",
+      category: [],
+      minPrice: "",
+      maxPrice: "",
+      condition: [],
+      sortBy: "latest"
+    });
+  };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    setAppliedFilters(prev => ({ ...prev, sortBy: newSortBy }));
     setPage(1);
   };
 
-  useEffect(() => {
-    setPage(1);
-  }, [selectedCategory, sortBy, condition]);
+  const toggleCategory = (id) => {
+    if (id === "all") {
+      setSelectedCategory([]);
+      return;
+    }
+    setSelectedCategory(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(c => c !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const toggleCondition = (k) => {
+    if (k === "Semua Kondisi") {
+      setCondition([]);
+      return;
+    }
+    setCondition(prev => {
+      if (prev.includes(k)) {
+        return prev.filter(c => c !== k);
+      } else {
+        return [...prev, k];
+      }
+    });
+  };
+
+  const mapConditions = (conds) => {
+    const mapped = [];
+    if (conds.includes("Baru")) mapped.push("NEW");
+    if (conds.includes("Pernah Dipakai")) mapped.push("LIKE_NEW", "GOOD");
+    if (conds.includes("Perlu Perbaikan")) mapped.push("FAIR");
+    return mapped;
+  };
 
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
       try {
         const res = await getApprovedProducts({
-          search: searchQuery,
-          categoryId: selectedCategory === "all" ? "" : selectedCategory,
-          minPrice: minPrice ? parseInt(minPrice) : 0,
-          maxPrice: maxPrice ? parseInt(maxPrice) : 1000000000,
-          sortBy: sortBy,
+          search: appliedFilters.search,
+          categoryId: appliedFilters.category,
+          minPrice: appliedFilters.minPrice ? parseInt(appliedFilters.minPrice) : 0,
+          maxPrice: appliedFilters.maxPrice ? parseInt(appliedFilters.maxPrice) : 1000000000,
+          condition: mapConditions(appliedFilters.condition),
+          sortBy: appliedFilters.sortBy,
           page: page,
           limit: 12
         });
@@ -91,7 +150,7 @@ function CatalogContent() {
       }
     }
     loadProducts();
-  }, [searchQuery, selectedCategory, page, minPrice, maxPrice, sortBy]);
+  }, [appliedFilters, page]);
 
   return (
     <div className="w-full bg-[#FAFAFA] md:bg-[#F8FAFC] flex flex-col items-center">
@@ -161,13 +220,13 @@ function CatalogContent() {
         onClose={() => setIsFilterOpen(false)}
         categories={categories}
         selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        toggleCategory={toggleCategory}
         minPrice={minPrice}
         setMinPrice={setMinPrice}
         maxPrice={maxPrice}
         setMaxPrice={setMaxPrice}
         condition={condition}
-        setCondition={setCondition}
+        toggleCondition={toggleCondition}
         onApply={handleSearch}
         onReset={resetFilters}
       />
@@ -210,20 +269,23 @@ function CatalogContent() {
           <div className="flex flex-col gap-4">
             <h3 className="text-gray-900 text-sm font-bold font-poppins">Kategori</h3>
             <div className="flex flex-col gap-3">
-              <button onClick={() => setSelectedCategory("all")} className="flex items-center gap-3 group text-left">
-                 <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedCategory === "all" ? "bg-blue-600 border-blue-600" : "border-2 border-gray-300 group-hover:border-blue-500"}`}>
-                    {selectedCategory === "all" && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+              <button onClick={() => toggleCategory("all")} className="flex items-center gap-3 group text-left">
+                 <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedCategory.length === 0 ? "bg-blue-600 border-blue-600" : "border-2 border-gray-300 group-hover:border-blue-500"}`}>
+                    {selectedCategory.length === 0 && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
                  </div>
-                 <span className={`text-sm font-inter transition-colors ${selectedCategory === "all" ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>Semua Kategori</span>
+                 <span className={`text-sm font-inter transition-colors ${selectedCategory.length === 0 ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>Semua Kategori</span>
               </button>
-              {categories.map(cat => (
-                 <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="flex items-center gap-3 group text-left">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedCategory === cat.id ? "bg-blue-600 border-blue-600" : "border-2 border-gray-300 group-hover:border-blue-500"}`}>
-                       {selectedCategory === cat.id && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-                    </div>
-                    <span className={`text-sm font-inter transition-colors ${selectedCategory === cat.id ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>{cat.name}</span>
-                 </button>
-              ))}
+              {categories.map(cat => {
+                 const isActive = selectedCategory.includes(cat.id);
+                 return (
+                    <button key={cat.id} onClick={() => toggleCategory(cat.id)} className="flex items-center gap-3 group text-left">
+                       <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isActive ? "bg-blue-600 border-blue-600" : "border-2 border-gray-300 group-hover:border-blue-500"}`}>
+                          {isActive && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                       </div>
+                       <span className={`text-sm font-inter transition-colors ${isActive ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>{cat.name}</span>
+                    </button>
+                 );
+              })}
             </div>
           </div>
 
@@ -259,14 +321,17 @@ function CatalogContent() {
           <div className="flex flex-col gap-4">
             <h3 className="text-gray-900 text-sm font-bold font-poppins">Kondisi</h3>
             <div className="flex flex-col gap-3">
-              {["Semua Kondisi", "Baru", "Pernah Dipakai", "Perlu Perbaikan"].map((k) => (
-                 <button key={k} onClick={() => setCondition(k)} className="flex items-center gap-3 group text-left">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${condition === k ? "bg-blue-600 border-blue-600" : "border-2 border-gray-300 group-hover:border-blue-500"}`}>
-                       {condition === k && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-                    </div>
-                    <span className={`text-sm font-inter transition-colors ${condition === k ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>{k}</span>
-                 </button>
-              ))}
+              {["Semua Kondisi", "Baru", "Pernah Dipakai", "Perlu Perbaikan"].map((k) => {
+                 const isActive = k === "Semua Kondisi" ? condition.length === 0 : condition.includes(k);
+                 return (
+                    <button key={k} onClick={() => toggleCondition(k)} className="flex items-center gap-3 group text-left">
+                       <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isActive ? "bg-blue-600 border-blue-600" : "border-2 border-gray-300 group-hover:border-blue-500"}`}>
+                          {isActive && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                       </div>
+                       <span className={`text-sm font-inter transition-colors ${isActive ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>{k}</span>
+                    </button>
+                 );
+              })}
             </div>
           </div>
 
@@ -290,7 +355,7 @@ function CatalogContent() {
                 <div className="relative">
                    <select 
                      value={sortBy} 
-                     onChange={(e) => setSortBy(e.target.value)}
+                     onChange={(e) => handleSortChange(e.target.value)}
                      className="appearance-none px-4 py-2 pr-10 outline outline-1 outline-[#2563EB] -outline-offset-1 rounded-md text-[#2563EB] text-[12px] font-semibold font-poppins shadow-[0_1px_2px_rgba(105,81,255,0.05)] bg-white cursor-pointer focus:outline-none"
                    >
                       <option value="latest">Terbaru</option>
