@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Trash2, Check, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Check, ExternalLink, Pencil } from "lucide-react";
 import NotificationList from "@/modules/notification/components/NotificationList";
 import { getProducts, deleteProduct, markProductAsSold } from "@/modules/product/actions";
 
@@ -218,9 +218,9 @@ export default function SellerProductList({ initialData = [], initialHasMore = f
                                 {products.map((product) => (
                                     <tr key={product.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                                         <td className="px-4 py-4">
-                                            <ProductImage 
-                                                src={product.images?.[0]?.url} 
-                                                alt={product.title} 
+                                            <ProductImage
+                                                src={product.images?.[0]?.url}
+                                                alt={product.title}
                                             />
                                         </td>
                                         <td className="px-4 py-4">
@@ -250,7 +250,15 @@ export default function SellerProductList({ initialData = [], initialHasMore = f
                                                 >
                                                     <ExternalLink className="w-4 h-4" />
                                                 </Link>
-                                                
+
+                                                <Link
+                                                    href={`/product/edit/${product.id}`}
+                                                    className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all"
+                                                    title="Edit Produk"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </Link>
+
                                                 {product.status === "APPROVED" && (
                                                     <button
                                                         onClick={() => handleMarkSold(product.id)}

@@ -68,7 +68,55 @@ export async function getAdminInventory({ page = 1, limit = 20, status = null })
   }
 }
 
+/**
+ * Action: Admin Update Product Status (Take Down / Direct Approve / Reject)
+ */
+export async function adminUpdateProductStatus({ productId, status, note = "" }) {
+  const auth = await getAuth();
+  const session = await auth();
 
+  if (session?.user?.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const db = await getContextDb();
+
+    const product = await db.query.products.findFirst({
+      where: eq(products.id, productId)
+    });
+
+    if (!product) {
+      return { success: false, error: "Produk tidak ditemukan" };
+    }
+
+    const operations: any[] = [
+      db.update(products).set({ status }).where(eq(products.id, productId)),
+      db.insert(adminLogs).values({
+        id: crypto.randomUUID(),
+        adminId: session.user.id,
+        action: status === "APPROVED" ? "APPROVE_PRODUCT" : "REJECT_PRODUCT",
+        targetId: productId,
+        details: `Admin changed status of ${product.title} to ${status}. Note: ${note || "No note"}`,
+      }),
+      db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: product.sellerId,
+        title: status === "APPROVED" ? "Produk Disetujui! 🎉" : "Produk Diturunkan ⚠️",
+        message: status === "APPROVED" 
+          ? `Produk "${product.title}" Anda disetujui oleh Admin dan sekarang tayang.`
+          : `Produk "${product.title}" Anda diturunkan/ditolak oleh Admin. Catatan: ${note || "Melanggar aturan komunitas"}`,
+        type: status === "APPROVED" ? "SUCCESS" : "DANGER",
+      })
+    ];
+
+    await db.batch(operations as any);
+    return { success: true, message: `Status produk berhasil diubah ke ${status}` };
+  } catch (error) {
+    console.error("Admin Status Update Error:", error);
+    return { success: false, error: "Gagal memperbarui status produk" };
+  }
+}
 
 /**
  * Action: Review Produk (Approve/Reject + Log QC + Advanced Feedback)

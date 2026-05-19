@@ -2,8 +2,8 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Plus, Send, Info, X, Video } from "lucide-react";
-import { createProduct } from "@/modules/product/actions";
+import { Send, Info, X, Video, Check, AlertCircle } from "lucide-react";
+import { updateProduct } from "@/modules/product/actions";
 
 const KONDISI_OPTIONS = [
   { label: "Baru", value: "NEW" },
@@ -12,26 +12,36 @@ const KONDISI_OPTIONS = [
   { label: "Cukup", value: "FAIR" },
 ];
 
-export default function ProductAddForm({ categories = [] }) {
+export default function ProductEditForm({ product, categories = [] }) {
   const router = useRouter();
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
   const [form, setForm] = useState({
-    title: "",
-    categoryId: "",
-    condition: "",
-    price: "",
-    description: "",
-    location: "IPB Dramaga",
+    title: product.title || "",
+    categoryId: product.categoryId || "",
+    condition: product.condition || "GOOD",
+    price: product.price || "",
+    description: product.description || "",
+    location: product.location || "IPB Dramaga",
+    status: product.status || "PENDING",
   });
 
-  const [images, setImages] = useState([]); // Array of File objects
-  const [video, setVideo] = useState(null); // File object
-  const [videoDuration, setVideoDuration] = useState(0);
-  const [previews, setPreviews] = useState([]);
-  const [videoPreview, setVideoPreview] = useState(null);
+  // existingImages: url strings dari backend
+  const [existingImages, setExistingImages] = useState(
+      (product.images || []).map(img => img.url).filter(Boolean)
+  );
+  const [newImages, setNewImages] = useState([]); // File objects
+  const [newImagePreviews, setNewImagePreviews] = useState([]);
+
+  // Video state
+  const [existingVideo, setExistingVideo] = useState(product.videoUrl || null);
+  const [newVideo, setNewVideo] = useState(null); // File object
+  const [videoPreview, setVideoPreview] = useState(product.videoUrl || null);
+  const [videoDuration, setVideoDuration] = useState(product.videoDuration || 0);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
 
   function handleChange(e) {
@@ -42,28 +52,27 @@ export default function ProductAddForm({ categories = [] }) {
 
   function handleFileChange(e) {
     const files = Array.from(e.target.files || []);
-    if (images.length + files.length > 5) {
+    if (existingImages.length + newImages.length + files.length > 5) {
       alert("Maksimal 5 foto.");
       return;
     }
-
-    setImages(prev => [...prev, ...files]);
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPreviews(prev => [...prev, ...newPreviews]);
+    
+    setNewImages(prev => [...prev, ...files]);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setNewImagePreviews(prev => [...prev, ...previews]);
     if (errors.media) setErrors(prev => ({ ...prev, media: "" }));
   }
 
   function handleVideoChange(e) {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 20 * 1024 * 1024) { // 20MB limit for MVP
+      if (file.size > 20 * 1024 * 1024) {
         alert("Video maksimal 20MB.");
         return;
       }
-      setVideo(file);
+      setNewVideo(file);
       setVideoPreview(URL.createObjectURL(file));
-
-      // Get duration
+      
       const vid = document.createElement('video');
       vid.preload = 'metadata';
       vid.onloadedmetadata = () => {
@@ -74,13 +83,18 @@ export default function ProductAddForm({ categories = [] }) {
     }
   }
 
-  function removeImage(index) {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setPreviews(prev => prev.filter((_, i) => i !== index));
+  function removeExistingImage(index) {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function removeNewImage(index) {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
+    setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
   }
 
   function removeVideo() {
-    setVideo(null);
+    setExistingVideo(""); // Set to empty string to signal deletion to backend
+    setNewVideo(null);
     setVideoPreview(null);
     setVideoDuration(0);
   }
@@ -93,15 +107,16 @@ export default function ProductAddForm({ categories = [] }) {
     if (!form.price || Number(form.price) < 500) newErrors.price = "Minimal Rp 500.";
     if (!form.description.trim()) newErrors.description = "Deskripsi wajib diisi.";
     else if (form.description.trim().length < 10) newErrors.description = "Deskripsi minimal 10 karakter.";
-
-    // Check constraints: 3 images OR (1 image + 1 video >= 5s)
-    const hasEnoughImages = images.length >= 3;
-    const hasEnoughMedia = images.length >= 1 && video && videoDuration >= 5;
-
+    
+    const totalImages = existingImages.length + newImages.length;
+    const hasEnoughImages = totalImages >= 3;
+    const hasVideo = !!videoPreview;
+    const hasEnoughMedia = totalImages >= 1 && hasVideo && videoDuration >= 5;
+    
     if (!hasEnoughImages && !hasEnoughMedia) {
       newErrors.media = "Syarat media tidak terpenuhi: Minimal 3 Foto ATAU 1 Foto + 1 Video (min 5 detik)";
     }
-
+    
     return newErrors;
   }
 
@@ -114,14 +129,15 @@ export default function ProductAddForm({ categories = [] }) {
     }
 
     setIsSubmitting(true);
+    setMessage("");
     try {
-      // 1. Upload Images (One by one as required by API)
+      // 1. Upload new images if any
       const uploadedImageUrls = [];
-      for (const img of images) {
+      for (const img of newImages) {
         const imgFormData = new FormData();
         imgFormData.append("file", img);
         imgFormData.append("type", "image");
-
+        
         const imgRes = await fetch("/api/upload", {
           method: "POST",
           body: imgFormData
@@ -131,11 +147,14 @@ export default function ProductAddForm({ categories = [] }) {
         uploadedImageUrls.push(imgData.url);
       }
 
-      // 2. Upload Video (if any)
-      let uploadedVideoUrl = "";
-      if (video) {
+      // Combine existing images with newly uploaded ones
+      const finalImageUrls = [...existingImages, ...uploadedImageUrls];
+
+      // 2. Upload new video if any
+      let finalVideoUrl = existingVideo;
+      if (newVideo) {
         const vidFormData = new FormData();
-        vidFormData.append("file", video);
+        vidFormData.append("file", newVideo);
         vidFormData.append("type", "video");
 
         const vidRes = await fetch("/api/upload", {
@@ -144,25 +163,34 @@ export default function ProductAddForm({ categories = [] }) {
         });
         const vidData = await vidRes.json();
         if (!vidData.success) throw new Error(vidData.error || "Gagal upload video");
-        uploadedVideoUrl = vidData.url;
+        finalVideoUrl = vidData.url;
       }
 
-      // 3. Create Product in DB
-      const res = await createProduct({
+      // 3. Update Product in DB
+      const res = await updateProduct(product.id, {
         formData: form,
-        imageUrls: uploadedImageUrls,
-        videoUrl: uploadedVideoUrl,
+        imageUrls: finalImageUrls,
+        videoUrl: finalVideoUrl,
         videoDuration: videoDuration
       });
 
       if (res.success) {
-        alert("Berhasil! Barang Anda sedang menunggu validasi Admin.");
-        router.push("/dashboard");
+        setMessage("Informasi Produk telah berhasil diperbarui");
+        // Update states to clear new files since they are now existing
+        setExistingImages(finalImageUrls);
+        setNewImages([]);
+        setNewImagePreviews([]);
+        if (newVideo) {
+          setExistingVideo(finalVideoUrl);
+          setNewVideo(null);
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         if (res.errors) {
           setErrors(prev => ({ ...prev, ...res.errors }));
         }
-        throw new Error(res.error || "Gagal menyimpan produk");
+        throw new Error(res.error || "Gagal memperbarui produk");
       }
     } catch (err) {
       alert("Terjadi kesalahan: " + err.message);
@@ -172,19 +200,31 @@ export default function ProductAddForm({ categories = [] }) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      {/* Header */}
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Breadcrumb & Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Formulir Produk</h1>
-        <p className="text-sm text-gray-500 mt-2">
-          Lengkapi detail barang pre-loved Anda untuk diajukan.
-        </p>
+        <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 font-medium">
+            <button onClick={() => router.push('/dashboard')} className="hover:text-gray-900 transition-colors">Dashboard</button>
+            <span>›</span>
+            <span className="text-gray-900">Edit Product</span>
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
       </div>
+
+      {message && (
+        <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg flex items-start gap-3 shadow-sm">
+            <Check className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            <div>
+                <p className="text-sm font-bold text-green-800">Perubahan Tersimpan</p>
+                <p className="text-xs text-green-700 mt-1">{message}</p>
+            </div>
+        </div>
+      )}
 
       {/* Card Form */}
       <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-10 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-12">
-
+          
           {/* ===== Kiri: Media Visual ===== */}
           <div className="lg:w-[300px] flex-shrink-0">
             <h2 className="text-sm font-bold text-gray-900 mb-2">
@@ -192,70 +232,40 @@ export default function ProductAddForm({ categories = [] }) {
             </h2>
             <p className="text-xs text-gray-500 mb-6">Unggah foto produk yang jelas.</p>
 
-            {/* Main Image Box / FOTO UTAMA */}
-            <div className="w-full aspect-square rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden flex flex-col items-center justify-center mb-4 relative">
-              {previews[0] ? (
-                <div className="relative w-full h-full group">
-                  <img src={previews[0]} className="w-full h-full object-cover" alt="Foto Utama" />
-                  <button
-                    onClick={() => removeImage(0)}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            {/* Photo Upload Area */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Existing Images */}
+              {existingImages.map((src, i) => (
+                <div key={`existing-${i}`} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                  <img src={src} className="w-full h-full object-cover" alt="preview" />
+                  <button 
+                    onClick={() => removeExistingImage(i)}
+                    className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                   </button>
-                  <div className="absolute bottom-2 left-2 px-2.5 py-1 bg-black/60 text-white text-[10px] font-bold uppercase rounded-lg tracking-wider">
-                    Foto Utama
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-gray-400">
-                  <svg className="w-12 h-12 stroke-[1.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Foto Utama</span>
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnail Previews Row + Add Button */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              {/* Other previews starting from index 1 */}
-              {previews.slice(1).map((src, idx) => {
-                const actualIndex = idx + 1;
-                return (
-                  <div key={actualIndex} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
-                    <img src={src} className="w-full h-full object-cover" alt="preview" />
-                    <button
-                      onClick={() => removeImage(actualIndex)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                );
-              })}
-
-              {/* Pad remaining slots with placeholders up to 2 items if previews is short */}
-              {Array.from({ length: Math.max(0, 2 - previews.slice(1).length) }).map((_, i) => (
-                <div key={`placeholder-${i}`} className="aspect-square bg-gray-100 border border-gray-200 rounded-xl flex items-center justify-center text-gray-300">
-                  <Plus className="w-4 h-4" />
                 </div>
               ))}
-
-              {/* Add image button */}
-              {images.length < 5 && (
-                <button
+              {/* New Images */}
+              {newImagePreviews.map((src, i) => (
+                <div key={`new-${i}`} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                  <img src={src} className="w-full h-full object-cover" alt="preview" />
+                  <button 
+                    onClick={() => removeNewImage(i)}
+                    className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {/* Add Button */}
+              {existingImages.length + newImages.length < 5 && (
+                <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-200 bg-white"
+                  className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-200 bg-gray-50/50"
                 >
-                  <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  <span className="text-[8px] font-bold uppercase tracking-wider">Tambah</span>
+                  <span className="text-2xl font-light mb-1">+</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Tambah</span>
                 </button>
               )}
             </div>
@@ -267,7 +277,7 @@ export default function ProductAddForm({ categories = [] }) {
               {videoPreview ? (
                 <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-black group">
                   <video src={videoPreview} className="w-full h-full object-contain" />
-                  <button
+                  <button 
                     onClick={removeVideo}
                     className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
@@ -278,9 +288,9 @@ export default function ProductAddForm({ categories = [] }) {
                   </div>
                 </div>
               ) : (
-                <button
+                <button 
                   onClick={() => videoInputRef.current?.click()}
-                  className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-200 bg-white"
+                  className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-blue-500 hover:border-blue-200 bg-gray-50/50"
                 >
                   <Video className="w-6 h-6 mb-2" />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Tambah Video</span>

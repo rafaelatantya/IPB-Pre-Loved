@@ -1,11 +1,11 @@
 import React from "react";
-import AdminSidebar from "@/components/layouts/adminSidebar";
+import Sidebar from "@/components/layouts/Sidebar";
 
-export default function AdminLayout({ children }) {
+export default function SellerLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* <AdminSidebar /> -- Jangan dihapus incase perlu, sementara di-comment buat penjual */}
-      <main className="flex-1 p-8 min-h-screen">
+      <Sidebar role="seller" />
+      <main className="flex-1 p-8 min-h-screen md:ml-[240px]">
         {children}
       </main>
     </div>

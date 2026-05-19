@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Check, User, Loader2 } from "lucide-react";
-import { getPendingProducts, reviewProduct } from "@/modules/admin/actions";
+import { getPendingProducts, reviewProduct, toggleFlagUser } from "@/modules/admin/actions";
 
 // Thumbnail klikable (Original Style)
 function Thumbnail({ src, alt, active, onClick }) {
@@ -102,9 +102,14 @@ export default function AdminQueueDoomScrollPage() {
         if (!item?.seller?.id) return;
         setFlagging(true);
         try {
-            // Simulasi flag user (bisa dihubungkan ke action nanti)
-            await new Promise((r) => setTimeout(r, 500));
-            alert("User berhasil diflag.");
+            const res = await toggleFlagUser(item.seller.id, true);
+            if (res.success) {
+                alert("Seller berhasil ditandai sebagai mencurigakan (flagged).");
+            } else {
+                alert(res.error || "Gagal melakukan flag seller.");
+            }
+        } catch {
+            alert("Terjadi kesalahan sistem saat memproses.");
         } finally {
             setFlagging(false);
         }
@@ -131,152 +136,160 @@ export default function AdminQueueDoomScrollPage() {
     const mainImage = allImages[activeImg];
 
     return (
-        <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Review Item: #{item.id}
-                    </h1>
-                    <p className="text-sm text-gray-400 mt-1">
-                        Queue Position: 1 / {items.length} items remaining
-                    </p>
-                </div>
-                <button
-                    onClick={handleFlagUser}
-                    disabled={flagging}
-                    className="border border-gray-200 text-sm font-medium text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                    {flagging ? "Memproses..." : "Flag User"}
-                </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex gap-8">
-                {/* Kiri: Galeri Foto */}
-                <div className="flex-1">
-                    {/* Main Image */}
-                    <div className="w-full aspect-[4/3] bg-gray-100 border border-gray-200 rounded-xl overflow-hidden flex items-center justify-center mb-3">
-                        {mainImage ? (
-                            <img src={mainImage} alt={item.title} className="w-full h-full object-cover" />
-                        ) : (
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="0.8">
-                                <rect x="3" y="3" width="18" height="18" rx="1" />
-                                <path d="M3 17l5-5 4 4 3-3 6 6" />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                            </svg>
-                        )}
-                    </div>
-
-                    {/* Thumbnails */}
-                    <div className="grid grid-cols-4 gap-2">
-                        {allImages.slice(0, 4).map((img, i) => (
-                            <Thumbnail
-                                key={i}
-                                src={img}
-                                alt={`Foto ${i + 1}`}
-                                active={activeImg === i}
-                                onClick={() => setActiveImg(i)}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Kanan: Detail + Aksi */}
-                <div className="w-[300px] flex flex-col">
-                    {/* Nama & Harga */}
-                    <h2 className="text-xl font-bold text-gray-900 leading-snug mb-2">
-                        {item.title}
-                    </h2>
-                    <p className="text-3xl font-bold text-gray-900 mb-5">
-                        {formatRupiah(item.price)}
-                    </p>
-
-                    {/* Grid info */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-5">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
-                                Category
-                            </p>
-                            <p className="text-sm text-gray-900">{item.category?.name || "UMUM"}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
-                                Condition
-                            </p>
-                            <p className="text-sm text-gray-900 flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-900 inline-block" />
-                                {item.condition}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
-                                Location
-                            </p>
-                            <p className="text-sm text-gray-900 truncate">{item.location || "IPB Dramaga"}</p>
-                        </div>
-                    </div>
-
-                    {/* Deskripsi */}
-                    <div className="border-t border-gray-100 pt-4 mb-5">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                            Description
-                        </p>
-                        <p className="text-sm text-gray-600 leading-relaxed italic opacity-80">
-                            "{item.description}"
-                        </p>
-                    </div>
-
-                    {/* Seller Card */}
-                    <div className="border border-gray-200 rounded-xl p-4 flex items-center gap-3 mb-6">
-                        <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                            <User className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{item.seller?.name}</p>
-                            <p className="text-xs text-gray-400">Seller Account</p>
-                        </div>
-                    </div>
-
-                    {/* Alasan Review (QC Note) */}
-                    <div className="border-t border-gray-100 pt-4 mb-4">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1.5">
-                            Alasan Review (QC Note)
-                        </label>
-                        <textarea
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            placeholder="Tulis alasan approve/reject..."
-                            className="w-full h-20 px-3 py-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 resize-none bg-white font-sans"
-                            maxLength={250}
-                        />
-                        <div className="flex justify-between items-center mt-1 text-[10px] text-gray-400">
-                            <span>Min 10, Max 250 kar.</span>
-                            <span>{reason.length}/250</span>
-                        </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="border-t border-gray-100 pt-5 flex gap-3">
-                        <button
-                            onClick={() => handleDecision("reject")}
-                            disabled={!!submitting}
-                            className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-sm font-semibold text-gray-700 py-2.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                        >
-                            <X className="w-4 h-4" />
-                            {submitting === "reject" ? "Wait..." : "Reject"}
-                        </button>
-                        <button
-                            onClick={() => handleDecision("approve")}
-                            disabled={!!submitting}
-                            className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
-                        >
-                            <Check className="w-4 h-4" />
-                            {submitting === "approve" ? "Wait..." : "Approve"}
-                        </button>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="max-w-5xl mx-auto py-4">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-[32px] font-black text-gray-900 tracking-tight leading-tight font-sans">
+            Review Item: #{item.id}
+          </h1>
+          <p className="text-sm text-gray-400 font-medium mt-1">
+            Queue Position: 1 / {items.length} items remaining
+          </p>
         </div>
-    );
+        <button
+          onClick={handleFlagUser}
+          disabled={flagging}
+          className="border border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-700 px-5 py-2.5 rounded shadow-sm hover:bg-gray-50 transition-all active:scale-[0.98] disabled:opacity-50"
+        >
+          {flagging ? "Processing..." : "Flag User"}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Kiri: Galeri Foto */}
+        <div className="flex-1">
+          {/* Main Image */}
+          <div className="w-full aspect-square bg-[#FAFAFA] border border-gray-200 rounded-xl overflow-hidden flex items-center justify-center mb-4">
+            {mainImage ? (
+              <img src={mainImage} alt={item.title} className="w-full h-full object-cover" />
+            ) : (
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="0.8">
+                <rect x="3" y="3" width="18" height="18" rx="1.5" />
+                <path d="M21 15l-5-5L5 21" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+              </svg>
+            )}
+          </div>
+
+          {/* Thumbnails */}
+          <div className="grid grid-cols-4 gap-3">
+            {allImages.slice(0, 4).map((img, i) => (
+              <Thumbnail
+                key={i}
+                src={img}
+                alt={`Foto ${i + 1}`}
+                active={activeImg === i}
+                onClick={() => setActiveImg(i)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Kanan: Detail Cards */}
+        <div className="w-full lg:w-[380px] flex flex-col gap-4">
+          {/* Card 1: Title & Price */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 leading-snug tracking-tight">
+                {item.title}
+              </h2>
+              <p className="text-2xl font-black text-gray-900 mt-2">
+                {formatRupiah(item.price)}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-100 text-xs">
+              <div>
+                <p className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-1">Category</p>
+                <p className="font-semibold text-gray-800">{item.category?.name || "UMUM"}</p>
+              </div>
+              <div>
+                <p className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-1">Condition</p>
+                <p className="font-semibold text-gray-800 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {item.condition}
+                </p>
+              </div>
+              <div>
+                <p className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-1">Brand</p>
+                <p className="font-semibold text-gray-800">{item.brand || "—"}</p>
+              </div>
+              <div>
+                <p className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-1">Location</p>
+                <p className="font-semibold text-gray-800 truncate" title={item.location}>{item.location || "IPB Dramaga"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Description */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-2">
+            <p className="font-bold text-[10px] uppercase tracking-widest text-gray-400">Description</p>
+            <p className="text-sm text-gray-600 leading-relaxed font-normal whitespace-pre-wrap">
+              {item.description || "Tidak ada deskripsi."}
+            </p>
+          </div>
+
+          {/* Card 3: Seller Card */}
+          <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900 leading-none">{item.seller?.name || "Seller"}</p>
+                <p className="text-[10px] text-gray-400 font-semibold mt-1">
+                  Joined {item.seller?.createdAt ? new Date(item.seller.createdAt).toLocaleDateString("en-US", { month: 'short', year: 'numeric' }) : "—"}
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => window.open(`/admin/users?search=${item.seller?.name || ""}`, '_blank')}
+              className="text-xs font-bold text-gray-900 hover:underline"
+            >
+              View History
+            </button>
+          </div>
+
+          {/* Card 4: QC Note (Textarea) */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-3">
+            <label className="font-bold text-[10px] uppercase tracking-widest text-gray-400">
+              QC Note / Reason
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Tulis alasan approve/reject..."
+              className="w-full h-20 px-3 py-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black resize-none bg-white font-sans transition-all"
+              maxLength={250}
+            />
+            <div className="flex justify-between items-center text-[10px] text-gray-400 font-semibold">
+              <span>Min 10, Max 250 kar.</span>
+              <span>{reason.length}/250</span>
+            </div>
+          </div>
+
+          {/* Card 5: Action Buttons */}
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => handleDecision("reject")}
+              disabled={!!submitting}
+              className="flex-1 flex items-center justify-center gap-2 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-xs font-extrabold uppercase tracking-wider text-gray-700 py-3.5 rounded transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              <X className="w-4 h-4" />
+              {submitting === "reject" ? "Wait..." : "Reject Listing"}
+            </button>
+            <button
+              onClick={() => handleDecision("approve")}
+              disabled={!!submitting}
+              className="flex-1 flex items-center justify-center gap-2 bg-black hover:bg-zinc-800 text-white text-xs font-extrabold uppercase tracking-wider py-3.5 rounded transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
+            >
+              <Check className="w-4 h-4" />
+              {submitting === "approve" ? "Wait..." : "Approve Listing"}
+            </button>
+          </div>
+        </div>
+      </div>
+  );
 }
