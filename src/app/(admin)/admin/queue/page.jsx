@@ -136,7 +136,6 @@ export default function AdminQueueDoomScrollPage() {
     const mainImage = allImages[activeImg];
 
     return (
-  return (
     <div className="max-w-5xl mx-auto py-4">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
