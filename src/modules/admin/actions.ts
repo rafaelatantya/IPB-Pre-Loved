@@ -56,13 +56,14 @@ export async function getAdminInventory({ page = 1, limit = 20, status = null })
       with: {
         seller: { columns: { name: true, email: true } },
         category: true,
+        images: { limit: 1 }, // Only first image needed for thumbnail
       },
       orderBy: [desc(products.createdAt)],
       limit,
       offset
     });
 
-    return { success: true, data: result };
+    return { success: true, data: result, total: result.length };
   } catch (error) {
     return { success: false, error: "Gagal mengambil inventory" };
   }

@@ -40,14 +40,14 @@ export default function SellerProductList({ initialData, initialHasMore, initial
     const router = useRouter();
 
     const [products, setProducts] = useState(() => {
-        if (initialData && initialData.length > 0) {
+        if (initialData) {
             return initialData;
         }
         return MOCK_PRODUCTS;
     });
 
     useEffect(() => {
-        if (initialData && initialData.length > 0) {
+        if (initialData) {
             setProducts(initialData);
         }
     }, [initialData]);

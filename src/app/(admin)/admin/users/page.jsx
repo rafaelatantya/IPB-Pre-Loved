@@ -5,8 +5,30 @@ export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Search, ShieldAlert, Trash2, UserCheck, Loader2 } from "lucide-react";
-import { getAdminUsers, toggleBlockUser, deleteUser, getUserProductsInfo } from "@/modules/admin/actions";
+import { Search, Loader2 } from "lucide-react";
+import {
+    getAdminUsers,
+    toggleBlockUser,
+    deleteUser,
+    getUserProductsInfo,
+} from "@/modules/admin/actions";
+
+function RoleBadge({ role }) {
+    return (
+        <span
+            className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#EFEFEF] text-[#1A1C1C]"
+            style={{
+                fontSize: "10.4px",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.52px",
+                lineHeight: "20px",
+            }}
+        >
+            {role}
+        </span>
+    );
+}
 
 export default function AdminUsersPage() {
     const { data: session } = useSession();
@@ -32,10 +54,19 @@ export default function AdminUsersPage() {
     }, [search]);
 
     const handleToggleBlock = async (userId, currentBlocked) => {
-        if (!confirm(`Apakah Anda yakin ingin ${currentBlocked ? 'melepaskan ban' : 'memblokir'} user ini?`)) return;
+        if (
+            !confirm(
+                `Apakah Anda yakin ingin ${currentBlocked ? "melepaskan ban" : "memblokir"} user ini?`
+            )
+        )
+            return;
         const res = await toggleBlockUser(userId, !currentBlocked);
         if (res.success) {
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, isBlocked: !currentBlocked } : u));
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === userId ? { ...u, isBlocked: !currentBlocked } : u
+                )
+            );
         }
     };
 
@@ -48,141 +79,205 @@ export default function AdminUsersPage() {
                 return;
             }
             const userProducts = infoRes.data || [];
-            let confirmMsg = "Hapus akun secara permanen? Tindakan ini tidak bisa dibatalkan.";
-            if (userProducts.length > 0) {
-                const titles = userProducts.map(p => `• ${p.title}`).join("\n");
-                confirmMsg = `User ini memiliki ${userProducts.length} produk berikut:\n\n${titles}\n\nSeluruh produk ini akan ikut TERHAPUS SECARA OTOMATIS!\n\nApakah Anda yakin ingin menghapus akun ini secara permanen?`;
-            } else {
-                confirmMsg = `User ini tidak memiliki produk.\n\nHapus akun secara permanen? Tindakan ini tidak bisa dibatalkan.`;
-            }
-            
+            const confirmMsg =
+                userProducts.length > 0
+                    ? `User ini memiliki ${userProducts.length} produk:\n\n${userProducts
+                        .map((p) => `• ${p.title}`)
+                        .join("\n")}\n\nSeluruh produk akan ikut TERHAPUS. Yakin?`
+                    : "User ini tidak memiliki produk.\n\nHapus akun secara permanen? Tidak bisa dibatalkan.";
             if (!confirm(confirmMsg)) return;
-            
             const res = await deleteUser(userId);
             if (res.success) {
-                setUsers(prev => prev.filter(u => u.id !== userId));
-                alert("Akun user dan semua produknya berhasil dihapus secara permanen.");
+                setUsers((prev) => prev.filter((u) => u.id !== userId));
             } else {
                 alert(res.error || "Gagal menghapus user.");
             }
         } catch (err) {
             console.error(err);
-            alert("Terjadi kesalahan sistem saat mencoba menghapus user.");
+            alert("Terjadi kesalahan sistem.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">User Accounts</h1>
-                    <p className="text-sm text-gray-400 mt-1">Manage permissions and safety protocols for all users</p>
+        <>
+            {/* ── Header ── */}
+            <div className="flex items-end justify-between mb-12">
+                <div className="flex flex-col gap-2">
+                    <h1
+                        className="text-[#1A1C1C] leading-[44px]"
+                        style={{ fontSize: 44, fontWeight: 900 }}
+                    >
+                        User Accounts
+                    </h1>
+                    <p
+                        className="text-[#777777]"
+                        style={{ fontSize: 14, fontWeight: 400, letterSpacing: "0.35px", lineHeight: "20px" }}
+                    >
+                        Manage platform participants and enforce community standards.
+                    </p>
                 </div>
+
+                {/* Search */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input 
-                        type="text" 
-                        placeholder="Search by name, email, NIM, or User Type..." 
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#777777]" />
+                    <input
+                        type="text"
+                        placeholder="Search users by name or email..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all w-72"
+                        className="pl-10 pr-4 py-2.5 bg-white border border-[rgba(119,119,119,0.30)] rounded-[4px] text-[14px] text-[#777777] outline-none focus:ring-1 focus:ring-black transition-all w-72"
                     />
                 </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50/50 border-b border-gray-100">
-                            <th className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-6 py-4">User Details</th>
-                            <th className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Type</th>
-                            <th className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Role</th>
-                            <th className="text-center text-[10px] font-black uppercase tracking-widest text-gray-400 px-4 py-4">Status</th>
-                            <th className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Contact</th>
-                            <th className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-4">Joined At</th>
-                            <th className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 px-6 py-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                        {users.map((u) => (
-                            <tr key={u.id} className={`hover:bg-gray-50/50 transition-colors group ${u.isBlocked ? "bg-red-50/30" : ""}`}>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs ${u.role === "ADMIN" ? "bg-blue-100 text-blue-600 border border-blue-200" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
-                                            {u.name?.charAt(0) || "U"}
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-900">{u.name}</p>
-                                            <p className="text-[10px] text-gray-400">{u.email}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                                        {u.userType || "STUDENT"}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${u.role === "ADMIN" ? "text-blue-600" : "text-gray-400"}`}>
-                                        {u.role}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <div className="flex justify-center">
-                                        {u.isBlocked ? (
-                                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-red-100 text-red-600 border border-red-200">BANNED</span>
-                                        ) : (
-                                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-green-100 text-green-600 border border-green-200">ACTIVE</span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-4 py-4 text-center text-[10px] font-bold text-gray-600">
-                                    {u.whatsappNumber ? (
-                                        <a href={`https://wa.me/${u.whatsappNumber.replace(/^\+/, '')}`} target="_blank" rel="noreferrer" className="hover:text-green-600 hover:underline">
-                                            {u.whatsappNumber.startsWith("+") ? u.whatsappNumber : `+${u.whatsappNumber}`}
-                                        </a>
-                                    ) : "—"}
-                                </td>
-                                <td className="px-4 py-4 text-center text-[10px] font-bold text-gray-400 uppercase">
-                                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }) : "—"}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center justify-center gap-1">
-                                        {u.id !== session?.user?.id ? (
-                                            <>
-                                                <button 
-                                                    onClick={() => handleToggleBlock(u.id, u.isBlocked)}
-                                                    className={`p-2 rounded-lg transition-all ${u.isBlocked ? "text-green-600 hover:bg-green-50" : "text-orange-500 hover:bg-orange-50"}`}
-                                                    title={u.isBlocked ? "Unban" : "Ban User"}
-                                                >
-                                                    {u.isBlocked ? <UserCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDelete(u.id)}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                    title="Delete Account"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase italic">YOU (ACTIVE)</span>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {loading && (
+            {/* ── Table ── */}
+            <div className="bg-white rounded-[4px] overflow-hidden">
+                {/* Filter bar */}
+                <div className="px-8 py-4 bg-[#F3F3F3] border-b border-[rgba(198,198,198,0.20)]">
+                    <span
+                        className="text-[#777777]"
+                        style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "1.2px",
+                            lineHeight: "16px",
+                        }}
+                    >
+                        Filter
+                    </span>
+                </div>
+
+                {loading ? (
                     <div className="py-20 flex justify-center">
                         <Loader2 className="w-6 h-6 animate-spin text-gray-200" />
                     </div>
+                ) : users.length === 0 ? (
+                    <div className="py-16 text-center text-[#777777] text-sm italic font-medium">
+                        Tidak ada user ditemukan.
+                    </div>
+                ) : (
+                    <table className="w-full border-collapse text-left table-fixed">
+                        <colgroup>
+                            <col />
+                            <col className="w-[220px]" />
+                            <col className="w-[140px]" />
+                            <col className="w-[120px]" />
+                        </colgroup>
+
+                        <thead>
+                            <tr className="border-b border-[rgba(198,198,198,0.20)]">
+                                {["User", "Email Address", "Role"].map((h) => (
+                                    <th
+                                        key={h}
+                                        className="px-8 py-4 text-[#777777] text-left"
+                                        style={{
+                                            fontSize: 12,
+                                            fontWeight: 500,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "1.2px",
+                                            lineHeight: "16px",
+                                        }}
+                                    >
+                                        {h}
+                                    </th>
+                                ))}
+                                <th
+                                    className="px-8 py-4 text-[#777777] text-right"
+                                    style={{
+                                        fontSize: 12,
+                                        fontWeight: 500,
+                                        textTransform: "uppercase",
+                                        letterSpacing: "1.2px",
+                                        lineHeight: "16px",
+                                    }}
+                                >
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {users.map((u) => (
+                                <tr
+                                    key={u.id}
+                                    className={`border-b border-[rgba(198,198,198,0.20)] last:border-0 transition-colors hover:bg-gray-50/50 ${u.isBlocked ? "opacity-50" : ""
+                                        }`}
+                                >
+                                    {/* User */}
+                                    <td className="px-8 py-6">
+                                        <p
+                                            className="text-[#1A1C1C]"
+                                            style={{ fontSize: 14, fontWeight: 700, lineHeight: "20px" }}
+                                        >
+                                            {u.name}
+                                        </p>
+                                        <p
+                                            className="text-[#777777] mt-0.5"
+                                            style={{ fontSize: 12, fontWeight: 400, lineHeight: "16px" }}
+                                        >
+                                            Joined{" "}
+                                            {u.createdAt
+                                                ? new Date(u.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    year: "numeric",
+                                                })
+                                                : "—"}
+                                        </p>
+                                    </td>
+
+                                    <td className="px-8 py-6">
+                                        <span
+                                            className="text-[#474747] truncate block"
+                                            style={{
+                                                fontSize: 12,
+                                                fontWeight: 400,
+                                                lineHeight: "16px",
+                                                fontFamily: "Poppins, sans-serif",
+                                            }}
+                                        >
+                                            {u.email ?? "—"}
+                                        </span>
+                                    </td>
+
+                                    {/* Role */}
+                                    <td className="px-8 py-6">
+                                        <RoleBadge role={u.userType ?? u.role ?? "STUDENT"} />
+                                    </td>
+
+                                    {/* Actions */}
+                                    <td className="px-8 py-6 text-right">
+                                        {u.id !== session?.user?.id ? (
+                                            <button
+                                                onClick={() => handleToggleBlock(u.id, u.isBlocked)}
+                                                className="inline-flex items-center justify-center px-5 py-2 rounded-[4px] border border-[rgba(119,119,119,0.40)] bg-transparent hover:bg-gray-50 active:scale-[0.98] transition-all text-[#1A1C1C]"
+                                                style={{
+                                                    fontSize: 12,
+                                                    fontWeight: 700,
+                                                    textTransform: "uppercase",
+                                                    letterSpacing: "1.2px",
+                                                    lineHeight: "16px",
+                                                }}
+                                            >
+                                                {u.isBlocked ? "Unblock" : "Block"}
+                                            </button>
+                                        ) : (
+                                            <span
+                                                className="text-[#777777] italic"
+                                                style={{ fontSize: 11, fontWeight: 600 }}
+                                            >
+                                                You
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
-        </div>
+        </>
     );
 }

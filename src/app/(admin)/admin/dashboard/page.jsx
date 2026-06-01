@@ -5,8 +5,16 @@ export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SlidersHorizontal, Loader2 } from "lucide-react";
-import { getPendingProducts } from "@/modules/admin/actions";
+import {
+  ClipboardList,
+  Loader2,
+  Search,
+  Users,
+  PackageCheck,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import { getPendingProducts, getAdminDashboardStats } from "@/modules/admin/actions";
 
 function getTimeAgo(dateString) {
   if (!dateString) return "—";
@@ -21,21 +29,45 @@ function getTimeAgo(dateString) {
   if (diffMins < 60) return `${diffMins} mins ago`;
   if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? "hr" : "hrs"} ago`;
   if (diffDays < 30) return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
-  return date.toLocaleDateString("id-ID", { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+}
+
+function StatCard({ label, value, icon: Icon, subtitle }) {
+  return (
+    <div className="bg-white rounded-[4px] p-6 flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[12px] font-bold uppercase tracking-[1.2px] text-[#777777]">
+          {label}
+        </p>
+        <p className="text-[36px] font-black leading-none text-[#1A1C1C]">
+          {value ?? "—"}
+        </p>
+        {subtitle && (
+          <p className="text-[12px] font-medium text-[#777777]">{subtitle}</p>
+        )}
+      </div>
+      <div className="w-12 h-12 bg-[#E8E8E8] rounded-[2px] flex items-center justify-center flex-shrink-0 mt-1">
+        <Icon className="w-5 h-5 stroke-2 text-[#1A1C1C]" />
+      </div>
+    </div>
+  );
 }
 
 export default function AdminDashboardPage() {
   const [items, setItems] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await getPendingProducts();
-        if (res.success) {
-          setItems(res.data);
-        }
+        const [queueRes, statsRes] = await Promise.all([
+          getPendingProducts(),
+          getAdminDashboardStats(),
+        ]);
+        if (queueRes.success) setItems(queueRes.data);
+        if (statsRes.success) setStats(statsRes.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -47,76 +79,121 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-4">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-[32px] font-black text-gray-900 tracking-tight leading-tight font-sans">
-          Pending Validation Queue
+    <>
+      {/* ── Header ── */}
+      <div className="mb-10 flex flex-col gap-2">
+        <h1 className="text-[44px] font-bold leading-[55px] text-[#1A1C1C] tracking-tight">
+          Overview
         </h1>
-        <p className="text-sm text-gray-400 font-medium mt-1">
-          Review and approve new listings.
+        <p className="text-[14px] font-medium text-[#474747] tracking-[0.35px]">
+          Platform health snapshot & pending validation queue.
         </p>
       </div>
 
-      {/* Stat Card - Needs QC Today */}
-      <div className="bg-white border border-gray-200/80 rounded-xl px-8 py-6 flex items-center justify-between mb-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <div className="flex flex-col gap-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 font-sans">
-            Needs QC Today
-          </p>
-          <p className="text-5xl font-black text-gray-900 tracking-tight leading-none font-sans">{items.length}</p>
-        </div>
-        <div className="w-12 h-12 flex items-center justify-center bg-gray-100 border border-gray-200 rounded-lg text-gray-900">
-          <SlidersHorizontal className="w-5 h-5 stroke-[1.8]" />
-        </div>
+      {/* ── Stats Grid ── */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-10">
+        <StatCard
+          label="Needs QC"
+          value={items.length}
+          icon={ClipboardList}
+          subtitle="Items pending review"
+        />
+        <StatCard
+          label="Total Users"
+          value={stats?.totalUsers ?? "—"}
+          icon={Users}
+          subtitle="Registered accounts"
+        />
+        <StatCard
+          label="Live Listings"
+          value={stats?.approvedProducts ?? "—"}
+          icon={PackageCheck}
+          subtitle="Approved & public"
+        />
+        <StatCard
+          label="WA Leads"
+          value={stats?.totalLeads ?? "—"}
+          icon={TrendingUp}
+          subtitle="Total WhatsApp clicks"
+        />
       </div>
 
-      {/* Queue Table */}
-      <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+      {/* ── New Today banner ── */}
+      {stats?.newToday > 0 && (
+        <div className="mb-8 flex items-center gap-3 bg-white rounded-[4px] px-6 py-4">
+          <Zap className="w-4 h-4 text-[#1A1C1C]" />
+          <p className="text-[14px] font-semibold text-[#1A1C1C]">
+            <span className="font-black">{stats.newToday}</span> listing baru masuk hari ini.
+          </p>
+        </div>
+      )}
+
+      {/* ── Section title ── */}
+      <div className="mb-5">
+        <h2 className="text-[20px] font-bold text-[#1A1C1C] tracking-tight">
+          Pending Validation Queue
+        </h2>
+        <p className="text-[13px] text-[#777777] mt-1">
+          Review and approve new listings before they go public.
+        </p>
+      </div>
+
+      {/* ── Queue table ── */}
+      <div className="bg-white rounded-[4px] overflow-hidden">
         {items.length === 0 ? (
           <div className="p-12 text-center text-gray-400 font-bold italic text-sm">
-            Semua produk telah diproses. Antrean QC kosong! 🎉
+            Semua produk telah diproses. Antrean QC kosong!
           </div>
         ) : (
-          <table className="w-full text-sm border-collapse text-left">
+          <table className="w-full border-collapse text-left table-fixed">
+            <colgroup>
+              <col className="w-[88px]" />
+              <col />
+              <col className="w-[180px]" />
+              <col className="w-[140px]" />
+              <col className="w-[120px]" />
+            </colgroup>
+
             <thead>
-              <tr className="border-b border-gray-200 bg-[#FAFAFA]">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#71717A] w-[90px]">
-                  Item
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#71717A]">
-                  Details
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#71717A] w-[180px]">
-                  Seller
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#71717A] w-[130px]">
-                  Uploaded
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#71717A] w-[110px] text-center">
+              <tr className="bg-[#F3F3F3] border-b border-[rgba(198,198,198,0.20)]">
+                {["Item", "Details", "Seller", "Uploaded"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-4 text-[12px] font-bold uppercase tracking-[1.2px] text-[#474747]"
+                  >
+                    {h}
+                  </th>
+                ))}
+                <th className="px-4 py-4 text-[12px] font-bold uppercase tracking-[1.2px] text-[#474747] text-right">
                   Action
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+
+            <tbody>
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  className="hover:bg-gray-50/40 transition-colors"
+                  className="border-b border-[rgba(198,198,198,0.20)] last:border-0 hover:bg-gray-50/50 transition-colors"
                 >
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <div className="w-14 h-14 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {/* Thumbnail */}
+                  <td className="px-4 py-6">
+                    <div className="w-16 h-16 bg-[#E2E2E2] border border-[rgba(119,119,119,0.20)] rounded-[2px] flex items-center justify-center overflow-hidden flex-shrink-0">
                       {item.images?.[0]?.url ? (
-                        <img src={item.images[0].url} alt={item.title} className="w-full h-full object-cover" />
+                        <img
+                          src={item.images[0].url}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth="1.2">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="1.5">
                           <rect x="3" y="3" width="18" height="18" rx="1.5" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
                           <path d="M21 15l-5-5L5 21" />
@@ -124,27 +201,38 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-5">
-                    <p className="font-bold text-[14px] text-gray-900 tracking-tight leading-snug">{item.title}</p>
-                    <p className="text-xs text-gray-400 mt-1 font-medium">
-                      Category: {item.category?.name || "UMUM"}
+
+                  {/* Details */}
+                  <td className="px-4 py-6">
+                    <p className="text-[16px] font-bold text-[#1A1C1C] leading-6 truncate">
+                      {item.title}
+                    </p>
+                    <p className="text-[12px] font-medium text-[#474747] mt-1 tracking-[0.3px]">
+                      Category: {item.category?.name ?? "UMUM"}
                     </p>
                   </td>
-                  <td className="px-6 py-5">
-                    <span className="text-sm font-semibold text-gray-700 truncate block max-w-[160px]">
-                      {item.seller?.name || "—"}
+
+                  {/* Seller */}
+                  <td className="px-4 py-6">
+                    <span className="text-[14px] font-medium text-[#1A1C1C] truncate block">
+                      {item.seller?.name ?? "—"}
                     </span>
                   </td>
-                  <td className="px-6 py-5">
-                    <span className="text-xs font-semibold text-gray-400">
+
+                  {/* Uploaded */}
+                  <td className="px-4 py-6">
+                    <span className="text-[14px] font-normal text-[#474747]">
                       {getTimeAgo(item.createdAt)}
                     </span>
                   </td>
-                  <td className="px-6 py-5 text-center whitespace-nowrap">
+
+                  {/* Action */}
+                  <td className="px-4 py-6 text-right">
                     <button
-                      onClick={() => router.push(`/admin/queue/${item.id}`)}
-                      className="bg-black hover:bg-zinc-800 text-white text-[10px] font-extrabold uppercase tracking-widest px-6 py-2.5 rounded shadow-sm active:scale-[0.98] transition-all"
+                      onClick={() => router.push(`/admin/queue`)}
+                      className="inline-flex items-center gap-1.5 bg-black hover:bg-zinc-900 active:scale-[0.98] text-[#E5E2E1] text-[12px] font-bold uppercase tracking-[0.6px] px-6 py-2 rounded-[2px] transition-all whitespace-nowrap"
                     >
+                      <Search className="w-3.5 h-3.5" />
                       Review
                     </button>
                   </td>
@@ -154,6 +242,6 @@ export default function AdminDashboardPage() {
           </table>
         )}
       </div>
-    </div>
+    </>
   );
 }

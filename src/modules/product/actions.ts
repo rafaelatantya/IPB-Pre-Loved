@@ -39,14 +39,46 @@ export async function getProducts({ page = 1, limit = 10 } = {}) {
       });
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: result,
       hasMore: result.length === limit
     };
   } catch (error) {
     console.error("Get Products Error:", error);
     return { success: false, error: "Gagal mengambil produk" };
+  }
+}
+
+/**
+ * Action: Ambil satu produk berdasarkan ID (untuk halaman Edit)
+ */
+export async function getProductById(id: string) {
+  const auth = await getAuth();
+  const session = await auth();
+
+  if (!session?.user?.id) return { success: false, code: 401, error: "Unauthenticated" };
+
+  try {
+    const db = await getContextDb();
+    const product = await db.query.products.findFirst({
+      where: eq(products.id, id),
+      with: { seller: true, category: true, images: true },
+    });
+
+    if (!product) return { success: false, error: "Produk tidak ditemukan" };
+
+    // 🛡️ SECURITY: Seller hanya bisa lihat produk milik sendiri, Admin bisa lihat semua
+    const isOwner = product.sellerId === session.user.id;
+    const isAdmin = session.user.role === "ADMIN";
+    if (!isOwner && !isAdmin) {
+      return { success: false, code: 403, error: "Akses ditolak" };
+    }
+
+    return { success: true, data: product };
+  } catch (error) {
+    console.error("Get Product By ID Error:", error);
+    return { success: false, error: "Gagal mengambil data produk" };
   }
 }
 
@@ -106,7 +138,7 @@ export async function createProduct({ formData, imageUrls = [], videoUrl = "", v
 
   try {
     const db = await getContextDb();
-    
+
     // 🛡️ SECURITY: Pastikan User/Admin punya nomor WA sebelum jualan
     const { users } = await import("@/db/schema");
     const seller = await db.select().from(users).where(eq(users.id, session.user.id)).get();
@@ -190,9 +222,9 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
 
   try {
     const db = await getContextDb();
-    
+
     // 1. Cek keberadaan dan kepemilikan produk
-    const product = await db.query.products.findFirst({ 
+    const product = await db.query.products.findFirst({
       where: eq(products.id, id),
       with: { images: true }
     });
@@ -206,7 +238,7 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
     // 2. Filter URL Internal (Cegah injection URL luar)
     const isInternal = (url: any) => typeof url === 'string' && url.startsWith("/api/images/products/");
     const safeImageUrls = Array.from(new Set((imageUrls || []).filter(url => isInternal(url))));
-    
+
     // Logic Video: null (tidak berubah), "" (hapus), URL (baru)
     let safeVideoUrl = product.videoUrl;
     if (videoUrl === "") safeVideoUrl = "";
@@ -221,11 +253,11 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
     });
 
     if (!validation.success) {
-      return { 
-        success: false, 
-        code: 400, 
-        error: "Validasi gagal", 
-        errors: validation.error.flatten().fieldErrors 
+      return {
+        success: false,
+        code: 400,
+        error: "Validasi gagal",
+        errors: validation.error.flatten().fieldErrors
       };
     }
 
@@ -244,7 +276,7 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
 
     // 5. Tentukan Status (Seller edit APPROVED -> PENDING)
     const newStatus = isAdmin ? (formData.status || product.status) : "PENDING";
-    
+
     const operations: any[] = [
       // A. Update data utama produk
       db.update(products).set({
@@ -261,8 +293,8 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
       }).where(eq(products.id, id)),
 
       // B. Hapus record gambar lama yang dibuang user
-      ...(imagesToDelete.length > 0 
-        ? [db.delete(productImages).where(inArray(productImages.id, imagesToDelete.map(i => i.id)))] 
+      ...(imagesToDelete.length > 0
+        ? [db.delete(productImages).where(inArray(productImages.id, imagesToDelete.map(i => i.id)))]
         : []),
 
       // C. Insert record gambar baru
@@ -275,7 +307,7 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
       })),
 
       // D. Update urutan (sortOrder) untuk gambar yang dipertahankan
-      ...currentImages.filter(img => safeImageUrls.includes(img.url)).map(img => 
+      ...currentImages.filter(img => safeImageUrls.includes(img.url)).map(img =>
         db.update(productImages).set({ sortOrder: safeImageUrls.indexOf(img.url) }).where(eq(productImages.id, img.id))
       )
     ];
@@ -301,10 +333,10 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
       deleteFilesFromR2(keysToDelete);
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: isAdmin ? "Produk diperbarui" : "Produk diperbarui, menunggu QC Admin",
-      status: newStatus 
+      status: newStatus
     };
   } catch (error) {
     console.error("Update Product Error:", error);
@@ -349,9 +381,9 @@ export async function markProductAsSold(id) {
 
     const operations: any[] = [
       // 1. Update status produk
-      db.update(products).set({ 
+      db.update(products).set({
         status: "SOLD",
-        updatedAt: new Date().getTime() 
+        updatedAt: new Date().getTime()
       }).where(eq(products.id, id)),
 
       // 2. Kirim Notifikasi ke Penjual
@@ -378,7 +410,7 @@ export async function markProductAsSold(id) {
     }
 
     await db.batch(operations as any);
-    
+
     return { success: true, message: "Produk ditandai sebagai terjual" };
   } catch (error) {
     console.error("Mark Sold Error:", error);
@@ -400,11 +432,11 @@ export async function updateImageOrder(productId, imageIds) {
     const product = await db.query.products.findFirst({ where: eq(products.id, productId) });
 
     if (!product || product.sellerId !== session.user.id) {
-        return { success: false, code: 403, error: "Akses ditolak" };
+      return { success: false, code: 403, error: "Akses ditolak" };
     }
 
-    const batchUpdates = imageIds.map((id, index) => 
-        db.update(productImages).set({ sortOrder: index }).where(eq(productImages.id, id))
+    const batchUpdates = imageIds.map((id, index) =>
+      db.update(productImages).set({ sortOrder: index }).where(eq(productImages.id, id))
     );
 
     await db.batch(batchUpdates);
@@ -432,7 +464,7 @@ export async function deleteProduct(id) {
     const isOwner = product.sellerId === session.user.id;
 
     if (!isAdmin && !isOwner) {
-        return { success: false, code: 403, error: "Akses ditolak" };
+      return { success: false, code: 403, error: "Akses ditolak" };
     }
 
     // 1. Ambil semua kunci aset (Gambar & Video) sebelum dihapus dari DB
@@ -465,7 +497,7 @@ export async function deleteProduct(id) {
       // R2 cleanup jalan di background (Edge supports this via waitUntil if needed, but in Actions this is fine)
       deleteFilesFromR2(imageKeys);
     }
-    
+
     return { success: true, message: "Produk dihapus" };
   } catch (error) {
     return { success: false, error: "Gagal menghapus" };
@@ -509,9 +541,9 @@ export async function getSellerStats() {
       count: sql`count(*)`,
       totalClicks: sql`sum(${products.whatsappClicks})`,
     })
-    .from(products)
-    .where(eq(products.sellerId, sellerId))
-    .groupBy(products.status);
+      .from(products)
+      .where(eq(products.sellerId, sellerId))
+      .groupBy(products.status);
 
     // Map hasil ke format yang enak dipake UI
     const stats = {

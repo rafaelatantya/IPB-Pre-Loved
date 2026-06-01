@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Plus, Send, Info, X, Video } from "lucide-react";
 import { createProduct } from "@/modules/product/actions";
+import { productSchema } from "@/lib/validation";
 
 const KONDISI_OPTIONS = [
   { label: "Baru", value: "NEW" },
@@ -86,21 +87,29 @@ export default function ProductAddForm({ categories = [] }) {
   }
 
   function validate() {
+    const result = productSchema.safeParse({
+      title: form.title,
+      description: form.description,
+      price: form.price,
+      categoryId: form.categoryId,
+      condition: form.condition,
+      location: form.location,
+      imageCount: images.length,
+      hasVideo: !!video,
+      videoDuration: videoDuration,
+    });
+
+    if (result.success) return {};
+
     const newErrors = {};
-    if (!form.title.trim()) newErrors.title = "Nama barang wajib diisi.";
-    if (!form.categoryId) newErrors.categoryId = "Pilih kategori.";
-    if (!form.condition) newErrors.condition = "Pilih kondisi.";
-    if (!form.price || Number(form.price) < 500) newErrors.price = "Minimal Rp 500.";
-    if (!form.description.trim()) newErrors.description = "Deskripsi wajib diisi.";
-    else if (form.description.trim().length < 10) newErrors.description = "Deskripsi minimal 10 karakter.";
-
-    // Check constraints: 3 images OR (1 image + 1 video >= 5s)
-    const hasEnoughImages = images.length >= 3;
-    const hasEnoughMedia = images.length >= 1 && video && videoDuration >= 5;
-
-    if (!hasEnoughImages && !hasEnoughMedia) {
-      newErrors.media = "Syarat media tidak terpenuhi: Minimal 3 Foto ATAU 1 Foto + 1 Video (min 5 detik)";
-    }
+    result.error.issues.forEach((issue) => {
+      const path = issue.path[0];
+      if (path === "imageCount") {
+        newErrors.media = issue.message;
+      } else {
+        newErrors[path] = issue.message;
+      }
+    });
 
     return newErrors;
   }
