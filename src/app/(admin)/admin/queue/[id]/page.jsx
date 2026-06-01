@@ -5,26 +5,35 @@ export const runtime = "edge";
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { X, Check, User } from "lucide-react";
+import { X, Check, User, PlayCircle } from "lucide-react";
 import { getProductById } from "@/modules/catalog/services";
 import { reviewProduct, toggleFlagUser } from "@/modules/admin/actions";
 
 // Thumbnail klikable
-function Thumbnail({ src, alt, active, onClick }) {
+function Thumbnail({ media, active, onClick }) {
+    const isVideo = media?.type === "video";
+    const src = isVideo ? media.thumbnail : media?.url;
+
     return (
         <div
             onClick={onClick}
-            className={`w-full aspect-square border rounded-lg overflow-hidden cursor-pointer bg-gray-100 flex items-center justify-center transition-all ${active ? "border-gray-900 border-2" : "border-gray-200 hover:border-gray-400"
-                }`}
+            className={`w-full aspect-square border rounded-lg overflow-hidden cursor-pointer bg-gray-100 flex items-center justify-center relative transition-all ${
+                active ? "border-gray-900 border-2" : "border-gray-200 hover:border-gray-400"
+            }`}
         >
             {src ? (
-                <img src={src} alt={alt} className="w-full h-full object-cover" />
+                <img src={src} alt="thumbnail" className="w-full h-full object-cover" />
             ) : (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1">
                     <rect x="3" y="3" width="18" height="18" rx="1" />
                     <path d="M3 17l5-5 4 4 3-3 6 6" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                 </svg>
+            )}
+            {isVideo && (
+                <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                    <PlayCircle className="w-8 h-8 text-white" />
+                </div>
             )}
         </div>
     );
@@ -137,8 +146,18 @@ export default function AdminReviewDetailPage() {
     if (!product) return null;
 
     // Gabungkan media untuk galeri
-    const allImages = product.images?.length > 0 ? product.images.map(img => img.url) : [null, null, null, null];
-    const mainImage = allImages[activeImg];
+    const mediaList = [];
+    if (product.videoUrl) {
+        mediaList.push({ type: "video", url: product.videoUrl, thumbnail: product.images?.[0]?.url });
+    }
+    if (product.images && product.images.length > 0) {
+        product.images.forEach((img) => mediaList.push({ type: "image", url: img.url }));
+    }
+    while (mediaList.length < 4) {
+        mediaList.push({ type: "image", url: null });
+    }
+
+    const currentMedia = mediaList[activeImg] ?? null;
 
     return (
         <div className="max-w-5xl mx-auto py-4">
@@ -165,10 +184,12 @@ export default function AdminReviewDetailPage() {
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Kiri: Galeri Foto */}
                 <div className="flex-1">
-                    {/* Main Image */}
+                    {/* Main Image / Video */}
                     <div className="w-full aspect-square bg-[#FAFAFA] border border-gray-200 rounded-xl overflow-hidden flex items-center justify-center mb-4">
-                        {mainImage ? (
-                            <img src={mainImage} alt={product.title} className="w-full h-full object-cover" />
+                        {currentMedia?.type === "video" ? (
+                            <video src={currentMedia.url} controls className="w-full h-full object-contain bg-black" />
+                        ) : currentMedia?.url ? (
+                            <img src={currentMedia.url} alt={product.title} className="w-full h-full object-cover" />
                         ) : (
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="0.8">
                                 <rect x="3" y="3" width="18" height="18" rx="1.5" />
@@ -180,11 +201,10 @@ export default function AdminReviewDetailPage() {
 
                     {/* Thumbnails */}
                     <div className="grid grid-cols-4 gap-3">
-                        {allImages.slice(0, 4).map((img, i) => (
+                        {mediaList.slice(0, 4).map((media, i) => (
                             <Thumbnail
                                 key={i}
-                                src={img}
-                                alt={`Foto ${i + 1}`}
+                                media={media}
                                 active={activeImg === i}
                                 onClick={() => setActiveImg(i)}
                             />

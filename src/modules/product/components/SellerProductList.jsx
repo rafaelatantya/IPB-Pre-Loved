@@ -194,7 +194,7 @@ export default function SellerProductList({ initialData, initialHasMore, initial
                                     <div className="flex items-center gap-2">
                                         {/* Tombol Mata -> Menuju /product/[id] */}
                                         <button
-                                            onClick={() => router.push(`/product/detail/${productId}`)}
+                                            onClick={() => router.push(`/product/${productId}`)}
                                             className="p-2 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] rounded-lg hover:bg-gray-50 transition-colors"
                                             title="Lihat Detail"
                                         >

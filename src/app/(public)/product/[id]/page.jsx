@@ -22,10 +22,12 @@ import Link from "next/link";
 import ProductCard from "@/modules/catalog/components/ProductCard";
 import WishlistButton from "@/modules/wishlist/components/WishlistButton";
 import { openWhatsAppChat } from "@/lib/whatsapp";
+import { useSession } from "next-auth/react";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [product, setProduct] = useState(null);
   const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,49 @@ export default function ProductDetailPage() {
       <div className="w-full bg-indigo-50 md:bg-[#F8FAFC] pb-32 md:pb-12">
         <div className="w-full max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12 flex flex-col gap-8">
           
+          {/* Status Warning Banner for Non-Approved Products */}
+          {product.status !== "APPROVED" && (
+            <div className={`p-5 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-300 shadow-sm ${
+              product.status === "PENDING" 
+                ? "bg-amber-50 border-amber-200 text-amber-900" 
+                : product.status === "REJECTED"
+                ? "bg-rose-50 border-rose-200 text-rose-955"
+                : "bg-slate-100 border-slate-200 text-slate-900"
+            }`}>
+              <div className="flex items-start md:items-center gap-4">
+                <div className={`p-3 rounded-xl shrink-0 ${
+                  product.status === "PENDING"
+                    ? "bg-amber-100 text-amber-600 shadow-sm"
+                    : product.status === "REJECTED"
+                    ? "bg-rose-100 text-rose-600 shadow-sm"
+                    : "bg-slate-200 text-slate-600 shadow-sm"
+                }`}>
+                  {product.status === "PENDING" && <Clock className="w-6 h-6 animate-pulse" />}
+                  {product.status === "REJECTED" && <Info className="w-6 h-6" />}
+                  {product.status === "SOLD" && <Tag className="w-6 h-6" />}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <h3 className="text-base md:text-[18px] font-bold tracking-tight font-poppins uppercase leading-snug">
+                    Listing Tidak Live ({product.status})
+                  </h3>
+                  <p className="text-xs md:text-sm leading-relaxed font-normal opacity-90 max-w-2xl font-poppins">
+                    {product.status === "PENDING" && "Produk ini tidak tayang di katalog publik karena statusnya masih PENDING (Menunggu QC & Persetujuan Admin). Hanya Anda (Penjual) dan Admin yang dapat mengakses preview halaman ini."}
+                    {product.status === "REJECTED" && "Produk ini tidak tayang di katalog publik karena statusnya REJECTED (Ditolak QC oleh Admin). Silakan sunting produk ini melalui dashboard untuk mengajukan kembali."}
+                    {product.status === "SOLD" && "Produk ini tidak tayang di katalog publik karena statusnya SOLD (Sudah Terjual)."}
+                  </p>
+                </div>
+              </div>
+              <div className="self-stretch md:self-center flex items-center justify-end">
+                <div className="px-3.5 py-1.5 bg-white border border-current/10 rounded-full flex items-center gap-2 text-[11px] font-semibold tracking-wider uppercase font-poppins shadow-xs select-none shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
+                  <span>
+                    Viewing as: {session?.user?.role === "ADMIN" ? "Admin" : "Uploader"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
             
             {/* LEFT COLUMN: IMAGES & DESCRIPTION */}

@@ -7,8 +7,6 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import dynamicImport from "next/dynamic";
-import { getProductById } from "@/modules/product/actions";
-import { getCategories } from "@/modules/category/actions";
 
 const ProductEditForm = dynamicImport(
   () => import("@/modules/product/components/ProductEditForm"),
@@ -29,8 +27,8 @@ export default function EditProductPage() {
     async function fetchData() {
       try {
         const [productRes, catRes] = await Promise.all([
-          getProductById(id),
-          getCategories(),
+          fetch(`/api/products/${id}`).then(r => r.json()),
+          fetch("/api/categories").then(r => r.json()),
         ]);
 
         if (!productRes.success) {
@@ -64,10 +62,12 @@ export default function EditProductPage() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
-        <p className="text-sm text-red-500 font-medium">
-          {error || "Produk tidak ditemukan."}
-        </p>
+      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center gap-4">
+          <p className="text-sm text-red-500 font-medium leading-relaxed font-poppins">
+            {error || "Produk tidak ditemukan."}
+          </p>
+        </div>
       </div>
     );
   }

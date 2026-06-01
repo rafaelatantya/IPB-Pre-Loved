@@ -66,3 +66,5 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/modules/catalog/components/MobileFilter.jsx` | Komponen modal filter responsif untuk pencarian di perangkat mobile |
 | `src/components/layouts/BottomNav.jsx` | Bar navigasi bawah khusus untuk pengalaman mobile |
 | `src/components/layouts/Navbar.jsx` | Bar navigasi atas universal (Desktop & Mobile Branding) |
+| `src/app/api/products/[id]/route.js` | API Route untuk memuat detail produk + rekomendasi (dengan owner/admin security check) |
+| `src/app/api/categories/route.js` | API Route untuk memuat daftar kategori barang dari database D1 |

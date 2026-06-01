@@ -30,9 +30,11 @@ export default async function middleware(req: NextRequest) {
   const isPublicPage = path === '/';
   const isApiAuth = path.startsWith('/api/auth');
   const isPublicFile = path.match(/\.(png|jpg|jpeg|svg|gif|webp|ico)$/);
+  const isNextInternal = path.startsWith('/_next') || req.headers.has('x-nextjs-data');
+  const isServerAction = req.headers.has('next-action');
 
-  // Skip middleware for public assets and auth APIs
-  if (isPublicFile || isApiAuth) return res;
+  // Skip middleware for public assets, auth APIs, Next.js internal requests, and Server Actions
+  if (isPublicFile || isApiAuth || isNextInternal || isServerAction) return res;
 
   // 3. SESSION VERIFICATION (Multi-variant check for local/prod compatibility)
   const hasToken = cookies.get("authjs.session-token") || 

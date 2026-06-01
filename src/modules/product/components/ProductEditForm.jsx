@@ -3,7 +3,6 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Info, X, Video, Check, AlertCircle } from "lucide-react";
-import { updateProduct } from "@/modules/product/actions";
 import { productSchema } from "@/lib/validation";
 
 const KONDISI_OPTIONS = [
@@ -195,13 +194,19 @@ export default function ProductEditForm({ product, categories = [] }) {
         finalVideoUrl = vidData.url;
       }
 
-      // 3. Update Product in DB
-      const res = await updateProduct(product.id, {
-        formData: form,
-        imageUrls: finalImageUrls,
-        videoUrl: finalVideoUrl,
-        videoDuration: videoDuration
-      });
+      // 3. Update Product in DB via PUT API Route
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          formData: form,
+          imageUrls: finalImageUrls,
+          videoUrl: finalVideoUrl,
+          videoDuration: videoDuration
+        })
+      }).then(r => r.json());
 
       if (res.success) {
         setMessage("Informasi Produk telah berhasil diperbarui");

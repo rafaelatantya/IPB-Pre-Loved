@@ -5,7 +5,7 @@ export const runtime = "edge";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Check, User, Loader2 } from "lucide-react";
+import { X, Check, User, Loader2, PlayCircle } from "lucide-react";
 import { getPendingProducts, reviewProduct, toggleFlagUser } from "@/modules/admin/actions";
 
 function formatRupiah(num) {
@@ -36,21 +36,29 @@ function MetaField({ label, children }) {
   );
 }
 
-function Thumbnail({ src, alt, active, onClick }) {
+function Thumbnail({ media, active, onClick }) {
+  const isVideo = media?.type === "video";
+  const src = isVideo ? media.thumbnail : media?.url;
+
   return (
     <div
       onClick={onClick}
-      className={`aspect-square rounded-[4px] overflow-hidden cursor-pointer bg-[#E8E8E8] flex items-center justify-center transition-all ${active ? "ring-2 ring-[#1A1C1C]" : "hover:opacity-80"
+      className={`aspect-square rounded-[4px] overflow-hidden cursor-pointer bg-[#E8E8E8] flex items-center justify-center relative transition-all ${active ? "ring-2 ring-[#1A1C1C]" : "hover:opacity-80"
         }`}
     >
       {src ? (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <img src={src} alt="thumbnail" className="w-full h-full object-cover" />
       ) : (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="1.5">
           <rect x="3" y="3" width="18" height="18" rx="1.5" />
           <circle cx="8.5" cy="8.5" r="1.5" />
           <path d="M21 15l-5-5L5 21" />
         </svg>
+      )}
+      {isVideo && (
+        <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+          <PlayCircle className="w-6 h-6 text-white" />
+        </div>
       )}
     </div>
   );
@@ -137,12 +145,18 @@ export default function AdminQueueReviewPage() {
     );
   }
 
-  const allImages =
-    item.images && item.images.length > 0
-      ? item.images.map((img) => img.url)
-      : [null, null, null, null];
+  const mediaList = [];
+  if (item.videoUrl) {
+    mediaList.push({ type: "video", url: item.videoUrl, thumbnail: item.images?.[0]?.url });
+  }
+  if (item.images && item.images.length > 0) {
+    item.images.forEach((img) => mediaList.push({ type: "image", url: img.url }));
+  }
+  while (mediaList.length < 4) {
+    mediaList.push({ type: "image", url: null });
+  }
 
-  const mainImage = allImages[activeImg] ?? null;
+  const currentMedia = mediaList[activeImg] ?? null;
 
   return (
     <div className="font-poppins max-w-5xl mx-auto p-6 space-y-8">
@@ -165,8 +179,10 @@ export default function AdminQueueReviewPage() {
         {/* Kolom Kiri: Media Visual */}
         <div className="flex flex-col gap-4">
           <div className="w-full aspect-[4/3] bg-neutral-100 border border-neutral-200/60 rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.01)] flex items-center justify-center">
-            {mainImage ? (
-              <img src={mainImage} alt={item.title} className="w-full h-full object-cover" />
+            {currentMedia?.type === "video" ? (
+              <video src={currentMedia.url} controls className="w-full h-full object-contain bg-black" />
+            ) : currentMedia?.url ? (
+              <img src={currentMedia.url} alt={item.title} className="w-full h-full object-cover" />
             ) : (
               <div className="p-4 bg-neutral-200/60 rounded-xl">
                 <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="1">
@@ -179,11 +195,10 @@ export default function AdminQueueReviewPage() {
           </div>
 
           <div className="grid grid-cols-4 gap-3">
-            {allImages.slice(0, 4).map((img, i) => (
+            {mediaList.slice(0, 4).map((media, i) => (
               <Thumbnail
                 key={i}
-                src={img}
-                alt={`Foto ${i + 1}`}
+                media={media}
                 active={activeImg === i}
                 onClick={() => setActiveImg(i)}
               />
