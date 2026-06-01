@@ -1,6 +1,7 @@
 import { getEnv } from "@/lib/db";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 /**
  * API Route: Serve images directly from R2 Bucket

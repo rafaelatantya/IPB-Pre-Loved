@@ -4,8 +4,6 @@ import { getContextDb } from "@/lib/db";
 import { products, users, categories, productImages } from "@/db/schema";
 import { desc, asc, eq, and, or, like, between, sql, inArray } from "drizzle-orm";
 
-const cache = new Map();
-
 /**
  * Service: Ambil produk yang sudah APPROVED dengan filter canggih & Smart Search
  */
@@ -19,11 +17,6 @@ export async function getApprovedProducts({
   page = 1,
   limit = 12
 } = {}) {
-  const cacheKey = JSON.stringify({ search, categoryId, minPrice, maxPrice, condition, sortBy, page, limit });
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey);
-  }
-
   try {
     const db = await getContextDb();
     const offset = (page - 1) * limit;
@@ -111,7 +104,6 @@ export async function getApprovedProducts({
       }
     };
 
-    cache.set(cacheKey, result);
     return result;
   } catch (error) {
     console.error("Error fetching catalog products:", error);

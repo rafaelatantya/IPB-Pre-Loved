@@ -1,4 +1,3 @@
-import imageCompression from 'browser-image-compression';
 
 /**
  * 🖼️ Action: Kompres Gambar (Client-Side)
@@ -19,6 +18,8 @@ export async function compressImage(file) {
   if (file.size < 100 * 1024) {
     return file;
   }
+
+  const imageCompression = (await import('browser-image-compression')).default;
 
   const options = {
     maxSizeMB: 1,            // Target ukuran file di bawah 1MB

@@ -67,8 +67,8 @@ export default function ProductEditForm({ product, categories = [] }) {
   function handleVideoChange(e) {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 20 * 1024 * 1024) {
-        alert("Video maksimal 20MB.");
+      if (file.size > 150 * 1024 * 1024) { // 150MB raw limit before compression
+        alert("Video mentah terlalu besar, maksimal 150MB sebelum kompresi.");
         return;
       }
       setNewVideo(file);
@@ -142,9 +142,18 @@ export default function ProductEditForm({ product, categories = [] }) {
     try {
       // 1. Upload new images if any
       const uploadedImageUrls = [];
+      const { compressImage } = await import("@/lib/image");
       for (const img of newImages) {
+        // Compress new image on client-side before uploading
+        const compressedImg = await compressImage(img);
+        
+        // Hard limit check (max 5MB after compression)
+        if (compressedImg.size > 5 * 1024 * 1024) {
+          throw new Error("Gambar masih terlalu besar bahkan setelah kompresi (maks 5 MB setelah kompresi)");
+        }
+
         const imgFormData = new FormData();
-        imgFormData.append("file", img);
+        imgFormData.append("file", compressedImg);
         imgFormData.append("type", "image");
         
         const imgRes = await fetch("/api/upload", {
@@ -162,8 +171,19 @@ export default function ProductEditForm({ product, categories = [] }) {
       // 2. Upload new video if any
       let finalVideoUrl = existingVideo;
       if (newVideo) {
+        console.log("[Video Compression] Compressing new video:", newVideo.name);
+        const { compressVideo } = await import("@/lib/video");
+        const compressedVid = await compressVideo(newVideo, (progress) => {
+          console.log(`[Video Compression] Progress: ${progress}%`);
+        });
+
+        // Hard limit check (max 50MB after compression)
+        if (compressedVid.size > 50 * 1024 * 1024) {
+          throw new Error("Video masih terlalu besar bahkan setelah kompresi (maks 50 MB setelah kompresi)");
+        }
+
         const vidFormData = new FormData();
-        vidFormData.append("file", newVideo);
+        vidFormData.append("file", compressedVid);
         vidFormData.append("type", "video");
 
         const vidRes = await fetch("/api/upload", {
@@ -185,6 +205,11 @@ export default function ProductEditForm({ product, categories = [] }) {
 
       if (res.success) {
         setMessage("Informasi Produk telah berhasil diperbarui");
+        // Update status to hide the approved warning once saved
+        if (res.status) {
+          product.status = res.status;
+          setForm(prev => ({ ...prev, status: res.status }));
+        }
         // Update states to clear new files since they are now existing
         setExistingImages(finalImageUrls);
         setNewImages([]);
@@ -226,6 +251,19 @@ export default function ProductEditForm({ product, categories = [] }) {
             <div>
                 <p className="text-sm font-bold text-green-800">Perubahan Tersimpan</p>
                 <p className="text-xs text-green-700 mt-1">{message}</p>
+            </div>
+        </div>
+      )}
+
+      {product.status === "APPROVED" && (
+        <div className="mb-6 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+                <p className="text-sm font-bold text-amber-800">Peringatan: Verifikasi Ulang Diperlukan</p>
+                <p className="text-xs text-amber-700 mt-1">
+                    Mengedit produk yang sudah disetujui akan mengembalikan status produk Anda menjadi <strong>PENDING</strong>. 
+                    Produk akan diturunkan sementara dari katalog publik sampai disetujui kembali oleh Admin QC.
+                </p>
             </div>
         </div>
       )}

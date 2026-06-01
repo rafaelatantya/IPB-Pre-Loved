@@ -11,9 +11,10 @@ import {
     Users,
     History,
     FileText,
-    LogOut
+    LogOut,
+    PlusSquare,
+    User
 } from "lucide-react";
-import PhoneSettingModal from "@/components/profile/PhoneSettingModal";
 
 const topLinks = [
     { name: "Overview", href: "/admin/dashboard", icon: LayoutGrid },
@@ -21,6 +22,8 @@ const topLinks = [
     { name: "Inventory", href: "/admin/inventory", icon: Archive },
     { name: "User Accounts", href: "/admin/users", icon: Users },
     { name: "Activity Logs", href: "/admin/logs", icon: History },
+    { name: "Tambah Produk", href: "/product/add", icon: PlusSquare },
+    { name: "Profil & Kontak", href: "/profile", icon: User },
 ];
 
 export default function AdminSidebar() {
@@ -62,17 +65,6 @@ export default function AdminSidebar() {
             </nav>
 
             <div className="flex flex-col gap-2 mt-auto pt-6 border-t border-gray-200/60 w-full">
-
-                <button
-                    onClick={() => alert("Report generation started...")}
-                    className="w-full py-3 bg-black hover:bg-zinc-900 text-[#E5E2E1] text-[11.2px] font-bold uppercase tracking-[1.12px] rounded-[4px] shadow-sm active:scale-[0.98] transition-colors mb-2 text-center"
-                >
-                    Generate Report
-                </button>
-
-                <div className="w-full">
-                    <PhoneSettingModal />
-                </div>
 
                 <Link
                     href="/panduan"

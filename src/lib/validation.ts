@@ -60,7 +60,7 @@ export const productSchema = z.object({
 
 // Schema untuk QC Review
 export const qcReviewSchema = z.object({
-  productId: z.string().uuid(),
+  productId: z.string(),
   decision: z.string().refine(v => ["APPROVED", "REJECTED"].includes(v)),
   reasonCode: z.string().optional().nullable(),
   note: z.string().optional(),

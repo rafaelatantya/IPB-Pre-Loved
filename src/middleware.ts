@@ -85,13 +85,25 @@ export default async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
 
-    // GUARD: Seller Dashboard
-    if (path.startsWith('/dashboard')) {
+    // GUARD: Seller Dashboard & Seller Area (Dashboard, Product Add/Edit/Detail, Profile)
+    const isSellerPath = path.startsWith('/dashboard') || 
+                         path === '/product/add' || 
+                         path.startsWith('/product/edit') || 
+                         path.startsWith('/product/detail') || 
+                         path.startsWith('/profile');
+
+    if (isSellerPath) {
       if (role === 'ONBOARDING') {
         return NextResponse.redirect(new URL('/onboarding', nextUrl));
       }
       if (role === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+        if (path.startsWith('/dashboard')) {
+          return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+        }
+      }
+      if (role === 'BUYER') {
+        console.warn(`[Middleware] Forbidden: Buyer ${decoded.email} tried to access Seller area.`);
+        return NextResponse.redirect(new URL('/', nextUrl)); // Redirect to public home
       }
     }
 

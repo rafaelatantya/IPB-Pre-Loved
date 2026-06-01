@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { updateSellerProfile } from "@/modules/user/actions";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {

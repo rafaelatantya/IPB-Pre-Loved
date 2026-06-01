@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+
 export default function NotificationsPage() {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">

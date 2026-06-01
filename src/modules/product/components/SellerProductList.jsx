@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Eye, Pencil, Trash2, Check } from "lucide-react";
+import { deleteProduct, markProductAsSold, getProducts } from "@/modules/product/actions";
 
 const STATUS_CONFIG = {
     APPROVED: { bg: "bg-[#16A34A]", label: "Approved" },
@@ -46,25 +47,78 @@ export default function SellerProductList({ initialData, initialHasMore, initial
         return MOCK_PRODUCTS;
     });
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(initialHasMore ?? false);
+    const [loadingMore, setLoadingMore] = useState(false);
+
     useEffect(() => {
         if (initialData) {
             setProducts(initialData);
         }
     }, [initialData]);
 
-    const handleDelete = (id) => {
-        if (window.confirm("Hapus produk ini secara permanen?"))
-            setProducts((prev) => prev.filter((p) => (p.id || p._id) !== id));
+    useEffect(() => {
+        setHasMore(initialHasMore ?? false);
+    }, [initialHasMore]);
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Hapus produk ini secara permanen?")) {
+            try {
+                const res = await deleteProduct(id);
+                if (res.success) {
+                    setProducts((prev) => prev.filter((p) => (p.id || p._id) !== id));
+                } else {
+                    alert(res.error || "Gagal menghapus produk");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Terjadi kesalahan sistem saat menghapus produk");
+            }
+        }
     };
 
-    const handleMarkSold = (id) => {
-        if (window.confirm("Tandai produk ini sebagai terjual?"))
-            setProducts((prev) =>
-                prev.map((p) => {
-                    const productId = p.id || p._id;
-                    return productId === id ? { ...p, status: "SOLD" } : p;
-                })
-            );
+    const handleMarkSold = async (id) => {
+        if (window.confirm("Tandai produk ini sebagai terjual?")) {
+            try {
+                const res = await markProductAsSold(id);
+                if (res.success) {
+                    setProducts((prev) =>
+                        prev.map((p) => {
+                            const productId = p.id || p._id;
+                            return productId === id ? { ...p, status: "SOLD" } : p;
+                        })
+                    );
+                } else {
+                    alert(res.error || "Gagal mengubah status produk");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Terjadi kesalahan sistem saat mengubah status produk");
+            }
+        }
+    };
+
+    const handleLoadMore = async () => {
+        if (loadingMore) return;
+        setLoadingMore(true);
+        try {
+            const res = await getProducts({ page: page + 1, limit: 10 });
+            if (res.success && res.data) {
+                let newProducts = [];
+                if (Array.isArray(res.data)) {
+                    newProducts = res.data;
+                } else if (Array.isArray(res.data.products)) {
+                    newProducts = res.data.products;
+                }
+                setProducts((prev) => [...prev, ...newProducts]);
+                setPage((prev) => prev + 1);
+                setHasMore(res.hasMore ?? false);
+            }
+        } catch (err) {
+            console.error("Gagal memuat produk lebih banyak:", err);
+        } finally {
+            setLoadingMore(false);
+        }
     };
 
     return (
@@ -96,17 +150,37 @@ export default function SellerProductList({ initialData, initialHasMore, initial
                         products.map((product) => {
                             const productId = product.id || product._id || "PRD-UNKNOWN";
                             const productTitle = product.title || product.name || "Produk Tanpa Nama";
-                            const productCategory = product.category || "Umum";
+                            const productCategory = product.category?.name || product.category || "Umum";
                             const productPrice = product.price || 0;
-                            const productDate = product.date || product.createdAt || "-";
+                            
+                            const formatProductDate = (d) => {
+                                if (!d) return "-";
+                                if (typeof d === "number") {
+                                    return new Date(d).toLocaleDateString("id-ID", {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric"
+                                    });
+                                }
+                                return d;
+                            };
+                            const productDate = product.date || formatProductDate(product.createdAt);
                             const productStatus = product.status || "PENDING";
 
                             return (
                                 <div key={productId} className="flex flex-col items-end gap-2">
                                     <div className="w-full bg-white shadow-[0_4px_8px_rgba(0,0,0,0.12)] p-4 flex items-center justify-between gap-4">
                                         <div className="flex items-center gap-8 max-w-[284px] w-full">
-                                            <ImagePlaceholder />
-                                            <div className="flex flex-col gap-1">
+                                            {product.images?.[0]?.url ? (
+                                                <img 
+                                                    src={product.images[0].url} 
+                                                    alt={productTitle} 
+                                                    className="w-20 h-20 flex-shrink-0 rounded-sm object-cover"
+                                                />
+                                            ) : (
+                                                <ImagePlaceholder />
+                                            )}
+                                            <div className="flex flex-col gap-1 flex-1 min-w-0">
                                                 <p className="text-base font-bold leading-6 text-[#1A1C1C]">{productTitle}</p>
                                                 <p className="text-xs text-[#474747] pt-1">ID: {productId}</p>
                                             </div>
@@ -127,8 +201,8 @@ export default function SellerProductList({ initialData, initialHasMore, initial
                                             <Eye className="w-4 h-4 text-[#1A1C1C]" />
                                         </button>
 
-                                        {/* Tombol Pensil -> Menuju /product/edit/[id] */}
-                                        {productStatus !== "SOLD" && (
+                                        {/* Tombol Pensil -> Menuju /product/edit/[id] (Sellers cannot edit PENDING or SOLD products) */}
+                                        {productStatus !== "SOLD" && productStatus !== "PENDING" && (
                                             <button
                                                 onClick={() => router.push(`/product/edit/${productId}`)}
                                                 className="p-2 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] rounded-lg hover:bg-gray-50 transition-colors"
@@ -156,11 +230,17 @@ export default function SellerProductList({ initialData, initialHasMore, initial
                     )}
                 </div>
 
-                <div className="flex justify-center">
-                    <button className="h-[46px] px-[18px] py-3 border border-[#2563EB] text-[#2563EB] text-sm font-semibold rounded-[6px] hover:bg-[#2563EB] hover:text-white transition-colors shadow-sm">
-                        Load More
-                    </button>
-                </div>
+                {hasMore && (
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className="h-[46px] px-[18px] py-3 border border-[#2563EB] text-[#2563EB] text-sm font-semibold rounded-[6px] hover:bg-[#2563EB] hover:text-white transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {loadingMore ? "Loading..." : "Load More"}
+                        </button>
+                    </div>
+                )}
             </main>
         </div>
     );

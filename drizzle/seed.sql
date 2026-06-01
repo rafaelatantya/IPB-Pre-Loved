@@ -38,9 +38,9 @@ INSERT INTO products (id, seller_id, category_id, title, description, price, con
 ('p-10', 'user-seller-1', 'cat-fash', 'Tas Ransel Eiger 25L', 'Kuat banget buat bawa laptop dan buku tebal.', 300000, 'CUKUP', 'APPROVED', 'CILIBENDE', NULL, NULL, 1773890742000),
 ('p-11', 'user-seller-2', 'cat-buku', 'Modul Kalkulus I & II', 'Modul lengkap dengan coretan tips n trik.', 45000, 'CUKUP', 'APPROVED', 'BARANANGSIANG', NULL, NULL, 1774631314000),
 ('p-12', 'user-seller-1', 'cat-kost', 'Rak Sepatu 4 Susun', 'Bahan plastik kokoh, gampang dibongkar pasang.', 35000, 'GOOD', 'APPROVED', 'DRAMAGA', NULL, NULL, 1775371885000),
-('p-13', 'user-seller-2', 'cat-elek', 'Monitor LG 24 Inch IPS', 'Layar jernih buat multitasking tugas.', 1200000, 'LIKE_NEW', 'APPROVED', 'BARANANGSIANG', NULL, NULL, 1776112457000),
-('p-14', 'user-seller-1', 'cat-fash', 'Kemeja Batik IPB Official', 'Wajib dipake hari Jumat. Bahan adem.', 180000, 'NEW', 'APPROVED', 'CILIBENDE', NULL, NULL, 1776853028000),
-('p-15', 'user-seller-2', 'cat-kost', 'Termos Lock&Lock 500ml', 'Tahan panas sampe 12 jam. Mulus.', 95000, 'LIKE_NEW', 'APPROVED', 'DRAMAGA', NULL, NULL, 1777593600000);
+('p-13', 'user-seller-2', 'cat-elek', 'Monitor LG 24 Inch IPS', 'Layar jernih buat multitasking tugas.', 1200000, 'LIKE_NEW', 'REJECTED', 'BARANANGSIANG', NULL, NULL, 1776112457000),
+('p-14', 'user-seller-1', 'cat-fash', 'Kemeja Batik IPB Official', 'Wajib dipake hari Jumat. Bahan adem.', 180000, 'NEW', 'PENDING', 'CILIBENDE', NULL, NULL, 1776853028000),
+('p-15', 'user-seller-2', 'cat-kost', 'Termos Lock&Lock 500ml', 'Tahan panas sampe 12 jam. Mulus.', 95000, 'LIKE_NEW', 'PENDING', 'DRAMAGA', NULL, NULL, 1777593600000);
 
 -- 4. PRODUCT IMAGES (45 UNIQUE MAPPING)
 INSERT INTO product_images (id, product_id, r2_key, url, sort_order) VALUES 

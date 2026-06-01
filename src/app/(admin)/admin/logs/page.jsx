@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { getAdminLogs } from "@/modules/admin/actions";
 import {
     Clock,
@@ -9,11 +11,12 @@ import {
     Trash2,
     Eye,
     AlertTriangle,
-    ShieldAlert
+    ShieldAlert,
+    Loader2
 } from "lucide-react";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 const actionIcons = {
     "REVIEW_PRODUCT": { icon: ShieldCheck, color: "text-green-600", bg: "bg-green-50" },
@@ -25,10 +28,39 @@ const actionIcons = {
     "DELETE_USER": { icon: Trash2, color: "text-red-600", bg: "bg-red-50" },
 };
 
-export default async function AdminLogsPage() {
-    const { success, data: logs, error } = await getAdminLogs();
+export default function AdminLogsPage() {
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    if (!success) {
+    useEffect(() => {
+        async function fetchLogs() {
+            try {
+                const res = await getAdminLogs();
+                if (res.success) {
+                    setLogs(res.data || []);
+                } else {
+                    setError(res.error || "Gagal memuat log.");
+                }
+            } catch (err) {
+                console.error(err);
+                setError("Terjadi kesalahan sistem saat memuat log.");
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchLogs();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-6 h-6 animate-spin text-neutral-300" />
+            </div>
+        );
+    }
+
+    if (error) {
         return (
             <div className="p-8 text-center text-red-500 font-poppins text-sm">
                 Gagal memuat log: {error}

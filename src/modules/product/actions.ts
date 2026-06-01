@@ -235,6 +235,11 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
 
     if (!isOwner && !isAdmin) return { success: false, code: 403, error: "Akses ditolak" };
 
+    // 🛡️ SECURITY: PENDING products cannot be edited by sellers to prevent QC conflicts
+    if (product.status === "PENDING" && !isAdmin) {
+      return { success: false, code: 400, error: "Produk yang sedang dalam proses verifikasi (Pending) tidak dapat diedit." };
+    }
+
     // 2. Filter URL Internal (Cegah injection URL luar)
     const isInternal = (url: any) => typeof url === 'string' && url.startsWith("/api/images/products/");
     const safeImageUrls = Array.from(new Set((imageUrls || []).filter(url => isInternal(url))));
@@ -510,15 +515,16 @@ export async function deleteProduct(id) {
 export async function trackWhatsAppClick(productId) {
   try {
     const db = await getContextDb();
-    // 🛡️ EDGE CASE: Increment atomic biar nggak tabrakan kalau diklik barengan
-    await db.update(products)
-      .set({ whatsappClicks: sql`${products.whatsappClicks} + 1` })
+    console.log(`[WA_LEADS] Incrementing click count for product ID: ${productId}`);
+    const res = await db.update(products)
+      .set({ whatsappClicks: sql`coalesce(whatsapp_clicks, 0) + 1` })
       .where(eq(products.id, productId))
       .run();
+    console.log(`[WA_LEADS] Click successfully updated in D1 database. Query result:`, res);
     return { success: true };
   } catch (error) {
-    console.error("Track WA Click Error:", error);
-    return { success: false };
+    console.error("[WA_LEADS] Track WA Click Error:", error);
+    return { success: false, error: error.message };
   }
 }
 
@@ -539,7 +545,7 @@ export async function getSellerStats() {
     const productStats = await db.select({
       status: products.status,
       count: sql`count(*)`,
-      totalClicks: sql`sum(${products.whatsappClicks})`,
+      totalClicks: sql`sum(coalesce(${products.whatsappClicks}, 0))`,
     })
       .from(products)
       .where(eq(products.sellerId, sellerId))

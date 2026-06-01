@@ -84,7 +84,18 @@ export default function ProductDetailPage() {
     );
   }
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
+    console.log("[WA_LEADS] WhatsApp button clicked, tracking engagement for product ID:", product.id);
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: "POST",
+      });
+      const res = await response.json();
+      console.log("[WA_LEADS] Click tracked successfully via API, response:", res);
+    } catch (err) {
+      console.error("[WA_LEADS] Failed to track WhatsApp click via API:", err);
+    }
+    
     openWhatsAppChat(
       product.seller?.name,
       product.seller?.whatsappNumber,
@@ -135,7 +146,11 @@ export default function ProductDetailPage() {
                       onClick={() => setActiveIndex(idx)}
                       className={`relative shrink-0 w-20 h-20 md:w-full md:h-[158px] bg-neutral-200 md:bg-gray-100 rounded-sm md:outline md:outline-1 md:outline-[#C6C6C6] md:-outline-offset-1 overflow-hidden transition-all ${activeIndex === idx ? "ring-2 ring-blue-600 md:outline-[#2563EB] md:outline-2" : "hover:opacity-80"}`}
                     >
-                      <img src={media.type === "video" ? media.thumbnail : media.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                      {media.type === "video" ? (
+                        <video src={media.url} className="w-full h-full object-cover" preload="metadata" muted playsInline />
+                      ) : (
+                        <img src={media.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                      )}
                       {media.type === "video" && (
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                           <PlayCircle className="w-6 h-6 md:w-8 md:h-8 text-white" />
@@ -225,10 +240,6 @@ export default function ProductDetailPage() {
                     <img src={product.seller?.image || `https://ui-avatars.com/api/?name=${product.seller?.name}&background=random`} alt={product.seller?.name} className="size-12 rounded-xl object-cover shrink-0" />
                     <div className="flex-1 flex flex-col justify-center items-start gap-1">
                         <span className="text-black text-sm md:text-[18px] font-poppins font-semibold uppercase">{product.seller?.name || "NAMA PENJUAL"}</span>
-                        <div className="h-4 px-1.5 py-[1.38px] bg-cyan-50 rounded-3xl shadow-[0px_0.69px_1.38px_0px_rgba(105,81,255,0.05)] inline-flex items-center gap-1.5 overflow-hidden">
-                           <div className="size-1.5 bg-cyan-500 rounded-full"></div>
-                           <span className="text-cyan-500 text-[8.3px] md:text-[10px] font-semibold font-poppins uppercase tracking-wider">Admin Verified</span>
-                        </div>
                     </div>
                     <div className="flex flex-col items-end gap-0.5">
                         <span className="text-zinc-700 text-[10px] md:text-xs font-semibold font-poppins uppercase">MEMBER SEJAK</span>

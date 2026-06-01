@@ -1,6 +1,3 @@
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
-
 let ffmpegInstance = null;
 
 /**
@@ -9,6 +6,9 @@ let ffmpegInstance = null;
  */
 async function getFFmpeg() {
   if (ffmpegInstance) return ffmpegInstance;
+
+  const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+  const { toBlobURL } = await import('@ffmpeg/util');
 
   const ffmpeg = new FFmpeg();
   const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
@@ -29,6 +29,7 @@ async function getFFmpeg() {
  * @param {Function} onProgress - Callback untuk progress (0-100)
  */
 export async function compressVideo(file, onProgress) {
+  const { fetchFile } = await import('@ffmpeg/util');
   const ffmpeg = await getFFmpeg();
   const { name } = file;
   const outputName = `compressed_${Date.now()}.mp4`;

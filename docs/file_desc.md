@@ -35,6 +35,7 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/(admin)/admin/queue/[id]/page.jsx` | Detail produk dalam antrean QC (Legacy/Direct Access) |
 | `src/app/(admin)/admin/inventory/page.jsx` | Manajemen stok barang global (Pagination & Search) |
 | `src/app/(admin)/admin/users/page.jsx` | Manajemen akun user global (Ban/Delete & Database) |
+| `src/app/(admin)/admin/logs/page.jsx` | Halaman riwayat log aktivitas audit administratif sistem |
 | `src/app/(seller)/dashboard/page.jsx` | Dashboard pusat kontrol untuk penjual (Manajemen Produk & Penjualan) |
 | `src/app/(seller)/product/add/page.jsx` | Form pengajuan produk baru oleh penjual |
 | `src/components/layouts/Sidebar.jsx` | Komponen navigasi samping universal untuk dashboard |
@@ -47,8 +48,8 @@ Dokumen ini berisi pemetaan dan fungsi dari skrip-skrip yang ada di dalam *repos
 | `src/app/api/images/[...key]/route.js` | API Proxy untuk melayani file gambar dari R2 ke browser (Local & Prod) |
 | `src/app/api/upload/route.js` | API Route untuk upload file besar ke R2 dengan progress bar support |
 | `src/app/api/user/upgrade/route.js` | API Route khusus untuk upgrade role (Bypass Cloudflare 405 Root Error) |
-| `src/lib/video.js` | Utility frontend untuk kompresi video 1080p 30fps H.264 (FFmpeg) |
-| `src/lib/image.js` | Utility frontend untuk kompresi gambar ke 12MP WebP |
+| `src/lib/video.ts` | Utility frontend untuk kompresi video 1080p 30fps H.264 (FFmpeg) |
+| `src/lib/image.ts` | Utility frontend untuk kompresi gambar ke 12MP WebP |
 | `src/modules/auth/actions.js` | Server Actions untuk manajemen pendaftaran dan proses onboarding role |
 | `src/modules/user/actions.js` | Server Actions untuk manajemen profil user (Seller/Buyer Settings & Upgrade Role) |
 | `src/modules/notification/actions.js` | Server Actions untuk manajemen data notifikasi (Create, Get, MarkAsRead) |

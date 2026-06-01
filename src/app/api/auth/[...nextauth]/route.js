@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { getAuthConfig } from "@/lib/auth";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 // Helper hook to inject Cloudflare bindings to NextAuth configuration
 const createHandler = () => {

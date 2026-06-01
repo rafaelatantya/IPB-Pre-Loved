@@ -238,7 +238,7 @@ export default function SellerProductDetailPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3 pt-2">
-              {(product.status === "PENDING" || product.status === "REJECTED") && (
+              {product.status === "REJECTED" && (
                 <button
                   onClick={() => router.push(`/product/edit/${product.id}`)}
                   className="flex items-center justify-center gap-2 w-full py-3 bg-black text-white rounded-lg font-semibold text-sm hover:bg-zinc-900 transition-all active:scale-[0.98]"

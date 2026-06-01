@@ -24,7 +24,7 @@ export async function getPendingProducts() {
     const result = await db.query.products.findMany({
       where: eq(products.status, "PENDING"),
       with: {
-        seller: { columns: { name: true, email: true } },
+        seller: true,
         category: true,
         images: true
       },
@@ -536,16 +536,16 @@ export async function getAdminDashboardStats() {
       count: sql`count(*)`,
     }).from(users);
 
-    // 3. Hitung Produk Baru Hari Ini (Terakhir 24 Jam)
+    // 3. Hitung Produk Baru (Terakhir 24 Jam)
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const newProductsToday = await db.select({
       count: sql`count(*)`,
     }).from(products).where(sql`${products.createdAt} >= ${dayAgo.getTime()}`);
 
-    // 4. Hitung Total Klik WA (Leads)
-    const waStats = await db.select({
-      totalClicks: sql`sum(${products.whatsappClicks})`,
-    }).from(products);
+     // 4. Hitung Total Klik WA (Leads)
+     const waStats = await db.select({
+       totalClicks: sql`sum(coalesce(${products.whatsappClicks}, 0))`,
+     }).from(products);
 
     // Map hasil ke format yang enak dipake UI
     const stats = {

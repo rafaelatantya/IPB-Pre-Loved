@@ -1,7 +1,7 @@
 "use client";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -130,7 +130,7 @@ export default function AdminDashboardPage() {
         <div className="mb-8 flex items-center gap-3 bg-white rounded-[4px] px-6 py-4">
           <Zap className="w-4 h-4 text-[#1A1C1C]" />
           <p className="text-[14px] font-semibold text-[#1A1C1C]">
-            <span className="font-black">{stats.newToday}</span> listing baru masuk hari ini.
+            <span className="font-black">{stats.newToday}</span> listing baru masuk dalam 24 jam terakhir.
           </p>
         </div>
       )}

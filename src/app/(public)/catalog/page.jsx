@@ -1,7 +1,7 @@
 "use client";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import React, { useState, useEffect, Suspense } from "react";
 import { Search, Filter, Grid, List, ChevronDown, ChevronLeft, ChevronRight, Check, SlidersHorizontal, LayoutGrid, Banknote, BadgeCheck } from "lucide-react";

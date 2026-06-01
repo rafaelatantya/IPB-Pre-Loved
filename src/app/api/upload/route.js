@@ -3,6 +3,7 @@ import { getEnv } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 /**
  * API Route: Handled Large Uploads with Progress Support

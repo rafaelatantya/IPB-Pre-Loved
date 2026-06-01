@@ -45,13 +45,15 @@ export default function Navbar() {
               <NotificationCenter />
 
               {/* Dashboard Link */}
-              <Link 
-                href={session?.user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard"} 
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-[#2563EB] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                DASHBOARD
-              </Link>
+              {session?.user?.role && session.user.role !== "BUYER" && session.user.role !== "ONBOARDING" && (
+                <Link 
+                  href={session?.user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard"} 
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-[#2563EB] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  DASHBOARD
+                </Link>
+              )}
 
               {/* Profile Avatar */}
               <div className="relative">

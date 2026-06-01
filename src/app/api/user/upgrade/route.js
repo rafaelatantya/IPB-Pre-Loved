@@ -3,6 +3,7 @@ import { upgradeToSeller } from "@/modules/user/actions";
 import { getAuth } from "@/lib/auth";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 /**
  * API Route: Upgrade User to Seller

@@ -6,9 +6,14 @@ export const dynamic = "force-dynamic";
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import ProductEditForm from "@/modules/product/components/ProductEditForm";
+import dynamicImport from "next/dynamic";
 import { getProductById } from "@/modules/product/actions";
 import { getCategories } from "@/modules/category/actions";
+
+const ProductEditForm = dynamicImport(
+  () => import("@/modules/product/components/ProductEditForm"),
+  { ssr: false }
+);
 
 export default function EditProductPage() {
   const params = useParams();
@@ -30,6 +35,8 @@ export default function EditProductPage() {
 
         if (!productRes.success) {
           setError(productRes.error || "Produk tidak ditemukan.");
+        } else if (productRes.data?.status === "PENDING") {
+          setError("Produk yang sedang dalam proses verifikasi (Pending) tidak dapat diedit untuk mencegah konflik QC.");
         } else {
           setProduct(productRes.data);
         }

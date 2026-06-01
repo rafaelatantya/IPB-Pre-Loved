@@ -6,6 +6,7 @@ import { getProducts, getSellerStats } from "@/modules/product/actions";
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+
 export default async function DaftarProdukPage() {
     // Ambil data awal secara server-side
     const [productsRes, statsRes] = await Promise.all([

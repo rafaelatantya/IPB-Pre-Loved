@@ -15,15 +15,33 @@ export default function SellerProfileForm({ initialData }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 1. Autocorrect WhatsApp number to international format
+        let clean = whatsappNumber.replace(/[^0-9+]/g, "");
+        let corrected = clean;
+        if (clean.startsWith("0")) {
+            corrected = "+62" + clean.substring(1);
+        } else if (clean.startsWith("62")) {
+            corrected = "+" + clean;
+        } else if (clean.startsWith("+62")) {
+            corrected = clean;
+        } else if (clean.length > 0) {
+            corrected = "+62" + clean;
+        }
+
+        // 2. Show confirmation window.confirm matching other onboarding flows
+        const confirmBox = window.confirm(`Autocorrect: nomor yang akan tercatat: ${corrected}\n\nKlik OK untuk setuju, atau Cancel untuk ketik ulang.`);
+        if (!confirmBox) return; // User membatalkan
+
         setIsSubmitting(true);
         setMessage("");
         setError("");
 
         try {
-            // Note: Currently updateSellerProfile only updates whatsappNumber. 
-            // If backend supports name update later, we can pass it.
-            const res = await updateSellerProfile({ whatsappNumber });
+            // 3. Save corrected number to DB
+            const res = await updateSellerProfile({ whatsappNumber: corrected });
             if (res.success) {
+                setWhatsappNumber(corrected);
                 setMessage("Perubahan Tersimpan. Informasi Anda telah berhasil diperbarui.");
                 router.refresh();
             } else {

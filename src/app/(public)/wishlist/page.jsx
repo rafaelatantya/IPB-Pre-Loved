@@ -3,8 +3,8 @@ import { getWishlistItems } from "@/modules/wishlist/services";
 import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 export default async function WishlistPage() {
   const auth = await getAuth();

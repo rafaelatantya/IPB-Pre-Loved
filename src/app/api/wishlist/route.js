@@ -5,6 +5,7 @@ import { wishlists } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {

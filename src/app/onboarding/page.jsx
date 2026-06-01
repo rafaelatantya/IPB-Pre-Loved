@@ -1,12 +1,13 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ShoppingBag, Store, ArrowRight, MessageCircle, CheckCircle2 } from "lucide-react";
 import { completeOnboarding } from "@/modules/auth/actions";
-
-export const runtime = "edge";
 
 export default function OnboardingPage() {
   const { data: session, status, update } = useSession();

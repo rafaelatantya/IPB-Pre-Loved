@@ -3,7 +3,6 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, PlusSquare, FileText, User } from "lucide-react";
-import PhoneSettingModal from "@/components/profile/PhoneSettingModal";
 
 const sellerLinks = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
@@ -60,9 +59,6 @@ export default function Sidebar({ role = "seller" }) {
                 })}
             </nav>
 
-            <div className="pt-4 border-t border-gray-100">
-                <PhoneSettingModal />
-            </div>
         </aside>
     );
 }

@@ -4,10 +4,19 @@ import React, { useState } from "react";
 import { ArrowLeft, Share2, MapPin, Tag, ShieldCheck, MessageCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import WishlistButton from "@/modules/wishlist/components/WishlistButton";
+import { trackWhatsAppClick } from "@/modules/product/actions";
 
 export default function ProductDetailView({ product }) {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleWhatsAppClick = async () => {
+    try {
+      await trackWhatsAppClick(product.id);
+    } catch (error) {
+      console.error("Failed to track WhatsApp click:", error);
+    }
+  };
 
   const mediaList = [];
   if (product.videoUrl) {
@@ -176,6 +185,7 @@ export default function ProductDetailView({ product }) {
               <a 
                 href={`https://wa.me/${product.seller?.whatsappNumber || "628"}`}
                 target="_blank"
+                onClick={handleWhatsAppClick}
                 className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20"
               >
                 <MessageCircle className="w-6 h-6" />

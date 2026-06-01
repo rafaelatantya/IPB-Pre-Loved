@@ -1,6 +1,5 @@
 "use client";
 
-export const runtime = "edge";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -11,6 +10,7 @@ import ProductCard from "@/modules/catalog/components/ProductCard";
 import { getFeaturedProducts } from "@/modules/catalog/services"; // Tetap simpan jika ada dep lain
 import { upgradeToSeller } from "@/modules/user/actions";
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -125,10 +125,16 @@ export default function LandingPage() {
   };
 
   const loginPrompt = (
-    <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+    <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50 gap-4">
       <p className="text-gray-500 uppercase tracking-widest text-xs font-bold italic">
         anda harus signup/login terlebih dahulu
       </p>
+      <button 
+        onClick={() => router.push("/login")}
+        className="px-6 py-2.5 bg-black hover:bg-zinc-900 active:scale-[0.98] transition-all text-white text-xs font-bold uppercase tracking-wider"
+      >
+        Masuk Sekarang
+      </button>
     </div>
   );
 
@@ -168,15 +174,15 @@ export default function LandingPage() {
                 </div>
 
                 <div className="self-stretch pb-2 flex justify-start items-start gap-3 overflow-x-auto no-scrollbar">
-                    <button onClick={() => router.push('/catalog')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
+                    <button onClick={() => router.push(status === "authenticated" ? '/catalog' : '/login')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
                         <LayoutGrid className="w-3.5 h-3.5 text-white" />
                         <span className="text-center text-white text-sm font-medium font-poppins leading-5">Kategori</span>
                     </button>
-                    <button onClick={() => router.push('/catalog')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
+                    <button onClick={() => router.push(status === "authenticated" ? '/catalog' : '/login')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
                         <Banknote className="w-3.5 h-3.5 text-white" />
                         <span className="text-center text-white text-sm font-medium font-poppins leading-5">Harga</span>
                     </button>
-                    <button onClick={() => router.push('/catalog')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
+                    <button onClick={() => router.push(status === "authenticated" ? '/catalog' : '/login')} className="shrink-0 px-4 py-2 bg-blue-600 rounded-full flex justify-start items-center gap-2 active:scale-95 transition-all">
                         <BadgeCheck className="w-3.5 h-3.5 text-white" />
                         <span className="text-center text-white text-sm font-medium font-poppins leading-5">Kondisi</span>
                     </button>
@@ -216,22 +222,22 @@ export default function LandingPage() {
                     </div>
 
                     <div className="flex flex-wrap justify-start items-start gap-3">
-                        <Link href="/catalog" className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                        <Link href={status === "authenticated" ? "/catalog" : "/login"} className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
                             <LayoutGrid className="w-4 h-4 text-white" />
                             <span className="text-white text-sm font-medium">Kategori</span>
                         </Link>
-                        <Link href="/catalog" className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                        <Link href={status === "authenticated" ? "/catalog" : "/login"} className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
                             <Banknote className="w-4 h-4 text-white" />
                             <span className="text-white text-sm font-medium">Harga</span>
                         </Link>
-                        <Link href="/catalog" className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
+                        <Link href={status === "authenticated" ? "/catalog" : "/login"} className="px-4 py-2 bg-[#2563EB] rounded-full flex justify-center items-center gap-2 hover:bg-blue-700 transition-colors">
                             <BadgeCheck className="w-4 h-4 text-white" />
                             <span className="text-white text-sm font-medium">Kondisi</span>
                         </Link>
                     </div>
                 </div>
                 
-                <Link href="/catalog" className="px-8 py-4 bg-[#0891B2] flex justify-center items-center hover:bg-cyan-700 transition-colors">
+                <Link href={status === "authenticated" ? "/catalog" : "/login"} className="px-8 py-4 bg-[#0891B2] flex justify-center items-center hover:bg-cyan-700 transition-colors">
                     <span className="text-white text-base font-bold font-sans tracking-wide">MULAI EKSPLORASI</span>
                 </Link>
             </div>

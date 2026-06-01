@@ -1,5 +1,8 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Check, User, Loader2 } from "lucide-react";
@@ -85,8 +88,8 @@ export default function AdminQueueReviewPage() {
   async function handleDecision(action) {
     if (!item) return;
     const finalReason = reason.trim();
-    if (finalReason.length < 10) {
-      alert("Alasan review minimal harus 10 karakter!");
+    if (action === "reject" && finalReason.length < 10) {
+      alert("Alasan penolakan review minimal harus 10 karakter!");
       return;
     }
     setSubmitting(action);
@@ -107,23 +110,6 @@ export default function AdminQueueReviewPage() {
       alert("Terjadi kesalahan, coba lagi.");
     } finally {
       setSubmitting(null);
-    }
-  }
-
-  async function handleFlagUser() {
-    if (!item?.seller?.id) return;
-    setFlagging(true);
-    try {
-      const res = await toggleFlagUser(item.seller.id, true);
-      if (res && res.success) {
-        alert("Seller berhasil ditandai (flagged).");
-      } else {
-        alert((res && res.error) || "Gagal flag seller.");
-      }
-    } catch {
-      alert("Terjadi kesalahan sistem.");
-    } finally {
-      setFlagging(false);
     }
   }
 
@@ -171,14 +157,6 @@ export default function AdminQueueReviewPage() {
             {item.seller?.studentId ?? item.seller?.id ?? "—"}
           </p>
         </div>
-
-        <button
-          onClick={handleFlagUser}
-          disabled={flagging}
-          className="px-5 py-2.5 rounded-[4px] border border-neutral-300 text-sm font-semibold text-[#1A1C1C] bg-white hover:bg-neutral-50 active:scale-[0.98] transition-all disabled:opacity-50"
-        >
-          {flagging ? "Processing..." : "Flag User"}
-        </button>
       </div>
 
       {/* Body Grid */}
@@ -284,13 +262,13 @@ export default function AdminQueueReviewPage() {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Tulis alasan approve/reject... (min. 10 karakter)"
+              placeholder="Tulis alasan approve/reject... (min. 10 karakter khusus Reject)"
               maxLength={250}
               rows={3}
               className="w-full px-3 py-2.5 text-sm text-[#1A1C1C] border border-neutral-300 rounded-[4px] focus:outline-none focus:ring-1 focus:ring-black resize-none bg-white font-sans transition-all placeholder:text-neutral-400"
             />
             <div className="flex justify-between text-[11px] font-semibold text-[#777777]">
-              <span>Min 10, Maks 250 karakter</span>
+              <span>Min 10 karakter (khusus Reject), Maks 250</span>
               <span>{reason.length}/250</span>
             </div>
           </div>

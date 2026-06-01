@@ -1,6 +1,5 @@
 "use client";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 import { signIn } from "next-auth/react";
@@ -11,12 +10,6 @@ import { Suspense, useEffect } from "react";
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-
-  useEffect(() => {
-    if (error === "AccessDenied") {
-      alert("Silakan kontak admin, akun anda di-banned.\n\nProduk anda tidak dihapus namun di-archive.");
-    }
-  }, [error]);
 
   return (
     <div className="w-full h-screen bg-[#FAFAFA] md:bg-white flex flex-col md:flex-row font-poppins md:font-sans overflow-hidden">
@@ -89,12 +82,12 @@ function LoginContent() {
                     <AlertTriangle className="w-5 h-5 text-[#B91C1C] md:text-white shrink-0 mt-0" />
                     <div className="flex flex-col gap-1 items-start w-full">
                       <h3 className="text-[#020617] md:text-white text-[12px] font-semibold uppercase font-poppins md:font-sans leading-[16px] md:leading-normal md:tracking-wider">
-                        STATUS: UNAUTHORIZED
+                        STATUS: AKSES DITOLAK
                       </h3>
                       <p className="text-[#020617] md:text-white text-[14px] font-normal leading-[16px] md:leading-snug font-poppins md:font-sans">
                         {error === "AccessDenied"
-                          ? "Email tidak dikenali dalam database kami."
-                          : "Terjadi kesalahan saat login."}
+                          ? "Gunakan email @apps.ipb.ac.id resmi Anda, atau hubungi admin jika akun Anda ditangguhkan."
+                          : "Terjadi kesalahan saat masuk ke sistem."}
                       </p>
                     </div>
                   </div>

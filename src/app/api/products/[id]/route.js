@@ -1,7 +1,9 @@
 import { getProductById, getRecommendedProducts } from "@/modules/catalog/services";
+import { trackWhatsAppClick } from "@/modules/product/actions";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 /**
  * API: Get single product detail + recommendations
@@ -27,6 +29,21 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error("API Single Product Error:", error);
+    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+/**
+ * API: Track WhatsApp Click
+ */
+export async function POST(request, { params }) {
+  try {
+    const { id } = await params;
+    console.log(`[WA_LEADS_API] Received track request for product: ${id}`);
+    const res = await trackWhatsAppClick(id);
+    return NextResponse.json(res);
+  } catch (error) {
+    console.error("API Track WA Click Error:", error);
     return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -57,8 +57,8 @@ export default function ProductAddForm({ categories = [] }) {
   function handleVideoChange(e) {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 20 * 1024 * 1024) { // 20MB limit for MVP
-        alert("Video maksimal 20MB.");
+      if (file.size > 150 * 1024 * 1024) { // 150MB raw limit before compression
+        alert("Video mentah terlalu besar, maksimal 150MB sebelum kompresi.");
         return;
       }
       setVideo(file);
@@ -126,9 +126,18 @@ export default function ProductAddForm({ categories = [] }) {
     try {
       // 1. Upload Images (One by one as required by API)
       const uploadedImageUrls = [];
+      const { compressImage } = await import("@/lib/image");
       for (const img of images) {
+        // Compress image to WebP under 1MB on client-side before uploading
+        const compressedImg = await compressImage(img);
+        
+        // Hard limit check (max 5MB after compression)
+        if (compressedImg.size > 5 * 1024 * 1024) {
+          throw new Error("Gambar masih terlalu besar bahkan setelah kompresi (maks 5 MB setelah kompresi)");
+        }
+
         const imgFormData = new FormData();
-        imgFormData.append("file", img);
+        imgFormData.append("file", compressedImg);
         imgFormData.append("type", "image");
 
         const imgRes = await fetch("/api/upload", {
@@ -143,8 +152,19 @@ export default function ProductAddForm({ categories = [] }) {
       // 2. Upload Video (if any)
       let uploadedVideoUrl = "";
       if (video) {
+        console.log("[Video Compression] Compressing video:", video.name);
+        const { compressVideo } = await import("@/lib/video");
+        const compressedVid = await compressVideo(video, (progress) => {
+          console.log(`[Video Compression] Progress: ${progress}%`);
+        });
+
+        // Hard limit check (max 50MB after compression)
+        if (compressedVid.size > 50 * 1024 * 1024) {
+          throw new Error("Video masih terlalu besar bahkan setelah kompresi (maks 50 MB setelah kompresi)");
+        }
+
         const vidFormData = new FormData();
-        vidFormData.append("file", video);
+        vidFormData.append("file", compressedVid);
         vidFormData.append("type", "video");
 
         const vidRes = await fetch("/api/upload", {
@@ -165,8 +185,13 @@ export default function ProductAddForm({ categories = [] }) {
       });
 
       if (res.success) {
-        alert("Berhasil! Barang Anda sedang menunggu validasi Admin.");
-        router.push("/dashboard");
+        if (res.message && res.message.includes("APPROVED")) {
+          alert("Berhasil! Produk terupload dan otomatis disetujui (Auto-Approved).");
+          router.push("/admin/dashboard");
+        } else {
+          alert("Berhasil! Barang Anda sedang menunggu validasi Admin.");
+          router.push("/dashboard");
+        }
       } else {
         if (res.errors) {
           setErrors(prev => ({ ...prev, ...res.errors }));
@@ -202,12 +227,18 @@ export default function ProductAddForm({ categories = [] }) {
             <p className="text-xs text-gray-500 mb-6">Unggah foto produk yang jelas.</p>
 
             {/* Main Image Box / FOTO UTAMA */}
-            <div className="w-full aspect-square rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden flex flex-col items-center justify-center mb-4 relative">
+            <div 
+              onClick={() => { if (!previews[0]) fileInputRef.current?.click(); }}
+              className={`w-full aspect-square rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden flex flex-col items-center justify-center mb-4 relative ${!previews[0] ? "cursor-pointer hover:bg-gray-50/80 transition-colors" : ""}`}
+            >
               {previews[0] ? (
                 <div className="relative w-full h-full group">
                   <img src={previews[0]} className="w-full h-full object-cover" alt="Foto Utama" />
                   <button
-                    onClick={() => removeImage(0)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeImage(0);
+                    }}
                     className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="w-4 h-4" />
@@ -248,7 +279,11 @@ export default function ProductAddForm({ categories = [] }) {
 
               {/* Pad remaining slots with placeholders up to 2 items if previews is short */}
               {Array.from({ length: Math.max(0, 2 - previews.slice(1).length) }).map((_, i) => (
-                <div key={`placeholder-${i}`} className="aspect-square bg-gray-100 border border-gray-200 rounded-xl flex items-center justify-center text-gray-300">
+                <div 
+                  key={`placeholder-${i}`} 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square bg-gray-100 border border-gray-200 rounded-xl flex items-center justify-center text-gray-300 cursor-pointer hover:bg-gray-50/80 hover:text-blue-500 hover:border-blue-200 transition-all"
+                >
                   <Plus className="w-4 h-4" />
                 </div>
               ))}

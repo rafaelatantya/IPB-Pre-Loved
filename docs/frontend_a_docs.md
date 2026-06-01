@@ -61,3 +61,6 @@ const wishlisted = await isProductWishlisted(productId);
   - Penambahan `max-width` container pada Hero Section untuk tampilan layar ultra-wide.
   - Implementasi horizontal scroll pada kategori produk di perangkat mobile.
   - Fix double Navbar: Menghapus header mobile redundan pada halaman Katalog dan Detail Produk.
+- **1 Juni 2026**:
+  - Mengintegrasikan server action `trackWhatsAppClick` pada tombol WhatsApp di detail produk publik (`src/app/(public)/product/[id]/page.jsx`), sehingga engagement / lead (WhatsApp clicks) tercatat dengan benar ke database D1.
+
