@@ -49,9 +49,8 @@ export default function AdminUsersPage() {
     };
 
     useEffect(() => {
-        const timer = setTimeout(fetchUsers, 300);
-        return () => clearTimeout(timer);
-    }, [search]);
+        fetchUsers();
+    }, []);
 
     const handleToggleBlock = async (userId, currentBlocked) => {
         if (
@@ -119,17 +118,31 @@ export default function AdminUsersPage() {
                     </p>
                 </div>
 
-                {/* Search */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#777777]" />
-                    <input
-                        type="text"
-                        placeholder="Search users by name or email..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10 pr-4 py-2.5 bg-white border border-[rgba(119,119,119,0.30)] rounded-[4px] text-[14px] text-[#777777] outline-none focus:ring-1 focus:ring-black transition-all w-72"
-                    />
-                </div>
+                {/* Search Form */}
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        fetchUsers();
+                    }}
+                    className="flex items-center gap-2"
+                >
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#777777]" />
+                        <input
+                            type="text"
+                            placeholder="Search users by name or email..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-10 pr-4 py-2.5 bg-white border border-[rgba(119,119,119,0.30)] rounded-[4px] text-[14px] text-[#777777] outline-none focus:ring-1 focus:ring-black transition-all w-72"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="px-4 py-2.5 bg-black hover:bg-zinc-900 text-white rounded-[4px] text-[14px] font-medium transition-all active:scale-[0.98]"
+                    >
+                        Search
+                    </button>
+                </form>
             </div>
 
             {/* ── Table ── */}

@@ -15,7 +15,7 @@ import {
   Tag,
   MessageCircle,
 } from "lucide-react";
-import { getProductById, markProductAsSold } from "@/modules/product/actions";
+import { markProductAsSold } from "@/modules/product/actions";
 
 const STATUS_CONFIG = {
   PENDING: {
@@ -68,7 +68,7 @@ export default function SellerProductDetailPage() {
     if (!id) return;
     async function fetchProduct() {
       try {
-        const res = await getProductById(id);
+        const res = await fetch(`/api/products/${id}`).then(r => r.json());
         if (res.success) {
           setProduct(res.data);
         } else {

@@ -12,10 +12,13 @@ const ProductEditForm = dynamicImport(
   () => import("@/modules/product/components/ProductEditForm"),
   { ssr: false }
 );
+import { useSession } from "next-auth/react";
 
 export default function EditProductPage() {
   const params = useParams();
   const id = params?.id;
+  const { data: session, status: sessionStatus } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -23,7 +26,7 @@ export default function EditProductPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || sessionStatus === "loading") return;
     async function fetchData() {
       try {
         const [productRes, catRes] = await Promise.all([
@@ -33,10 +36,17 @@ export default function EditProductPage() {
 
         if (!productRes.success) {
           setError(productRes.error || "Produk tidak ditemukan.");
-        } else if (productRes.data?.status === "PENDING") {
-          setError("Produk yang sedang dalam proses verifikasi (Pending) tidak dapat diedit untuk mencegah konflik QC.");
         } else {
-          setProduct(productRes.data);
+          const fetchedProduct = productRes.data;
+          const isOwner = session?.user?.id === fetchedProduct?.sellerId;
+
+          if (!isOwner) {
+            setError("Akses ditolak. Anda hanya dapat mengedit produk Anda sendiri.");
+          } else if (fetchedProduct?.status === "PENDING" && !isAdmin) {
+            setError("Produk yang sedang dalam proses verifikasi (Pending) tidak dapat diedit untuk mencegah konflik QC.");
+          } else {
+            setProduct(fetchedProduct);
+          }
         }
 
         if (catRes.success) {
@@ -50,7 +60,7 @@ export default function EditProductPage() {
       }
     }
     fetchData();
-  }, [id]);
+  }, [id, sessionStatus, session, isAdmin]);
 
   if (loading) {
     return (

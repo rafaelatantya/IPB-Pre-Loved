@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import React, { useState, useEffect } from "react";
-import { Search, Loader2, SlidersHorizontal, Bell, Settings } from "lucide-react";
+import { Search, Loader2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getAdminInventory, adminUpdateProductStatus } from "@/modules/admin/actions";
@@ -164,8 +164,6 @@ export default function AdminInventoryPage() {
 
                 {/* Right icons */}
                 <div className="flex items-center gap-6">
-                    <Bell className="w-[18px] h-[20px] text-[#474747]" strokeWidth={1.8} />
-                    <Settings className="w-[20px] h-[20px] text-[#474747]" strokeWidth={1.8} />
                     <div
                         className="w-8 h-8 overflow-hidden flex-shrink-0"
                         style={{ borderRadius: 12, border: "1px rgba(198,198,198,0.20) solid" }}
@@ -229,20 +227,6 @@ export default function AdminInventoryPage() {
                         </button>
                     ))}
                 </div>
-
-                {/* More Filters */}
-                <button
-                    className="flex items-center gap-2 px-4 py-2 rounded-[2px] transition-all hover:bg-gray-200/60"
-                    style={{
-                        fontSize: 14,
-                        fontWeight: 400,
-                        color: "#474747",
-                        outline: "1px rgba(198,198,198,0.40) solid",
-                    }}
-                >
-                    <SlidersHorizontal className="w-[13px] h-[9px] text-[#474747]" strokeWidth={2} />
-                    More Filters
-                </button>
             </div>
 
             {/* ── Table ── */}
@@ -381,6 +365,36 @@ export default function AdminInventoryPage() {
                                     {/* Actions */}
                                     <td className="px-4 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            {/* View Product Link (Eye Icon Button) */}
+                                            <button
+                                                onClick={() => {
+                                                    const url = p.status === "APPROVED" || p.status === "SOLD"
+                                                        ? `/product/${p.id}`
+                                                        : `/product/detail/${p.id}`;
+                                                    router.push(url);
+                                                }}
+                                                className="p-1.5 rounded-[2px] hover:bg-gray-100 transition-all text-[#474747] border border-[rgba(119,119,119,0.30)] flex items-center justify-center active:scale-[0.98]"
+                                                title="View Product"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+
+                                            {/* Edit button for admin's own products */}
+                                            {p.seller?.email && session?.user?.email && p.seller.email === session.user.email && (
+                                                <button
+                                                    onClick={() => router.push(`/product/edit/${p.id}`)}
+                                                    className="px-3 py-1.5 rounded-[2px] bg-white transition-all hover:bg-gray-50 active:scale-[0.98]"
+                                                    style={{
+                                                        fontSize: 12,
+                                                        fontWeight: 500,
+                                                        color: "#1A1C1C",
+                                                        outline: "1px rgba(119,119,119,0.40) solid",
+                                                    }}
+                                                >
+                                                    {p.status === "REJECTED" ? "Edit & Post" : "Edit"}
+                                                </button>
+                                            )}
+
                                             {p.status === "APPROVED" && (
                                                 <button
                                                     onClick={() => handleUpdateStatus(p.id, "REJECTED")}
@@ -425,7 +439,7 @@ export default function AdminInventoryPage() {
                                                 </>
                                             )}
 
-                                            {p.status === "REJECTED" && (
+                                            {p.status === "REJECTED" && (!p.seller?.email || !session?.user?.email || p.seller.email !== session.user.email) && (
                                                 <button
                                                     onClick={() => router.push("/admin/queue")}
                                                     className="px-3 py-1.5 rounded-[2px] transition-all hover:bg-gray-50 active:scale-[0.98]"

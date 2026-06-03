@@ -233,9 +233,12 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
     const isAdmin = userRole === "ADMIN";
     const isOwner = product.sellerId === session.user.id;
 
-    if (!isOwner && !isAdmin) return { success: false, code: 403, error: "Akses ditolak" };
+    // 🛡️ SECURITY: Admin maupun Seller hanya boleh mengedit produk milik sendiri (tidak boleh edit punya orang lain)
+    if (!isOwner) {
+      return { success: false, code: 403, error: "Akses ditolak. Anda hanya dapat mengedit produk Anda sendiri." };
+    }
 
-    // 🛡️ SECURITY: PENDING products cannot be edited by sellers to prevent QC conflicts
+    // 🛡️ SECURITY: PENDING products cannot be edited by sellers to prevent QC conflicts (Admins can edit their own pending products)
     if (product.status === "PENDING" && !isAdmin) {
       return { success: false, code: 400, error: "Produk yang sedang dalam proses verifikasi (Pending) tidak dapat diedit." };
     }
@@ -279,8 +282,15 @@ export async function updateProduct(id: string, { formData, imageUrls = [], vide
       keysToDelete.push(product.videoUrl.replace("/api/images/", ""));
     }
 
-    // 5. Tentukan Status (Seller edit APPROVED -> PENDING)
-    const newStatus = isAdmin ? (formData.status || product.status) : "PENDING";
+    // 5. Tentukan Status
+    // Jika pengedit adalah admin dan dia adalah pemilik produk, maka status produk setelah diedit 
+    // selalu menjadi APPROVED (live), kecuali jika status saat ini atau di form diatur ke SOLD.
+    let newStatus = "PENDING";
+    if (isAdmin && isOwner) {
+      newStatus = (formData.status === "SOLD" || product.status === "SOLD") ? "SOLD" : "APPROVED";
+    } else {
+      newStatus = "PENDING";
+    }
 
     const operations: any[] = [
       // A. Update data utama produk

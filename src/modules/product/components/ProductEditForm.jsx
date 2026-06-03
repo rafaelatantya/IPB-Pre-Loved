@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Info, X, Video, Check, AlertCircle } from "lucide-react";
 import { productSchema } from "@/lib/validation";
+import { useSession } from "next-auth/react";
 
 const KONDISI_OPTIONS = [
   { label: "Baru", value: "NEW" },
@@ -16,6 +17,8 @@ export default function ProductEditForm({ product, categories = [] }) {
   const router = useRouter();
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const [form, setForm] = useState({
     title: product.title || "",
@@ -261,16 +264,28 @@ export default function ProductEditForm({ product, categories = [] }) {
       )}
 
       {product.status === "APPROVED" && (
-        <div className="mb-6 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-                <p className="text-sm font-bold text-amber-800">Peringatan: Verifikasi Ulang Diperlukan</p>
-                <p className="text-xs text-amber-700 mt-1">
-                    Mengedit produk yang sudah disetujui akan mengembalikan status produk Anda menjadi <strong>PENDING</strong>. 
-                    Produk akan diturunkan sementara dari katalog publik sampai disetujui kembali oleh Admin QC.
-                </p>
-            </div>
-        </div>
+        isAdmin ? (
+          <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
+              <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                  <p className="text-sm font-bold text-blue-800">Info Admin: Auto-Approved Aktif</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                      Status produk tidak akan pending dan jadi auto approved karena Anda adalah Admin. Produk Anda akan tetap live setelah disimpan.
+                  </p>
+              </div>
+          </div>
+        ) : (
+          <div className="mb-6 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                  <p className="text-sm font-bold text-amber-800">Peringatan: Verifikasi Ulang Diperlukan</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                      Mengedit produk yang sudah disetujui akan mengembalikan status produk Anda menjadi <strong>PENDING</strong>. 
+                      Produk akan diturunkan sementara dari katalog publik sampai disetujui kembali oleh Admin QC.
+                  </p>
+              </div>
+          </div>
+        )
       )}
 
       {/* Card Form */}

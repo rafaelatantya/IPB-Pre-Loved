@@ -51,7 +51,7 @@ wait
 # 3. UPLOAD TO R2 SEQUENTIALLY
 WRANGLER_FLAGS="--local --persist-to ./local-db-info"
 if [ "$1" == "--remote" ]; then
-    WRANGLER_FLAGS=""
+    WRANGLER_FLAGS="--remote"
     echo "📤 Uploading to REMOTE R2 (Production)..."
 else
     echo "📤 Uploading to local R2 (Development)..."
